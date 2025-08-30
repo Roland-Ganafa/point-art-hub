@@ -6,38 +6,127 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  throw new Error('Missing Supabase environment variables. Please check your .env file.');
+// Debug environment variables
+if (typeof window !== 'undefined') {
+  console.log("Supabase Client Configuration:");
+  console.log("URL Available:", !!SUPABASE_URL);
+  console.log("Key Available:", !!SUPABASE_PUBLISHABLE_KEY);
+  
+  if (SUPABASE_URL) {
+    console.log("URL Format Check:", SUPABASE_URL.startsWith("https://") ? "Valid" : "Invalid");
+    console.log("URL Length:", SUPABASE_URL.length);
+  }
+  
+  if (SUPABASE_PUBLISHABLE_KEY) {
+    console.log("Key Length:", SUPABASE_PUBLISHABLE_KEY.length);
+  }
 }
 
-// Create a custom storage handler
+// Custom fetch with retry logic
+const fetchWithRetry = async (url: string, options: any, retries = 2, backoff = 300) => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500); // 2.5 second timeout
+    
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    return response;
+  } catch (err) {
+    if (retries === 0) {
+      throw err;
+    }
+    
+    console.log(`Fetch retry (${retries} left): ${url}`);
+    await new Promise(resolve => setTimeout(resolve, backoff));
+    return fetchWithRetry(url, options, retries - 1, backoff * 2);
+  }
+};
+
+// Function to handle environment variable issues
+const handleMissingEnvVars = () => {
+  // Check if we have the required environment variables
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    const errorMessage = 'Missing Supabase environment variables. Please check your .env file.';
+    console.error(errorMessage);
+    
+    if (typeof window !== 'undefined') {
+      // Display an error message for users
+      document.addEventListener('DOMContentLoaded', () => {
+        const rootElement = document.getElementById('root');
+        if (rootElement) {
+          rootElement.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 1rem; text-align: center;">
+              <h1 style="color: #e11d48; font-size: 1.5rem; margin-bottom: 1rem;">Configuration Error</h1>
+              <p style="color: #374151; max-width: 28rem; margin-bottom: 1.5rem;">
+                The application cannot connect to the database because environment variables are missing.
+                Please contact the administrator to fix this issue.
+              </p>
+              <button onclick="window.location.href = '/auth'" style="background: #2563eb; color: white; font-weight: 500; padding: 0.5rem 1rem; border-radius: 0.375rem; border: none; cursor: pointer; margin-bottom: 1rem;">
+                Go to Login Page
+              </button>
+              <button onclick="window.location.reload()" style="background: #4b5563; color: white; font-weight: 500; padding: 0.5rem 1rem; border-radius: 0.375rem; border: none; cursor: pointer;">
+                Reload Page
+              </button>
+            </div>
+          `;
+        }
+      });
+    }
+    
+    // Throw an error to prevent creating an invalid client
+    throw new Error(errorMessage);
+  }
+  
+  return { url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY };
+};
+
+// Get configuration - this will throw if env vars are missing
+const { url, key } = handleMissingEnvVars();
+
+// Create a custom storage handler with better error handling
 const storage = {
   getItem: (key: string) => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(key);
+    try {
+      if (typeof window !== 'undefined') {
+        return localStorage.getItem(key);
+      }
+    } catch (error) {
+      console.error('Error accessing localStorage:', error);
     }
     return null;
   },
   setItem: (key: string, value: string) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(key, value);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(key, value);
+      }
+    } catch (error) {
+      console.error('Error writing to localStorage:', error);
     }
   },
   removeItem: (key: string) => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(key);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(key);
+      }
+    } catch (error) {
+      console.error('Error removing from localStorage:', error);
     }
   },
 };
 
-// Create Supabase client with standard configuration for reliable authentication
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+// Create Supabase client with enhanced error handling and optimized connection
+export const supabase = createClient<Database>(url as string, key as string, {
   auth: {
     storage: storage,
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: 'pkce', // Use PKCE flow for better security and performance
+    flowType: 'pkce',
   },
   global: {
     headers: {
@@ -47,9 +136,63 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   db: {
     schema: 'public',
   },
+  // Reduce timeout settings for faster feedback
   realtime: {
     params: {
-      eventsPerSecond: 10, // Limit realtime events for better performance
+      eventsPerSecond: 10,
     },
   },
+  // Use custom fetch with retry logic
+  fetch: (url, options) => fetchWithRetry(url, options)
 });
+
+// Offline detection
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    console.log('Connection restored. Refreshing authentication...');
+    // Force refresh auth state when connection is restored
+    supabase.auth.refreshSession();
+  });
+  
+  window.addEventListener('offline', () => {
+    console.log('Connection lost. Operating in offline mode');
+    // Could implement additional offline behavior here
+  });
+}
+
+// Debug - check if client is created properly
+if (typeof window !== 'undefined') {
+  if (supabase) {
+    console.log("Supabase client created successfully");
+    
+    // Test the connection to Supabase
+    (async () => {
+      try {
+        const start = Date.now();
+        const { error } = await supabase.from('profiles').select('count').limit(1).maybeSingle();
+        const end = Date.now();
+        
+        if (error) {
+          console.error("Supabase connection test failed:", error);
+          // Try setting a local flag to indicate connection issues
+          localStorage.setItem('supabase_connection_error', JSON.stringify({ 
+            timestamp: Date.now(),
+            error: error.message
+          }));
+        } else {
+          console.log(`Supabase connection successful. Latency: ${end - start}ms`);
+          // Clear any previous connection error
+          localStorage.removeItem('supabase_connection_error');
+        }
+      } catch (err) {
+        console.error("Supabase connection test error:", err);
+        localStorage.setItem('supabase_connection_error', JSON.stringify({ 
+          timestamp: Date.now(),
+          error: err instanceof Error ? err.message : 'Unknown error'
+        }));
+      }
+    })();
+  } else {
+    console.error("Failed to create Supabase client");
+  }
+}

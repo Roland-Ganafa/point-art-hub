@@ -1,6 +1,13 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { mockAuthService } from '@/utils/MockAuthService';
+import { mockDatabaseService } from '@/utils/MockDatabaseService';
+
+// Check if development mode is enabled
+const isDevelopmentMode = () => {
+  return typeof window !== 'undefined' && localStorage.getItem('mock_auth_active') === 'true';
+};
 
 interface Profile {
   id: string;
@@ -22,6 +29,7 @@ interface UserContextType {
   refreshProfile: () => Promise<void>;
   // Emergency admin access function
   grantEmergencyAdmin: () => Promise<boolean>;
+  authError: string | null;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -43,11 +51,32 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [useDevelopmentMode, setUseDevelopmentMode] = useState<boolean>(isDevelopmentMode());
+
+  useEffect(() => {
+    // Check if development mode is enabled
+    setUseDevelopmentMode(isDevelopmentMode());
+  }, []);
 
   const refreshProfile = useCallback(async () => {
     if (!user) return;
     
     try {
+      // Use mock service if in development mode
+      if (useDevelopmentMode) {
+        const { data, error } = await mockAuthService.getProfile();
+        
+        if (error) {
+          console.error('Error fetching profile:', error);
+          return;
+        }
+        
+        setProfile(data);
+        return;
+      }
+      
+      // Use real Supabase service
       const { data, error } = await Promise.race([
         supabase
           .from('profiles')
@@ -55,7 +84,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
           .eq('user_id', user.id)
           .single(),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Profile fetch timeout')), 10000)
+          setTimeout(() => reject(new Error('Profile fetch timeout')), 3000)
         )
       ]) as any;
       
@@ -68,7 +97,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     } catch (error) {
       console.error('Error in refreshProfile:', error);
     }
-  }, [user]);
+  }, [user, useDevelopmentMode]);
 
   const createProfile = async (user: User) => {
     try {
@@ -107,8 +136,9 @@ export const UserProvider = ({ children }: UserProviderProps) => {
           ])
           .select()
           .single(),
+        // Reduced timeout from 10s to 3s
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Profile creation timeout')), 10000)
+          setTimeout(() => reject(new Error('Profile creation timeout')), 3000)
         )
       ]) as any;
 
@@ -133,6 +163,14 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
     try {
       console.log('Granting emergency admin access to user:', user.email);
+      
+      // Use mock service if in development mode
+      if (useDevelopmentMode) {
+        // In development mode, the user is already an admin
+        await refreshProfile();
+        setProfile(prev => prev ? { ...prev, role: 'admin' } : null);
+        return true;
+      }
       
       const { data, error } = await supabase
         .from('profiles')
@@ -159,7 +197,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
       console.error('Error in grantEmergencyAdmin:', error);
       return false;
     }
-  }, [user, refreshProfile]);
+  }, [user, refreshProfile, useDevelopmentMode]);
 
   useEffect(() => {
     let mounted = true;
@@ -167,10 +205,30 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     // Get initial session with timeout
     const initializeAuth = async () => {
       try {
+        setAuthError(null); // Reset error state
+        
+        // If development mode is enabled, use mock auth
+        if (useDevelopmentMode) {
+          console.log('Using development mode authentication');
+          
+          const mockSession = await mockAuthService.getSession();
+          if (mounted) {
+            setSession(mockSession.data.session as Session);
+            setUser(mockSession.data.session?.user as User ?? null);
+            
+            // Get the mock profile
+            const { data: mockProfile } = await mockAuthService.getProfile();
+            setProfile(mockProfile as Profile);
+            setLoading(false);
+          }
+          return;
+        }
+        
+        // Normal Supabase authentication
         const { data: { session } } = await Promise.race([
           supabase.auth.getSession(),
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Session fetch timeout')), 8000)
+            setTimeout(() => reject(new Error('Session fetch timeout')), 3000)
           )
         ]) as any;
 
@@ -188,15 +246,17 @@ export const UserProvider = ({ children }: UserProviderProps) => {
                 .select('*')
                 .eq('user_id', session.user.id)
                 .single(),
+              // Reduced timeout from 8s to 5s to give more time
               new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
+                setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
               )
             ]) as any;
-            
+          
             if (!mounted) return;
             
             if (error && error.code !== 'PGRST116') {
               console.error('Error fetching profile:', error);
+              setAuthError(`Failed to load user profile: ${error.message}`);
             }
             
             if (!existingProfile && !error) {
@@ -206,15 +266,28 @@ export const UserProvider = ({ children }: UserProviderProps) => {
             } else if (existingProfile) {
               setProfile(existingProfile);
             }
-          } catch (profileError) {
+          } catch (profileError: any) {
             console.error('Profile loading failed:', profileError);
-            // Continue without profile for now
+            // Don't set authError here to prevent blocking the UI
+            // Instead, continue with a minimal profile
+            if (mounted) {
+              setProfile({
+                id: 'temp-profile',
+                user_id: session.user.id,
+                full_name: session.user.user_metadata?.full_name || session.user.email || 'User',
+                role: 'user',
+                sales_initials: null,
+                created_at: null,
+                updated_at: null
+              });
+            }
           }
         }
-        
+      
         if (mounted) setLoading(false);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Auth initialization failed:', error);
+        setAuthError(`Authentication failed: ${error.message}`);
         if (mounted) {
           setLoading(false);
           setSession(null);
@@ -226,60 +299,93 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
     initializeAuth();
 
-    // Set up auth state listener with optimized profile loading
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user && event === 'SIGNED_IN') {
-          // Only fetch profile on sign in, not on every auth change
-          try {
-            const { data: existingProfile, error } = await Promise.race([
-              supabase
-                .from('profiles')
-                .select('*')
-                .eq('user_id', session.user.id)
-                .single(),
-              new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
-              )
-            ]) as any;
-            
-            if (!mounted) return;
-            
-            if (error && error.code !== 'PGRST116') {
-              console.error('Error fetching profile:', error);
+    // Set up auth state listener
+    const setupAuthListener = () => {
+      // If in development mode, no need for real-time listener
+      if (useDevelopmentMode) return { unsubscribe: () => {} };
+      
+      // Use real Supabase auth listener
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          if (!mounted) return;
+          
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user && event === 'SIGNED_IN') {
+            // Only fetch profile on sign in, not on every auth change
+            try {
+              const { data: existingProfile, error } = await Promise.race([
+                supabase
+                  .from('profiles')
+                  .select('*')
+                  .eq('user_id', session.user.id)
+                  .single(),
+                // Reduced timeout from 8s to 5s
+                new Promise((_, reject) => 
+                  setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+                )
+              ]) as any;
+              
+              if (!mounted) return;
+              
+              if (error && error.code !== 'PGRST116') {
+                console.error('Error fetching profile:', error);
+              }
+              
+              if (!existingProfile && !error) {
+                const newProfile = await createProfile(session.user);
+                if (mounted) setProfile(newProfile);
+              } else if (existingProfile) {
+                setProfile(existingProfile);
+              }
+            } catch (profileError) {
+              console.error('Profile loading failed:', profileError);
+              // Set a minimal profile to prevent UI issues
+              if (mounted) {
+                setProfile({
+                  id: 'temp-profile',
+                  user_id: session.user.id,
+                  full_name: session.user.user_metadata?.full_name || session.user.email || 'User',
+                  role: 'user',
+                  sales_initials: null,
+                  created_at: null,
+                  updated_at: null
+                });
+              }
             }
-            
-            if (!existingProfile && !error) {
-              const newProfile = await createProfile(session.user);
-              if (mounted) setProfile(newProfile);
-            } else if (existingProfile) {
-              setProfile(existingProfile);
-            }
-          } catch (profileError) {
-            console.error('Profile loading failed:', profileError);
+          } else if (!session?.user) {
+            setProfile(null);
           }
-        } else if (!session?.user) {
-          setProfile(null);
+          
+          if (mounted) setLoading(false);
         }
-        
-        if (mounted) setLoading(false);
-      }
-    );
+      );
+      
+      return subscription;
+    };
+    
+    const subscription = setupAuthListener();
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
-
-  // Remove redundant useEffect - profile loading is now handled in auth state change
+  }, [useDevelopmentMode]);
 
   const signOut = async () => {
+    setAuthError(null);
+    
+    if (useDevelopmentMode) {
+      // In development mode, just clear the flag
+      localStorage.removeItem('mock_auth_active');
+      setUseDevelopmentMode(false);
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      return;
+    }
+    
     await supabase.auth.signOut();
   };
 
@@ -296,7 +402,8 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         isAdmin,
         signOut,
         refreshProfile,
-        grantEmergencyAdmin
+        grantEmergencyAdmin,
+        authError
       }}
     >
       {children}

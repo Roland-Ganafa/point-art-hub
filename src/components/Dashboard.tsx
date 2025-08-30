@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useMemo, memo, lazy, Suspense, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Package, Gift, Scissors, Printer, Palette, TrendingUp, TrendingDown, Activity, BarChart3, Loader2, ShieldAlert } from "lucide-react";
+import { PlusCircle, Package, Gift, Scissors, Printer, Palette, TrendingUp, TrendingDown, Activity, BarChart3, Loader2, ShieldAlert, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
@@ -36,6 +37,7 @@ const ModulePlaceholder = ({ moduleName }: { moduleName: string }) => (
 );
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const { toast } = useToast();
   const { isAdmin, profile, loading } = useUser(); // Add loading state
@@ -60,15 +62,12 @@ const Dashboard = () => {
     "art-services": 0,
   });
 
-  // Fetch dashboard statistics
-  useEffect(() => {
-    fetchDashboardStats();
-    // Refresh stats every 30 seconds
-    const interval = setInterval(fetchDashboardStats, 30000);
-    return () => clearInterval(interval);
-  }, []);
+  // State for tracking dashboard data loading errors
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
 
-  // Memoize fetchDashboardStats to prevent recreation on every render
+  // Define fetchDashboardStats function with better error handling
   const fetchDashboardStats = useCallback(async () => {
     try {
       // Get today's date range
@@ -76,16 +75,26 @@ const Dashboard = () => {
       const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
       const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
 
-      // Fetch sales data from different tables
+      // Add timeout to Supabase queries
+      const fetchWithTimeout = async (promise: Promise<any>) => {
+        return Promise.race([
+          promise,
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Request timeout')), 5000)
+          )
+        ]);
+      };
+
+      // Fetch sales data from different tables with timeout
       const [stationeryData, giftData, embroideryData, machinesData, artData, salesData] = await Promise.all([
-        supabase.from("stationery").select("*"),
-        supabase.from("gift_store").select("*"),
-        supabase.from("embroidery").select("*"),
-        supabase.from("machines").select("*"),
-        supabase.from("art_services").select("*"),
-        supabase.from("stationery_sales").select("*")
+        fetchWithTimeout(supabase.from("stationery").select("*")),
+        fetchWithTimeout(supabase.from("gift_store").select("*")),
+        fetchWithTimeout(supabase.from("embroidery").select("*")),
+        fetchWithTimeout(supabase.from("machines").select("*")),
+        fetchWithTimeout(supabase.from("art_services").select("*")),
+        fetchWithTimeout(supabase.from("stationery_sales").select("*")
           .gte("date", startOfDay)
-          .lte("date", endOfDay)
+          .lte("date", endOfDay))
       ]);
 
       // Calculate totals
@@ -132,10 +141,54 @@ const Dashboard = () => {
           "art-services": artData.data?.length || 0,
         }
       });
+      
+      // Clear any previous dashboard error
+      setDashboardError(null);
+      // Reset retry count on success
+      setRetryCount(0);
+      
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
+      
+      // Implement retry logic
+      if (retryCount < maxRetries) {
+        setRetryCount(prev => prev + 1);
+        // Exponential backoff: 1s, 2s, 4s
+        const backoffTime = Math.pow(2, retryCount) * 1000;
+        console.log(`Retrying in ${backoffTime}ms (attempt ${retryCount + 1}/${maxRetries})`);
+        
+        setTimeout(() => {
+          fetchDashboardStats();
+        }, backoffTime);
+      } else {
+        setDashboardError(
+          "Unable to connect to the database. Please check your internet connection and refresh the page."
+        );
+      }
     }
-  }, []);
+  }, [retryCount, maxRetries, supabase]);
+  
+  // Fetch dashboard statistics with improved error handling
+  useEffect(() => {
+    let interval: number;
+    
+    // Initial fetch
+    fetchDashboardStats();
+    
+    // Refresh stats every 30 seconds
+    interval = window.setInterval(() => {
+      fetchDashboardStats().catch(error => {
+        console.error("Error refreshing dashboard stats:", error);
+      });
+    }, 30000);
+    
+    // Clear interval on unmount
+    return () => {
+      if (interval) window.clearInterval(interval);
+    };
+  }, [fetchDashboardStats]);
+
+  // Removed this duplicate definition of fetchDashboardStats
 
   // Memoize modules array to prevent recreation on every render
   const modules = useMemo(() => [
@@ -290,6 +343,55 @@ const Dashboard = () => {
         break;
     }
   };
+
+  if (dashboardError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50">
+        <div className="max-w-md p-8 bg-white rounded-2xl shadow-2xl">
+          <h2 className="text-xl font-bold text-red-500 mb-4">Connection Error</h2>
+          <p className="text-gray-700 mb-6">{dashboardError}</p>
+          <div className="space-y-3">
+            <Button 
+              onClick={() => {
+                // Attempt to refresh the Supabase connection
+                supabase.auth.refreshSession();
+                // Reset retry count
+                setRetryCount(0);
+                // Try fetching data again
+                fetchDashboardStats();
+                // Show a toast notification
+                toast({
+                  title: "Retrying connection",
+                  description: "Attempting to reconnect to the database..."
+                });
+              }} 
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 font-semibold"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Retry Connection
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.reload()} 
+              className="w-full"
+            >
+              Reload Page
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/auth')} 
+              className="w-full"
+            >
+              Go to Login
+            </Button>
+            <p className="text-sm text-gray-500 mt-4">
+              If the problem persists, please check your internet connection or contact support.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 relative overflow-hidden">

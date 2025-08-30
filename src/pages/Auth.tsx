@@ -8,43 +8,158 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/Logo";
+import { createRoot } from 'react-dom/client';
+import AuthDiagnostic from "@/components/AuthDiagnostic";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Debug env variables
+  useEffect(() => {
+    console.log("Checking Supabase environment variables:");
+    console.log("VITE_SUPABASE_URL:", import.meta.env.VITE_SUPABASE_URL ? "SET" : "NOT SET");
+    console.log("VITE_SUPABASE_ANON_KEY:", import.meta.env.VITE_SUPABASE_ANON_KEY ? "SET" : "NOT SET");
+    // More detailed debugging
+    try {
+      const urlStart = import.meta.env.VITE_SUPABASE_URL?.substring(0, 10);
+      const keyLength = import.meta.env.VITE_SUPABASE_ANON_KEY?.length || 0;
+      console.log(`URL starts with: ${urlStart || "not available"}... (length: ${import.meta.env.VITE_SUPABASE_URL?.length || 0})`);
+      console.log(`Key length: ${keyLength}`);
+    } catch (error) {
+      console.error("Error checking environment variables:", error);
+    }
+  }, []);
 
   useEffect(() => {
     // Check if user is already authenticated with timeout
     const checkUser = async () => {
+      setAuthError(null);
       try {
-        const { data: { session } } = await Promise.race([
+        console.log("Checking authentication status...");
+        const { data: { session }, error } = await Promise.race([
           supabase.auth.getSession(),
+          // Reduced timeout from 10s to 3s for faster feedback
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Session check timeout')), 5000)
+            setTimeout(() => reject(new Error('Session check timeout')), 3000)
           )
         ]) as any;
-        
-        if (session) {
-          navigate("/");
+      
+        if (error) {
+          console.error("Auth error:", error);
+          setAuthError(`Authentication error: ${error.message}`);
         }
-      } catch (error) {
+      
+        if (session) {
+          console.log("User is authenticated, redirecting to home");
+          navigate("/");
+        } else {
+          console.log("No active session found - displaying login form");
+        }
+      } catch (error: any) {
         console.warn('Session check failed:', error);
+        // Modified error message to be clearer
+        setAuthError(`Unable to connect to authentication service. Please try again.`);
         // Continue to show auth form
+      } finally {
+        setInitialLoad(false);
       }
     };
     checkUser();
   }, [navigate]);
 
+  if (initialLoad) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <div className="text-lg mb-4">Checking authentication status...</div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  // Display auth errors if any
+  if (authError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="max-w-md p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+          <h2 className="text-xl font-bold text-red-500 mb-4">Authentication Error</h2>
+          <p className="text-gray-700 dark:text-gray-300 mb-4">
+            {authError.includes("timeout") 
+            ? "Connection to authentication service timed out. This could be due to network issues or service unavailability." 
+            : authError}
+          </p>
+          <div className="space-y-3">
+            <Button 
+              onClick={() => navigate('/bypass-auth')} 
+              className="w-full bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700"
+            >
+              Enter Development Mode
+            </Button>
+            <Button 
+              onClick={() => {
+                // Load the DirectLogin component
+                import("@/components/DirectLogin").then(module => {
+                  const DirectLogin = module.default;
+                  const loginElement = document.createElement('div');
+                  loginElement.id = 'direct-login-container';
+                  document.body.innerHTML = '';
+                  document.body.appendChild(loginElement);
+                  
+                  // Create a root and render the DirectLogin component
+                  const root = createRoot(loginElement);
+                  root.render(<DirectLogin />);
+                });
+              }} 
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              Use Fast Login Method
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setAuthError(null);
+                setInitialLoad(false);
+              }} 
+              className="w-full"
+            >
+              Try Standard Login
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.reload()} 
+              className="w-full"
+            >
+              Reload Page
+            </Button>
+          </div>
+          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400 text-center">
+            If you continue experiencing issues, try:
+            <ul className="list-disc list-inside mt-2 text-left">
+              <li>Using a different browser</li>
+              <li>Clearing your browser cache</li>
+              <li>Disabling browser extensions</li>
+              <li>Checking your internet connection</li>
+            </ul>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setAuthError(null);
 
     try {
-      const { error } = await Promise.race([
+      console.log("Attempting to sign up with email:", email);
+      const { data, error } = await Promise.race([
         supabase.auth.signUp({
           email,
           password,
@@ -61,18 +176,23 @@ const Auth = () => {
       ]) as any;
 
       if (error) {
+        console.error("Sign-up error:", error);
+        setAuthError(`Sign-up failed: ${error.message}`);
         toast({
           title: "Error signing up",
           description: error.message,
           variant: "destructive",
         });
       } else {
+        console.log("Sign-up successful:", data);
         toast({
           title: "Success!",
           description: "Please check your email to confirm your account.",
         });
       }
     } catch (error: any) {
+      console.error("Sign-up exception:", error);
+      setAuthError(`Sign-up exception: ${error.message}`);
       toast({
         title: "Sign-up failed",
         description: error.message || "Connection timeout. Please check your internet connection and try again.",
@@ -86,9 +206,11 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setAuthError(null);
 
     try {
-      const { error } = await Promise.race([
+      console.log("Attempting to sign in with email:", email);
+      const { data, error } = await Promise.race([
         supabase.auth.signInWithPassword({
           email,
           password,
@@ -99,18 +221,23 @@ const Auth = () => {
       ]) as any;
 
       if (error) {
+        console.error("Sign-in error:", error);
+        setAuthError(`Sign-in failed: ${error.message}`);
         toast({
           title: "Error signing in",
           description: error.message,
           variant: "destructive",
         });
       } else {
+        console.log("Sign-in successful:", data);
         // Add a small delay to ensure auth state is updated
         setTimeout(() => {
           navigate("/");
         }, 100);
       }
     } catch (error: any) {
+      console.error("Sign-in exception:", error);
+      setAuthError(`Sign-in exception: ${error.message}`);
       toast({
         title: "Sign-in failed",
         description: error.message || "Connection timeout. Please check your internet connection and try again.",
@@ -122,8 +249,8 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20 p-4">
+      <Card className="w-full max-w-md mb-4">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
             <Logo size="lg" />
@@ -226,6 +353,74 @@ const Auth = () => {
           </Tabs>
         </CardContent>
       </Card>
+      
+      {/* Collapsible Diagnostics Section */}
+      <div className="w-full max-w-md">
+        <details className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+          <summary className="px-4 py-2 cursor-pointer text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+            Having trouble logging in? Click here for diagnostics
+          </summary>
+          <div className="p-4">
+            <div className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+              <p className="mb-2">If you're having trouble with login/signup:</p>
+              <ol className="list-decimal list-inside space-y-1">
+                <li>Check that cookies and local storage are enabled in your browser</li>
+                <li>Ensure you're using a supported browser (Chrome, Firefox, Safari, Edge)</li>
+                <li>Try clearing your browser cache and cookies</li>
+                <li>Disable any ad blockers or privacy extensions</li>
+                <li>Run the diagnostics below to check for configuration issues</li>
+              </ol>
+            </div>
+            
+            {/* Import and use the AuthDiagnostic component */}
+            <div className="mt-4">
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={() => import("@/components/AuthDiagnostic").then(module => {
+                  const AuthDiagnostic = module.default;
+                  const diagnosticElement = document.createElement('div');
+                  diagnosticElement.id = 'auth-diagnostic-container';
+                  document.body.appendChild(diagnosticElement);
+                  
+                  // Create a modal-like experience
+                  diagnosticElement.style.position = 'fixed';
+                  diagnosticElement.style.top = '0';
+                  diagnosticElement.style.left = '0';
+                  diagnosticElement.style.right = '0';
+                  diagnosticElement.style.bottom = '0';
+                  diagnosticElement.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                  diagnosticElement.style.zIndex = '9999';
+                  diagnosticElement.style.overflowY = 'auto';
+                  diagnosticElement.style.padding = '2rem';
+                  
+                  // Close button
+                  const closeButton = document.createElement('button');
+                  closeButton.innerText = 'Close';
+                  closeButton.style.position = 'absolute';
+                  closeButton.style.top = '1rem';
+                  closeButton.style.right = '1rem';
+                  closeButton.style.padding = '0.5rem 1rem';
+                  closeButton.style.backgroundColor = '#f44336';
+                  closeButton.style.color = 'white';
+                  closeButton.style.border = 'none';
+                  closeButton.style.borderRadius = '0.25rem';
+                  closeButton.style.cursor = 'pointer';
+                  closeButton.onclick = () => document.body.removeChild(diagnosticElement);
+                  
+                  diagnosticElement.appendChild(closeButton);
+                  
+                  // Render the diagnostic component
+                  const root = createRoot(diagnosticElement);
+                  root.render(<AuthDiagnostic />);
+                })}
+              >
+                Run Diagnostics
+              </Button>
+            </div>
+          </div>
+        </details>
+      </div>
     </div>
   );
 };

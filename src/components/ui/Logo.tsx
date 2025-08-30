@@ -76,13 +76,12 @@ const Logo = ({ className = '', size = 'md', showText = true, variant = 'full' }
   if (variant === 'icon') {
     return (
       <div className={`${sizeClasses[size]} ${className}`}>
-        <svg viewBox="0 0 120 120" className="w-full h-full">
-          <circle cx="60" cy="60" r="50" fill="#2c3e50"/>
-          <circle cx="60" cy="60" r="38" fill="#e74c3c"/>
-          <circle cx="60" cy="60" r="25" fill="#ffffff"/>
-          <path d="M35 45q-5-5-5 5 0 15 5 20 5 5 10 0l5 5-5 5-10-5q-10-5-10-20 0-15 10-10z" fill="#2c3e50"/>
-          <path d="M75 40q10-5 10 5 0 10-10 20v10l-5-10q-5-10-5-20 0-10 10-5z" fill="#e74c3c"/>
-        </svg>
+        <img
+          src="/point-art-logo.svg"
+          alt="Point Art Solutions Logo"
+          className="w-full h-full object-contain"
+          loading="lazy"
+        />
       </div>
     );
   }
@@ -104,29 +103,14 @@ const Logo = ({ className = '', size = 'md', showText = true, variant = 'full' }
 
   return (
     <div className={`flex items-center gap-3 ${className}`}>
-      {/* Professional logo icon */}
+      {/* Logo image */}
       <div className={`${sizeClasses[size]} relative flex items-center justify-center`}>
-        <svg
-          viewBox="0 0 120 120"
-          className="w-full h-full"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          {/* Professional circular design */}
-          <g>
-            {/* Outer ring */}
-            <circle cx="60" cy="60" r="50" fill="#2c3e50"/>
-            {/* Inner circle */}
-            <circle cx="60" cy="60" r="38" fill="#e74c3c"/>
-            {/* Central white circle */}
-            <circle cx="60" cy="60" r="25" fill="#ffffff"/>
-            
-            {/* Profile silhouette */}
-            <path d="M35 45q-5-5-5 5 0 15 5 20 5 5 10 0l5 5-5 5-10-5q-10-5-10-20 0-15 10-10z" fill="#2c3e50"/>
-            
-            {/* Location pin element */}
-            <path d="M75 40q10-5 10 5 0 10-10 20v10l-5-10q-5-10-5-20 0-10 10-5z" fill="#e74c3c"/>
-          </g>
-        </svg>
+        <img
+          src="/point-art-logo.svg"
+          alt="Point Art Solutions Logo"
+          className="w-full h-full object-contain"
+          loading="lazy"
+        />
       </div>
       
       {/* Logo text */}

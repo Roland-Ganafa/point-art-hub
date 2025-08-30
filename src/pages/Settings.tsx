@@ -9,8 +9,9 @@ import AdvancedSettings from '@/components/settings/AdvancedSettings';
 
 const SettingsPage = () => {
   const handleLogoUpdate = (logoUrl: string) => {
-    // Force a page refresh to update all logo instances
-    window.location.reload();
+    // Instead of full page reload, just update the UI
+    // The Logo component will automatically detect changes in localStorage
+    console.log("Logo updated:", logoUrl);
   };
 
   const handleThemeUpdate = (theme: string) => {
