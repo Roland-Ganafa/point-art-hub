@@ -159,12 +159,17 @@ const Auth = () => {
 
     try {
       console.log("Attempting to sign up with email:", email);
+      // Use the deployed URL for email confirmation redirects instead of localhost
+      const redirectUrl = window.location.hostname === 'localhost' 
+        ? `${window.location.origin}/` 
+        : 'https://point-art-hub.vercel.app/'; // Updated with actual deployed URL
+      
       const { data, error } = await Promise.race([
         supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: redirectUrl,
             data: {
               full_name: fullName,
             },
@@ -187,7 +192,7 @@ const Auth = () => {
         console.log("Sign-up successful:", data);
         toast({
           title: "Success!",
-          description: "Please check your email to confirm your account.",
+          description: `Thank you ${fullName}! Please check your email to confirm your account.`,
         });
       }
     } catch (error: any) {
