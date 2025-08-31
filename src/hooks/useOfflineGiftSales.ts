@@ -18,6 +18,7 @@ interface OfflineGiftSale {
   unit: string;
   bpx: number;
   spx: number;
+  sold_by: string | null;
 }
 
 interface PendingSyncItem {

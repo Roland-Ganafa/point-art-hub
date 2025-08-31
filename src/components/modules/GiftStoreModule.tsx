@@ -105,12 +105,12 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
       } else {
         // Process the data to ensure all required fields are present
         const processedData = data?.map(item => ({
-          ...item,
+          ...item as any,
           // Ensure optional fields have default values if missing
-          stock: item.stock !== undefined ? item.stock : undefined,
-          selling_price: item.selling_price !== undefined ? item.selling_price : undefined,
-          profit_per_unit: item.profit_per_unit !== undefined ? item.profit_per_unit : undefined,
-          low_stock_threshold: item.low_stock_threshold !== undefined ? item.low_stock_threshold : undefined,
+          stock: (item as any).stock !== undefined ? (item as any).stock : undefined,
+          selling_price: (item as any).selling_price !== undefined ? (item as any).selling_price : undefined,
+          profit_per_unit: (item as any).profit_per_unit !== undefined ? (item as any).profit_per_unit : undefined,
+          low_stock_threshold: (item as any).low_stock_threshold !== undefined ? (item as any).low_stock_threshold : undefined,
         })) || [];
         
         setItems(processedData);
@@ -216,7 +216,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
       const { error } = await supabase
         .from("gift_store")
         .delete()
-        .eq("id", id);
+        .eq("id", id as any);
 
       if (error) throw error;
 
@@ -226,7 +226,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
       });
 
       fetchItems();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error deleting item",
         description: error.message,
@@ -369,45 +369,32 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
         return;
       }
 
-      let error;
-      let data;
       if (editingId) {
-        console.log("Updating existing item with ID:", editingId);
         // Update existing item
-        const result = await supabase
+        const { error } = await supabase
           .from("gift_store")
           .update(itemData)
-          .eq("id", editingId);
-        error = result.error;
-        data = result.data;
-        console.log("Update result:", { error, data });
-      } else {
-        console.log("Creating new item with data:", itemData);
-        // Create new item
-        const result = await supabase.from("gift_store").insert([itemData]);
-        error = result.error;
-        data = result.data;
-        console.log("Insert result:", { error, data });
-      }
+          .eq("id", editingId as any);
 
-      if (error) {
-        console.error("=== DATABASE ERROR ===");
-        console.error("Database error:", error);
-        console.error("Item data being sent:", itemData);
+        if (error) throw error;
+
         toast({
-          title: editingId ? "Error updating item" : "Error adding item",
-          description: `${error.message} (Code: ${error.code || 'N/A'})`,
-          variant: "destructive",
+          title: "Success",
+          description: "Item updated successfully",
         });
-        return;
-      }
+      } else {
+        // Create new item
+        const { data, error } = await supabase.from("gift_store").insert([itemData]);
 
-      console.log("=== SUCCESS ===");
-      console.log("Success response:", data);
-      toast({
-        title: "Success",
-        description: editingId ? "Gift store item updated successfully" : "Gift store item added successfully",
-      });
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Item added successfully",
+        });
+
+        console.log(data);
+      }
 
       setIsDialogOpen(false);
       setFormData({
@@ -669,9 +656,10 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                     <TableRow className="border-b border-green-100">
                       <TableHead className="font-semibold text-gray-700">Category</TableHead>
                       <TableHead className="font-semibold text-gray-700">Item</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Description</TableHead>
                       <TableHead className="font-semibold text-gray-700">Qty</TableHead>
                       <TableHead className="font-semibold text-gray-700">Rate (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Stock</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Total Value (UGX)</TableHead>
                       <TableHead className="font-semibold text-gray-700">Selling Price</TableHead>
                       <TableHead className="font-semibold text-gray-700">Profit/Unit</TableHead>
                       <TableHead className="font-semibold text-gray-700">Stock Date</TableHead>
@@ -706,11 +694,10 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                               </div>
                             </TableCell>
                             <TableCell className="font-semibold text-gray-800">{item.item}</TableCell>
+                            <TableCell className="text-gray-600">{item.category === "custom" ? item.custom_category : "-"}</TableCell>
                             <TableCell className="font-medium">{item.quantity}</TableCell>
                             <TableCell className="font-medium text-blue-600">{formatUGX(item.rate)}</TableCell>
-                            <TableCell className={`font-bold ${isLowStock ? "text-red-600 animate-pulse" : "text-green-600"}`}>
-                              {stock}
-                            </TableCell>
+                            <TableCell className="font-medium text-green-600">{formatUGX(item.quantity * item.rate)}</TableCell>
                             <TableCell className="font-medium text-purple-600">{formatUGX(sellingPrice)}</TableCell>
                             <TableCell className={`font-bold ${profit && profit >= 0 ? "text-green-600" : "text-red-600"}`}>
                               <div className="flex items-center gap-1">

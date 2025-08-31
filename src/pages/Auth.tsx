@@ -45,9 +45,9 @@ const Auth = () => {
         console.log("Checking authentication status...");
         const { data: { session }, error } = await Promise.race([
           supabase.auth.getSession(),
-          // Reduced timeout from 10s to 3s for faster feedback
+          // Increased timeout for better reliability
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Session check timeout')), 3000)
+            setTimeout(() => reject(new Error('Session check timeout')), 10000)
           )
         ]) as any;
       

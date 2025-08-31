@@ -7,56 +7,116 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, TrendingUp, ShoppingCart, Package2, Star, Wifi, WifiOff } from "lucide-react";
+import { Plus, Edit, Trash2, TrendingUp, ShoppingCart, Package2, Star, WifiOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import { format } from "date-fns";
 import { useOffline } from "@/hooks/useOffline";
-import { useOfflineSales } from "@/hooks/useOfflineSales";
+import { useOfflineStationerySales } from "@/hooks/useOfflineStationerySales";
 
-interface Sale {
+interface StationeryDailySale {
   id: string;
-  item_id: string;
-  item_name: string;
+  date: string; // ISO date
+  category: string;
+  item: string;
+  description: string | null;
   quantity: number;
+  rate: number;
   selling_price: number;
-  total_amount: number;
-  profit: number;
-  date: string;
   sold_by: string | null;
-  sales_person_name?: string;
-  sales_person_initials?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
-interface StationeryDailySalesProps {
-  items: Array<{ id: string; item: string; selling_price: number; stock: number; rate: number; profit_per_unit: number }>;
+// Define interface for offline stationery sales
+interface OfflineStationerySale {
+  id: string;
+  date: string;
+  category: string;
+  item: string;
+  description: string | null;
+  quantity: number;
+  rate: number;
+  selling_price: number;
+  sold_by: string | null;
 }
 
-const StationeryDailySales = ({ items }: StationeryDailySalesProps) => {
-  const [sales, setSales] = useState<Sale[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [salesProfiles, setSalesProfiles] = useState<Array<{id: string, sales_initials: string, full_name: string}>>([]);
-  const [saleData, setSaleData] = useState({
-    item_id: "",
-    quantity: "1",
-    sold_by: "",
-  });
+const formatUGX = (n: number | null | undefined) => {
+  if (n == null) return "0";
+  return new Intl.NumberFormat("en-UG", { maximumFractionDigits: 0 }).format(n);
+};
+
+const StationeryDailySales = () => {
   const { toast } = useToast();
   const { profile } = useUser();
+  const [items, setItems] = useState<StationeryDailySale[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [salesProfiles, setSalesProfiles] = useState<Array<{id: string, sales_initials: string, full_name: string}>>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    date: new Date().toISOString().slice(0, 10),
+    category: "",
+    item: "",
+    description: "",
+    quantity: "1",
+    rate: "",
+    selling_price: "",
+    soldBy: ""          // UI only field
+  });
+
+  // Add offline functionality
   const { isOffline } = useOffline();
   const { 
-    offlineSales, 
-    recordOfflineSale, 
-    syncOfflineSales,
+    offlineStationerySales, 
+    recordOfflineStationerySale, 
+    syncOfflineStationerySales,
     isSyncing 
-  } = useOfflineSales();
+  } = useOfflineStationerySales();
 
+  // Add calculated profit state
+  const [calculatedProfit, setCalculatedProfit] = useState<number>(0);
+
+  // Calculate profit whenever rate or selling price changes
   useEffect(() => {
-    fetchSales();
-    fetchSalesProfiles();
-  }, []);
+    const rate = parseFloat(formData.rate) || 0;
+    const sellingPrice = parseFloat(formData.selling_price) || 0;
+    const quantity = parseInt(formData.quantity) || 1;
+    const profit = (sellingPrice - rate) * quantity;
+    setCalculatedProfit(profit);
+  }, [formData.rate, formData.selling_price, formData.quantity]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const today = new Date();
+      const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
+      const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
+
+      // First fetch the sales data
+      const { data, error } = await supabase
+        .from("stationery_daily_sales")
+        .select("*")
+        .gte("date", startOfDay)
+        .lte("date", endOfDay)
+        .order("date", { ascending: false });
+
+      if (error) {
+        toast({ title: "Error fetching daily sales", description: error.message, variant: "destructive" });
+      } else {
+        setItems(data as StationeryDailySale[] || []);
+      }
+      
+      // Also refresh sales profiles
+      await fetchSalesProfiles();
+    } catch (error) {
+      console.error("Error in fetchData:", error);
+      toast({ title: "Error fetching daily sales", description: "An unexpected error occurred", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchSalesProfiles = async () => {
     try {
@@ -80,88 +140,81 @@ const StationeryDailySales = ({ items }: StationeryDailySalesProps) => {
     }
   };
 
-  const fetchSales = async () => {
-    try {
-      setIsLoading(true);
-      const today = new Date();
-      const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
-      const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
+  useEffect(() => {
+    fetchData();
+    fetchSalesProfiles();
+  }, []);
 
-      const { data, error } = await supabase
-        .from("stationery_sales")
-        .select(`
-          *, 
-          stationery:item_id(item),
-          profiles:sold_by(sales_initials, full_name)
-        `)
-        .gte("date", startOfDay)
-        .lte("date", endOfDay)
-        .order("date", { ascending: false });
-
-      if (error) {
-        toast({
-          title: "Error fetching sales",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        setSales(
-          data?.map((sale) => ({
-            ...sale,
-            item_name: sale.stationery?.item || "Unknown Item",
-            sales_person_name: sale.profiles?.full_name || "Unknown",
-            sales_person_initials: sale.profiles?.sales_initials || "N/A",
-          })) || []
-        );
-      }
-    } catch (error) {
-      toast({
-        title: "Error fetching sales",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+  // Sync offline sales when coming back online
+  useEffect(() => {
+    if (!isOffline && offlineStationerySales.length > 0) {
+      syncOfflineStationerySales();
     }
-  };
+  }, [isOffline]);
 
-  const handleSaleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const item = items.find((i) => i.id === saleData.item_id);
-    if (!item) {
-      toast({
-        title: "Error",
-        description: "Please select a valid item",
-        variant: "destructive",
-      });
+    
+    // Validate required fields
+    if (!formData.category.trim()) {
+      toast({ title: "Validation Error", description: "Category is required", variant: "destructive" });
       return;
     }
-
-    const quantity = parseInt(saleData.quantity);
-    if (quantity > item.stock) {
-      toast({
-        title: "Error",
-        description: "Quantity cannot exceed available stock",
-        variant: "destructive",
-      });
+    
+    if (!formData.item.trim()) {
+      toast({ title: "Validation Error", description: "Item name is required", variant: "destructive" });
       return;
     }
-
-    const totalAmount = quantity * item.selling_price;
-    const profit = quantity * (item.profit_per_unit || 0);
-
+    
+    const quantity = parseInt(formData.quantity) || 0;
+    const rate = parseFloat(formData.rate) || 0;
+    const sellingPrice = parseFloat(formData.selling_price) || 0;
+    
+    if (quantity <= 0) {
+      toast({ title: "Validation Error", description: "Quantity must be a positive number", variant: "destructive" });
+      return;
+    }
+    
+    if (rate < 0) {
+      toast({ title: "Validation Error", description: "Rate cannot be negative", variant: "destructive" });
+      return;
+    }
+    
+    if (sellingPrice < 0) {
+      toast({ title: "Validation Error", description: "Selling price cannot be negative", variant: "destructive" });
+      return;
+    }
+    
+    const payload = {
+      date: formData.date,
+      category: formData.category,
+      item: formData.item,
+      description: formData.description ? formData.description.trim() : null,
+      quantity: quantity,
+      rate: rate,
+      selling_price: sellingPrice,
+      profit_per_unit: sellingPrice - rate,
+      total_value: quantity * rate,
+      sold_by: formData.soldBy === "not_specified" ? null : formData.soldBy
+    };
+    
     try {
       // If offline, store sale locally
       if (isOffline) {
-        const offlineSale = recordOfflineSale({
-          item_id: saleData.item_id,
-          quantity,
-          selling_price: item.selling_price,
-          total_amount: totalAmount,
-          profit,
-          sold_by: saleData.sold_by || profile?.id || null,
-        });
+        const offlineSale = {
+          date: formData.date,
+          category: formData.category,
+          item: formData.item,
+          description: formData.description ? formData.description.trim() : null,
+          quantity: quantity,
+          rate: rate,
+          selling_price: sellingPrice,
+          profit_per_unit: sellingPrice - rate,
+          total_value: quantity * rate,
+          sold_by: formData.soldBy === "not_specified" ? null : formData.soldBy
+        };
+
+        recordOfflineStationerySale(offlineSale);
 
         toast({
           title: "Offline Mode",
@@ -169,98 +222,100 @@ const StationeryDailySales = ({ items }: StationeryDailySalesProps) => {
           variant: "warning",
         });
 
-        setIsDialogOpen(false);
-        setSaleData({
-          item_id: "",
+        // Reset form
+        setFormData({
+          date: new Date().toISOString().slice(0, 10),
+          category: "",
+          item: "",
+          description: "",
           quantity: "1",
-          sold_by: "",
+          rate: "",
+          selling_price: "",
+          soldBy: ""
         });
+        setEditingId(null);
+        setIsDialogOpen(false);
         return;
       }
-
-      // Online mode - insert into database
-      const { error } = await supabase.from("stationery_sales").insert([
-        {
-          item_id: saleData.item_id,
-          quantity,
-          selling_price: item.selling_price,
-          total_amount: totalAmount,
-          profit,
-          sold_by: saleData.sold_by || profile?.id || null,
-        },
-      ]);
+      
+      let error;
+      
+      if (editingId) {
+        // Update existing record
+        const result = await supabase
+          .from("stationery_daily_sales")
+          .update(payload)
+          .eq("id", editingId);
+        error = result.error;
+      } else {
+        // Create new record
+        const result = await supabase
+          .from("stationery_daily_sales")
+          .insert([payload]);
+        error = result.error;
+      }
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Sale recorded successfully",
+        description: editingId ? "Sale updated successfully" : "Sale recorded successfully",
       });
-      
-      // Update the item stock
-      const { error: updateError } = await supabase
-        .from("stationery")
-        .update({ stock: item.stock - quantity })
-        .eq("id", saleData.item_id);
 
-      if (updateError) {
-        console.error("Error updating stock:", updateError);
-      }
-
-      setIsDialogOpen(false);
-      setSaleData({
-        item_id: "",
+      // Reset form
+      setFormData({
+        date: new Date().toISOString().slice(0, 10),
+        category: "",
+        item: "",
+        description: "",
         quantity: "1",
-        sold_by: "",
+        rate: "",
+        selling_price: "",
+        soldBy: ""
       });
-      fetchSales();
+      setEditingId(null);
+      setIsDialogOpen(false);
+      fetchData();
     } catch (error) {
       toast({
-        title: "Error recording sale",
+        title: editingId ? "Error updating sale" : "Error recording sale",
         description: error.message,
         variant: "destructive",
       });
     }
   };
 
-  const handleDeleteSale = async (saleId: string) => {
+  const handleEdit = (item: StationeryDailySale) => {
+    setFormData({
+      date: item.date,
+      category: item.category,
+      item: item.item,
+      description: item.description || "",
+      quantity: item.quantity.toString(),
+      rate: item.rate.toString(),
+      selling_price: item.selling_price.toString(),
+      soldBy: item.sold_by || ""
+    });
+    setEditingId(item.id);
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this sale?")) return;
     
     try {
-      // First get the sale details to restore stock
-      const { data: saleData, error: fetchError } = await supabase
-        .from("stationery_sales")
-        .select("item_id, quantity")
-        .eq("id", saleId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      const { error } = await supabase.from("stationery_sales").delete().eq("id", saleId);
+      const { error } = await supabase
+        .from("stationery_daily_sales")
+        .delete()
+        .eq("id", id);
 
       if (error) throw error;
-
-      // Restore the stock
-      if (saleData) {
-        const { data: itemData, error: itemError } = await supabase
-          .from("stationery")
-          .select("stock")
-          .eq("id", saleData.item_id)
-          .single();
-
-        if (!itemError && itemData) {
-          await supabase
-            .from("stationery")
-            .update({ stock: itemData.stock + saleData.quantity })
-            .eq("id", saleData.item_id);
-        }
-      }
 
       toast({
         title: "Success",
         description: "Sale deleted successfully",
       });
-      fetchSales();
+      fetchData();
     } catch (error) {
       toast({
         title: "Error deleting sale",
@@ -270,15 +325,14 @@ const StationeryDailySales = ({ items }: StationeryDailySalesProps) => {
     }
   };
 
-  const totalSales = sales.reduce((sum, sale) => sum + sale.total_amount, 0);
-  const totalProfit = sales.reduce((sum, sale) => sum + sale.profit, 0);
+  const totalSales = items.reduce((sum, item) => sum + (item.selling_price * item.quantity), 0);
+  const totalProfit = items.reduce((sum, item) => sum + ((item.selling_price - item.rate) * item.quantity), 0);
 
-  // Sync offline sales when coming back online
-  useEffect(() => {
-    if (!isOffline && offlineSales.length > 0) {
-      syncOfflineSales();
-    }
-  }, [isOffline]);
+  // Get sales person name from profiles
+  const getSalesPersonName = (soldById: string) => {
+    const profile = salesProfiles.find(p => p.id === soldById);
+    return profile ? `${profile.sales_initials} - ${profile.full_name}` : "Unknown";
+  };
 
   return (
     <div className="space-y-8 p-6">
@@ -292,309 +346,376 @@ const StationeryDailySales = ({ items }: StationeryDailySalesProps) => {
         </div>
       )}
 
-      <Tabs defaultValue="daily-sales" className="space-y-8">
-        <TabsList className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-1 shadow-lg">
-          <TabsTrigger 
-            value="daily-sales" 
-            className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
-          >
-            <ShoppingCart className="h-4 w-4" />
-            Daily Sales
-          </TabsTrigger>
-          <TabsTrigger 
-            value="inventory" 
-            className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
-          >
-            <Package2 className="h-4 w-4" />
-            Inventory
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="daily-sales" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-            <div className="space-y-2">
-              <h3 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-3">
-                <ShoppingCart className="h-8 w-8 text-blue-600" />
-                Daily Stationery Sales
-              </h3>
-              <p className="text-muted-foreground">Track and manage today's stationery sales</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
-                    disabled={isSyncing}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <div className="space-y-2">
+          <h3 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-3">
+            <ShoppingCart className="h-8 w-8 text-blue-600" />
+            Daily Stationery Sales
+          </h3>
+          <p className="text-muted-foreground">Track and manage today's stationery sales</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
+              // Reset form when closing
+              setFormData({
+                date: new Date().toISOString().slice(0, 10),
+                category: "",
+                item: "",
+                description: "",
+                quantity: "1",
+                rate: "",
+                selling_price: "",
+                soldBy: ""
+              });
+              setEditingId(null);
+            }
+          }}>
+            <DialogTrigger asChild>
+              <Button 
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                disabled={isSyncing}
+              >
+                {isSyncing ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Syncing...
+                  </div>
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Record Sale
+                  </>
+                )}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  {editingId ? '✏️ Edit Sale' : '✨ Record New Sale'}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="font-medium">Category *</Label>
+                  <Input
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    placeholder="e.g., Office Supplies"
+                    required
+                    className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="font-medium">Item Name *</Label>
+                  <Input
+                    value={formData.item}
+                    onChange={(e) => setFormData({ ...formData, item: e.target.value })}
+                    placeholder="e.g., Pens"
+                    required
+                    className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="font-medium">Description (Optional)</Label>
+                  <Input
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Item description"
+                    className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="font-medium">Rate (UGX) *</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.rate}
+                      onChange={(e) => setFormData({ ...formData, rate: e.target.value })}
+                      required
+                      className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-medium">Quantity *</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={formData.quantity}
+                      onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                      required
+                      className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="font-medium">Selling Price (UGX) *</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.selling_price}
+                      onChange={(e) => setFormData({ ...formData, selling_price: e.target.value })}
+                      required
+                      className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-medium flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-green-500" />
+                      Profit (UGX)
+                    </Label>
+                    <Input
+                      value={calculatedProfit.toFixed(2)}
+                      disabled
+                      className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 font-medium"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Date *</Label>
+                  <Input
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    required
+                    className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Sold By (Initials)</Label>
+                  <Select
+                    value={formData.soldBy}
+                    onValueChange={(value) => setFormData({ ...formData, soldBy: value })}
                   >
-                    {isSyncing ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Syncing...
-                      </div>
-                    ) : (
-                      <>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Record Sale
-                      </>
-                    )}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
-                  <DialogHeader>
-                    <DialogTitle className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                      ✨ Record New Sale
-                    </DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleSaleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label className="font-medium">Item *</Label>
-                      <Select
-                        value={saleData.item_id}
-                        onValueChange={(value) => setSaleData({ ...saleData, item_id: value })}
-                        required
-                      >
-                        <SelectTrigger className="border-blue-200 focus:border-blue-400 focus:ring-blue-200">
-                          <SelectValue placeholder="Select an item" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {items
-                            .filter((item) => item.stock > 0)
-                            .map((item) => (
-                              <SelectItem key={item.id} value={item.id}>
-                                {item.item} (Stock: {item.stock})
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label className="font-medium">Quantity *</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        max={items.find(i => i.id === saleData.item_id)?.stock || 1}
-                        value={saleData.quantity}
-                        onChange={(e) => setSaleData({ ...saleData, quantity: e.target.value })}
-                        required
-                        className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                    <SelectTrigger>
+                      <SelectValue 
+                        placeholder={
+                          salesProfiles.length > 0 
+                            ? "Select sales person" 
+                            : "No sales persons available"
+                        } 
                       />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Sold By (Initials)</Label>
-                      <Select
-                        value={saleData.sold_by}
-                        onValueChange={(value) => setSaleData({ ...saleData, sold_by: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue 
-                            placeholder={
-                              salesProfiles.length > 0 
-                                ? "Select sales person" 
-                                : "No sales persons available"
-                            } 
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="not_specified">Not Specified</SelectItem>
-                          {salesProfiles.length > 0 ? (
-                            salesProfiles.map(profile => (
-                              <SelectItem key={profile.id} value={profile.id}>
-                                {profile.sales_initials} - {profile.full_name}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <SelectItem value="no_sales_persons" disabled>
-                              No sales persons with initials found
-                            </SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                      {salesProfiles.length === 0 && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          No users have sales initials assigned. Visit Admin Profile to assign initials.
-                        </p>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="not_specified">Not Specified</SelectItem>
+                      {salesProfiles.length > 0 ? (
+                        salesProfiles.map(profile => (
+                          <SelectItem key={profile.id} value={profile.id}>
+                            {profile.sales_initials} - {profile.full_name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no_sales_persons" disabled>
+                          No sales persons with initials found
+                        </SelectItem>
                       )}
-                    </div>
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl" 
-                    >
-                      <div className="flex items-center gap-2">
-                        <ShoppingCart className="h-4 w-4" />
-                        Record Sale
-                      </div>
-                    </Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
+                    </SelectContent>
+                  </Select>
+                  {salesProfiles.length === 0 && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      No users have sales initials assigned. Visit Admin Profile to assign initials.
+                    </p>
+                  )}
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl" 
+                >
+                  <div className="flex items-center gap-2">
+                    {editingId ? '✏️ Update Sale' : '✨ Record Sale'}
+                  </div>
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <Card className="border-0 shadow-xl bg-gradient-to-r from-blue-50 to-purple-50 backdrop-blur-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium text-gray-600 flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5 text-blue-500" />
+              Total Sales
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-blue-600">UGX {totalSales.toLocaleString()}</div>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-0 shadow-xl bg-gradient-to-r from-green-50 to-emerald-50 backdrop-blur-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium text-gray-600 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-green-500" />
+              Total Profit
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-green-600">UGX {totalProfit.toLocaleString()}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 border-b border-blue-100">
+          <CardTitle className="text-2xl font-bold flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white">
+              <Package2 className="h-6 w-6" />
             </div>
-          </div>
-
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <Card className="border-0 shadow-xl bg-gradient-to-r from-blue-50 to-purple-50 backdrop-blur-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium text-gray-600 flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5 text-blue-500" />
-                  Total Sales
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">UGX {totalSales.toLocaleString()}</div>
-              </CardContent>
-            </Card>
-            
-            <Card className="border-0 shadow-xl bg-gradient-to-r from-green-50 to-emerald-50 backdrop-blur-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium text-gray-600 flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-green-500" />
-                  Total Profit
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-green-600">UGX {totalProfit.toLocaleString()}</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 border-b border-blue-100">
-              <CardTitle className="text-2xl font-bold flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white">
-                  <Package2 className="h-6 w-6" />
-                </div>
-                Today's Sales Records
-                <div className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
-                  <Star className="h-4 w-4 text-yellow-500" />
-                  {sales.length + offlineSales.length} records
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader className="bg-gradient-to-r from-gray-50 to-blue-50">
-                    <TableRow className="border-b border-blue-100">
-                      <TableHead className="font-semibold text-gray-700">Item</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Quantity</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Price (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Total (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Profit (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Sold By</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Time</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
+            Today's Sales Records
+            <div className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
+              <Star className="h-4 w-4 text-yellow-500" />
+              {items.length + offlineStationerySales.length} records
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-gradient-to-r from-gray-50 to-blue-50">
+                <TableRow className="border-b border-blue-100">
+                  <TableHead className="font-semibold text-gray-700">Category</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Item</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Description</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Qty</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Rate (UGX)</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Total Value (UGX)</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Profit/Unit</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Sold By</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Sold Date</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Sold Time</TableHead>
+                  <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {/* Offline sales */}
+                {offlineStationerySales.map((sale) => {
+                  const profit = (sale.selling_price - sale.rate) * sale.quantity;
+                  const totalValue = sale.quantity * sale.rate;
+                  const saleDate = new Date(sale.date);
+                  
+                  return (
+                    <TableRow 
+                      key={sale.id} 
+                      className="group hover:bg-gradient-to-r transition-all duration-300 bg-yellow-50 border-l-4 border-yellow-400"
+                    >
+                      <TableCell className="font-medium">{sale.category}</TableCell>
+                      <TableCell className="font-semibold text-gray-800">{sale.item}</TableCell>
+                      <TableCell className="text-gray-600">{sale.description || "-"}</TableCell>
+                      <TableCell className="font-medium">{sale.quantity}</TableCell>
+                      <TableCell className="font-medium text-blue-600">{formatUGX(sale.rate)}</TableCell>
+                      <TableCell className="font-medium text-green-600">{formatUGX(totalValue)}</TableCell>
+                      <TableCell className={`font-bold ${profit >= 0 ? "text-green-600" : "text-red-600"}`}>
+                        {formatUGX(sale.selling_price - sale.rate)}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {sale.sold_by ? getSalesPersonName(sale.sold_by) : "Not specified"}
+                      </TableCell>
+                      <TableCell className="text-gray-600">
+                        {saleDate.toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-gray-600">
+                        {saleDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="text-xs text-yellow-600 font-medium">Pending Sync</div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {/* Offline sales */}
-                    {offlineSales.map((sale, index) => {
-                      const item = items.find(i => i.id === sale.item_id);
-                      return (
-                        <TableRow 
-                          key={sale.id} 
-                          className="group hover:bg-gradient-to-r transition-all duration-300 bg-yellow-50 border-l-4 border-yellow-400"
-                        >
-                          <TableCell className="font-semibold text-gray-800">
-                            <div className="flex items-center gap-2">
-                              <WifiOff className="h-4 w-4 text-yellow-600" />
-                              {item?.item || "Unknown Item"}
-                            </div>
-                          </TableCell>
-                          <TableCell className="font-medium">{sale.quantity}</TableCell>
-                          <TableCell className="font-medium text-blue-600">{sale.selling_price.toLocaleString()}</TableCell>
-                          <TableCell className="font-bold text-purple-600">{sale.total_amount.toLocaleString()}</TableCell>
-                          <TableCell className={`font-bold ${sale.profit >= 0 ? "text-green-600" : "text-red-600"}`}>
-                            <div className="flex items-center gap-1">
-                              <TrendingUp className={`h-4 w-4 ${sale.profit >= 0 ? "text-green-500" : "text-red-500"}`} />
-                              {sale.profit.toLocaleString()}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-gray-600">
-                            Offline
-                          </TableCell>
-                          <TableCell className="text-gray-600">
-                            {new Date(sale.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="text-xs text-yellow-600 font-medium">Pending Sync</div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                  );
+                })}
 
-                    {/* Online sales */}
-                    {sales.length > 0 ? (
-                      sales.map((sale, index) => (
-                        <TableRow 
-                          key={sale.id} 
-                          className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-blue-50 hover:to-purple-50`}
-                          style={{ animationDelay: `${index * 50}ms` }}
-                        >
-                          <TableCell className="font-semibold text-gray-800">{sale.item_name}</TableCell>
-                          <TableCell className="font-medium">{sale.quantity}</TableCell>
-                          <TableCell className="font-medium text-blue-600">{sale.selling_price.toLocaleString()}</TableCell>
-                          <TableCell className="font-bold text-purple-600">{sale.total_amount.toLocaleString()}</TableCell>
-                          <TableCell className={`font-bold ${sale.profit >= 0 ? "text-green-600" : "text-red-600"}`}>
-                            <div className="flex items-center gap-1">
-                              <TrendingUp className={`h-4 w-4 ${sale.profit >= 0 ? "text-green-500" : "text-red-500"}`} />
-                              {sale.profit.toLocaleString()}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-gray-600">
-                            {sale.sales_person_initials !== "N/A" ? sale.sales_person_initials : "Not specified"}
-                          </TableCell>
-                          <TableCell className="text-gray-600">
-                            {new Date(sale.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </TableCell>
-                          <TableCell className="text-right">
+                {/* Online sales */}
+                {items.length > 0 ? (
+                  items.map((item) => {
+                    const profit = (item.selling_price - item.rate) * item.quantity;
+                    const totalValue = item.quantity * item.rate;
+                    const saleDate = new Date(item.date);
+                    
+                    return (
+                      <TableRow 
+                        key={item.id} 
+                        className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-blue-50 hover:to-purple-50`}
+                      >
+                        <TableCell className="font-medium">{item.category}</TableCell>
+                        <TableCell className="font-semibold text-gray-800">{item.item}</TableCell>
+                        <TableCell className="text-gray-600">{item.description || "-"}</TableCell>
+                        <TableCell className="font-medium">{item.quantity}</TableCell>
+                        <TableCell className="font-medium text-blue-600">{formatUGX(item.rate)}</TableCell>
+                        <TableCell className="font-medium text-green-600">{formatUGX(totalValue)}</TableCell>
+                        <TableCell className={`font-bold ${profit >= 0 ? "text-green-600" : "text-red-600"}`}>
+                          {formatUGX(item.selling_price - item.rate)}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {item.sold_by ? getSalesPersonName(item.sold_by) : "Not specified"}
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          {saleDate.toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          {saleDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center gap-2 justify-end">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 hover:bg-blue-100 hover:scale-110 transition-all duration-200"
+                              onClick={() => handleEdit(item)}
+                            >
+                              <Edit className="h-4 w-4 text-blue-600" />
+                            </Button>
                             <Button 
                               variant="ghost" 
                               size="icon" 
                               className="h-8 w-8 hover:bg-red-100 hover:scale-110 transition-all duration-200"
-                              onClick={() => handleDeleteSale(sale.id)}
+                              onClick={() => handleDelete(item.id)}
                             >
                               <Trash2 className="h-4 w-4 text-red-600" />
                             </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={8} className="h-32 text-center">
-                          <div className="flex flex-col items-center gap-4">
-                            {isLoading ? (
-                              <div className="flex items-center gap-3">
-                                <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                                <span className="text-lg text-gray-600">Loading sales records...</span>
-                              </div>
-                            ) : (
-                              <div className="flex flex-col items-center gap-3">
-                                <Package2 className="h-12 w-12 text-gray-400" />
-                                <span className="text-lg text-gray-600">No sales recorded today.</span>
-                                <span className="text-sm text-gray-500">Start by recording your first sale!</span>
-                              </div>
-                            )}
                           </div>
                         </TableCell>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="inventory" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden p-6">
-            <h3 className="text-xl font-bold mb-4">Inventory Management</h3>
-            <p className="text-muted-foreground">Inventory management for stationery items is available in the main Stationery Management section.</p>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={11} className="h-32 text-center">
+                      <div className="flex flex-col items-center gap-4">
+                        {loading ? (
+                          <div className="flex items-center gap-3">
+                            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                            <span className="text-lg text-gray-600">Loading sales records...</span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center gap-3">
+                            <Package2 className="h-12 w-12 text-gray-400" />
+                            <span className="text-lg text-gray-600">No sales recorded today.</span>
+                            <span className="text-sm text-gray-500">Start by recording your first sale!</span>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </div>
-        </TabsContent>
-      </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };

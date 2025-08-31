@@ -228,7 +228,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         const { data: { session } } = await Promise.race([
           supabase.auth.getSession(),
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Session fetch timeout')), 3000)
+            setTimeout(() => reject(new Error('Session fetch timeout')), 10000)
           )
         ]) as any;
 

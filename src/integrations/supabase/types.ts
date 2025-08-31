@@ -141,9 +141,11 @@ export type Database = {
           code: string | null
           created_at: string | null
           date: string
+          description: string | null
           id: string
           item: string
           quantity: number
+          sold_by: string | null
           spx: number
           unit: string
           updated_at: string | null
@@ -153,9 +155,11 @@ export type Database = {
           code?: string | null
           created_at?: string | null
           date?: string
+          description?: string | null
           id?: string
           item: string
           quantity?: number
+          sold_by?: string | null
           spx: number
           unit?: string
           updated_at?: string | null
@@ -165,14 +169,24 @@ export type Database = {
           code?: string | null
           created_at?: string | null
           date?: string
+          description?: string | null
           id?: string
           item?: string
           quantity?: number
+          sold_by?: string | null
           spx?: number
           unit?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "gift_daily_sales_sold_by_fkey"
+            columns: ["sold_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gift_store: {
         Row: {
@@ -425,6 +439,63 @@ export type Database = {
           },
           {
             foreignKeyName: "stationery_sales_sold_by_fkey"
+            columns: ["sold_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      
+      stationery_daily_sales: {
+        Row: {
+          category: string
+          created_at: string | null
+          date: string
+          description: string | null
+          id: string
+          item: string
+          profit_per_unit: number
+          quantity: number
+          rate: number
+          selling_price: number
+          sold_by: string | null
+          total_value: number
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          id?: string
+          item: string
+          profit_per_unit: number
+          quantity: number
+          rate: number
+          selling_price: number
+          sold_by?: string | null
+          total_value: number
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          id?: string
+          item?: string
+          profit_per_unit?: number
+          quantity?: number
+          rate?: number
+          selling_price?: number
+          sold_by?: string | null
+          total_value?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stationery_daily_sales_sold_by_fkey"
             columns: ["sold_by"]
             isOneToOne: false
             referencedRelation: "profiles"

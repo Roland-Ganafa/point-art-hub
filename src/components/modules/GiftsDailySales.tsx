@@ -24,6 +24,7 @@ interface GiftDailySale {
   unit: string;
   bpx: number;
   spx: number;
+  sold_by: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -38,6 +39,7 @@ interface OfflineGiftSale {
   unit: string;
   bpx: number;
   spx: number;
+  sold_by: string | null;
 }
 
 const formatUGX = (n: number | null | undefined) => {
@@ -63,8 +65,8 @@ const GiftsDailySales = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().slice(0, 10),
-    item: "",           // We'll use this for both category and item
-    itemName: "",       // This is for UI only and won't be sent to database
+    category: "",
+    item: "",
     code: "",
     quantity: "1",
     unit: "Pc",
@@ -112,7 +114,7 @@ const GiftsDailySales = () => {
       if (error) {
         toast({ title: "Error fetching daily sales", description: error.message, variant: "destructive" });
       } else {
-        setItems(data as GiftDailySale[] || []);
+        setItems(data as any || []);
       }
       
       // Also refresh sales profiles
@@ -133,7 +135,7 @@ const GiftsDailySales = () => {
         .not("sales_initials", "is", null);
         
       if (error) throw error;
-      setSalesProfiles(data || []);
+      setSalesProfiles(data as any || []);
       
       // If no profiles with initials found, check all profiles
       if (!data || data.length === 0) {
@@ -182,12 +184,12 @@ const GiftsDailySales = () => {
     e.preventDefault();
     
     // Validate required fields
-    if (!formData.item.trim()) {
+    if (!formData.category.trim()) {
       toast({ title: "Validation Error", description: "Category is required", variant: "destructive" });
       return;
     }
     
-    if (!formData.itemName.trim()) {
+    if (!formData.item.trim()) {
       toast({ title: "Validation Error", description: "Item name is required", variant: "destructive" });
       return;
     }
@@ -213,30 +215,31 @@ const GiftsDailySales = () => {
     
     // Combine category and item name into a single item field for database
     // Format: "Category: Item Name"
-    const combinedItem = `${formData.item.trim()}: ${formData.itemName.trim()}`;
+    const combinedItem = `${formData.category.trim()}: ${formData.item.trim()}`;
     
-    // Create a minimal payload with only fields that definitely exist in the database
-    const payload = {
+    const payload: any = {
       date: formData.date,
-      item: combinedItem,  // Store both category and item in a single field
+      item: combinedItem,
       code: formData.code ? formData.code.trim() : null,
       quantity: quantity,
       unit: formData.unit,
       bpx: bpx,
-      spx: spx
+      spx: spx,
+      sold_by: formData.soldBy === "not_specified" ? null : formData.soldBy
     };
     
     try {
       // If offline, store sale locally
       if (isOffline) {
-        const offlineSale = {
+        const offlineSale: any = {
           date: formData.date,
           item: combinedItem,
           code: formData.code ? formData.code.trim() : null,
           quantity: quantity,
           unit: formData.unit,
           bpx: bpx,
-          spx: spx
+          spx: spx,
+          sold_by: formData.soldBy === "not_specified" ? null : formData.soldBy
         };
 
         recordOfflineGiftSale(offlineSale);
@@ -244,14 +247,14 @@ const GiftsDailySales = () => {
         toast({
           title: "Offline Mode",
           description: "Sale recorded locally. Will sync when online.",
-          variant: "warning",
+          variant: "default",
         });
 
         // Reset form
         setFormData({
           date: new Date().toISOString().slice(0, 10),
+          category: "",
           item: "",
-          itemName: "",
           code: "",
           quantity: "1",
           unit: "Pc",
@@ -271,7 +274,7 @@ const GiftsDailySales = () => {
         const result = await supabase
           .from("gift_daily_sales")
           .update(payload)
-          .eq("id", editingId);
+          .eq("id", editingId as any);
         error = result.error;
       } else {
         // Create new record
@@ -291,8 +294,8 @@ const GiftsDailySales = () => {
       // Reset form
       setFormData({
         date: new Date().toISOString().slice(0, 10),
+        category: "",
         item: "",
-        itemName: "",
         code: "",
         quantity: "1",
         unit: "Pc",
@@ -319,14 +322,14 @@ const GiftsDailySales = () => {
     
     setFormData({
       date: item.date,
-      item: category || "",
-      itemName: itemName || "",
+      category: category || "",
+      item: itemName || "",
       code: item.code || "",
       quantity: item.quantity.toString(),
       unit: item.unit,
       bpx: item.bpx.toString(),
       spx: item.spx.toString(),
-      soldBy: ""
+      soldBy: item.sold_by || ""
     });
     setEditingId(item.id);
     setIsDialogOpen(true);
@@ -339,7 +342,7 @@ const GiftsDailySales = () => {
       const { error } = await supabase
         .from("gift_daily_sales")
         .delete()
-        .eq("id", id);
+        .eq("id", id as any);
 
       if (error) throw error;
 
@@ -359,6 +362,12 @@ const GiftsDailySales = () => {
 
   const totalSales = items.reduce((sum, item) => sum + (item.spx * item.quantity), 0);
   const totalProfit = items.reduce((sum, item) => sum + ((item.spx - item.bpx) * item.quantity), 0);
+
+  // Get sales person name from profiles
+  const getSalesPersonName = (soldById: string) => {
+    const profile = salesProfiles.find(p => p.id === soldById);
+    return profile ? `${profile.sales_initials} - ${profile.full_name}` : "Unknown";
+  };
 
   return (
     <div className="space-y-8 p-6">
@@ -406,8 +415,8 @@ const GiftsDailySales = () => {
                   // Reset form when closing
                   setFormData({
                     date: new Date().toISOString().slice(0, 10),
+                    category: "",
                     item: "",
-                    itemName: "",
                     code: "",
                     quantity: "1",
                     unit: "Pc",
@@ -443,6 +452,63 @@ const GiftsDailySales = () => {
                     </DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="font-medium">Category *</Label>
+                      <Input
+                        value={formData.category}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        placeholder="e.g., Birthday"
+                        required
+                        className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="font-medium">Item Name *</Label>
+                      <Input
+                        value={formData.item}
+                        onChange={(e) => setFormData({ ...formData, item: e.target.value })}
+                        placeholder="e.g., Birthday Card"
+                        required
+                        className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="font-medium">Description (Optional)</Label>
+                      <Input
+                        value={formData.code}
+                        onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                        placeholder="Item description"
+                        className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="font-medium">Rate (UGX) *</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.spx}
+                          onChange={(e) => setFormData({ ...formData, spx: e.target.value })}
+                          required
+                          className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="font-medium">Quantity *</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={formData.quantity}
+                          onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                          required
+                          className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
+                        />
+                      </div>
+                    </div>
+                    
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="font-medium">Date *</Label>
@@ -451,39 +517,6 @@ const GiftsDailySales = () => {
                           value={formData.date}
                           onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                           required
-                          className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="font-medium">Category *</Label>
-                        <Input
-                          value={formData.item}
-                          onChange={(e) => setFormData({ ...formData, item: e.target.value })}
-                          placeholder="e.g., Birthday"
-                          required
-                          className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label className="font-medium">Item Name *</Label>
-                      <Input
-                        value={formData.itemName}
-                        onChange={(e) => setFormData({ ...formData, itemName: e.target.value })}
-                        placeholder="e.g., Birthday Card"
-                        required
-                        className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="font-medium">Code</Label>
-                        <Input
-                          value={formData.code}
-                          onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                          placeholder="Item code"
                           className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
                         />
                       </div>
@@ -508,17 +541,6 @@ const GiftsDailySales = () => {
                     
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="font-medium">Quantity *</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={formData.quantity}
-                          onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                          required
-                          className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
-                        />
-                      </div>
-                      <div className="space-y-2">
                         <Label className="font-medium">Buying Price (UGX) *</Label>
                         <Input
                           type="number"
@@ -526,21 +548,6 @@ const GiftsDailySales = () => {
                           min="0"
                           value={formData.bpx}
                           onChange={(e) => setFormData({ ...formData, bpx: e.target.value })}
-                          required
-                          className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="font-medium">Selling Price (UGX) *</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={formData.spx}
-                          onChange={(e) => setFormData({ ...formData, spx: e.target.value })}
                           required
                           className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
                         />
@@ -656,12 +663,14 @@ const GiftsDailySales = () => {
                     <TableRow className="border-b border-green-100">
                       <TableHead className="font-semibold text-gray-700">Category</TableHead>
                       <TableHead className="font-semibold text-gray-700">Item</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Code</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Quantity</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Unit</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Buying Price</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Selling Price</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Profit</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Description</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Qty</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Rate (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Total Value (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Profit/Unit</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Sold By</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Sold Date</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Sold Time</TableHead>
                       <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -669,6 +678,8 @@ const GiftsDailySales = () => {
                     {/* Offline sales */}
                     {offlineGiftSales.map((sale, index) => {
                       const profit = (sale.spx - sale.bpx) * sale.quantity;
+                      const totalValue = sale.quantity * sale.bpx;
+                      const saleDate = new Date(sale.date);
                       const [category, ...itemNameParts] = sale.item.split(": ");
                       const itemName = itemNameParts.join(": ");
                       
@@ -677,23 +688,23 @@ const GiftsDailySales = () => {
                           key={sale.id} 
                           className="group hover:bg-gradient-to-r transition-all duration-300 bg-yellow-50 border-l-4 border-yellow-400"
                         >
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              <WifiOff className="h-4 w-4 text-yellow-600" />
-                              {category}
-                            </div>
-                          </TableCell>
-                          <TableCell className="font-semibold text-gray-800">{itemName}</TableCell>
+                          <TableCell className="font-medium">{category || "-"}</TableCell>
+                          <TableCell className="font-semibold text-gray-800">{itemName || sale.item}</TableCell>
                           <TableCell className="text-gray-600">{sale.code || "-"}</TableCell>
                           <TableCell className="font-medium">{sale.quantity}</TableCell>
-                          <TableCell className="font-medium">{sale.unit}</TableCell>
-                          <TableCell className="font-medium text-red-600">{formatUGX(sale.bpx)}</TableCell>
                           <TableCell className="font-medium text-green-600">{formatUGX(sale.spx)}</TableCell>
+                          <TableCell className="font-medium text-blue-600">{formatUGX(totalValue)}</TableCell>
                           <TableCell className={`font-bold ${profit >= 0 ? "text-blue-600" : "text-red-600"}`}>
-                            <div className="flex items-center gap-1">
-                              <TrendingUp className={`h-4 w-4 ${profit >= 0 ? "text-blue-500" : "text-red-500"}`} />
-                              {formatUGX(profit)}
-                            </div>
+                            {formatUGX(sale.spx - sale.bpx)}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {sale.sold_by ? getSalesPersonName(sale.sold_by) : "Not specified"}
+                          </TableCell>
+                          <TableCell className="text-gray-600">
+                            {saleDate.toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-gray-600">
+                            {saleDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="text-xs text-yellow-600 font-medium">Pending Sync</div>
@@ -706,6 +717,8 @@ const GiftsDailySales = () => {
                     {items.length > 0 ? (
                       items.map((item, index) => {
                         const profit = (item.spx - item.bpx) * item.quantity;
+                        const totalValue = item.quantity * item.bpx;
+                        const saleDate = new Date(item.date);
                         const [category, ...itemNameParts] = item.item.split(": ");
                         const itemName = itemNameParts.join(": ");
                         
@@ -715,23 +728,23 @@ const GiftsDailySales = () => {
                             className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-green-50 hover:to-emerald-50`}
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
-                            <TableCell className="font-medium">
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-400 to-emerald-500"></div>
-                                {category}
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-semibold text-gray-800">{itemName}</TableCell>
+                            <TableCell className="font-medium">{category || "-"}</TableCell>
+                            <TableCell className="font-semibold text-gray-800">{itemName || item.item}</TableCell>
                             <TableCell className="text-gray-600">{item.code || "-"}</TableCell>
                             <TableCell className="font-medium">{item.quantity}</TableCell>
-                            <TableCell className="font-medium">{item.unit}</TableCell>
-                            <TableCell className="font-medium text-red-600">{formatUGX(item.bpx)}</TableCell>
                             <TableCell className="font-medium text-green-600">{formatUGX(item.spx)}</TableCell>
+                            <TableCell className="font-medium text-blue-600">{formatUGX(totalValue)}</TableCell>
                             <TableCell className={`font-bold ${profit >= 0 ? "text-blue-600" : "text-red-600"}`}>
-                              <div className="flex items-center gap-1">
-                                <TrendingUp className={`h-4 w-4 ${profit >= 0 ? "text-blue-500" : "text-red-500"}`} />
-                                {formatUGX(profit)}
-                              </div>
+                              {formatUGX(item.spx - item.bpx)}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {item.sold_by ? getSalesPersonName(item.sold_by) : "Not specified"}
+                            </TableCell>
+                            <TableCell className="text-gray-600">
+                              {saleDate.toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="text-gray-600">
+                              {saleDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center gap-2 justify-end">
@@ -758,7 +771,7 @@ const GiftsDailySales = () => {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={9} className="h-32 text-center">
+                        <TableCell colSpan={11} className="h-32 text-center">
                           <div className="flex flex-col items-center gap-4">
                             {loading ? (
                               <div className="flex items-center gap-3">

@@ -1,78 +1,96 @@
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import Logo from "./ui/Logo";
 import { useToast } from "@/hooks/use-toast";
-import Logo from "@/components/ui/Logo";
 
 /**
- * DirectLogin component provides a streamlined login experience
- * that bypasses session checks for faster access when users 
- * encounter connection issues
+ * DirectLogin component for bypassing session timeout issues
+ * This component provides a streamlined login experience without session checks
  */
 const DirectLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
+      console.log("Fast Login: Attempting direct sign in with email:", email);
+      
+      // Sign in without timeout race condition
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        console.error("Sign-in error:", error);
+        console.error("Fast Login error:", error);
+        setError(error.message);
         toast({
-          title: "Error signing in",
+          title: "Fast Login failed",
           description: error.message,
           variant: "destructive",
         });
       } else {
-        console.log("Sign-in successful:", data);
+        console.log("Fast Login successful");
         toast({
-          title: "Success!",
-          description: "You have been signed in successfully.",
+          title: "Login successful",
+          description: "Redirecting to dashboard...",
         });
         
-        // Force redirect to home
-        window.location.href = "/";
+        // Redirect to home page
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 500);
       }
     } catch (error: any) {
-      console.error("Sign-in exception:", error);
+      console.error("Fast Login exception:", error);
+      setError(error.message || "An unexpected error occurred");
       toast({
-        title: "Sign-in failed",
-        description: error.message || "Connection timeout. Please check your internet connection and try again.",
+        title: "Login failed",
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
+  };
 
-    setLoading(false);
+  const handleCancel = () => {
+    window.location.href = '/auth';
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
             <Logo size="lg" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold">Direct Login</CardTitle>
+            <CardTitle className="text-2xl font-bold">Fast Login</CardTitle>
             <CardDescription className="mt-2">
-              Use this fast login option if you're experiencing connection issues
+              Streamlined authentication - bypasses session checks
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSignIn} className="space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+          
+          <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -99,19 +117,24 @@ const DirectLogin = () => {
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Signing in...</span>
+                  <span>Logging in...</span>
                 </div>
-              ) : "Sign In"}
+              ) : "Log In"}
             </Button>
-            
-            <div className="mt-4 text-center">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                By bypassing session checks, this login method provides faster access when 
-                connection issues occur
-              </p>
-            </div>
           </form>
+          
+          <p className="text-sm text-gray-500 mt-4">
+            This login method bypasses session timeouts by using a direct authentication approach.
+          </p>
         </CardContent>
+        <CardFooter className="flex justify-between">
+          <Button variant="outline" onClick={handleCancel}>
+            Cancel
+          </Button>
+          <Button variant="ghost" onClick={() => window.location.reload()}>
+            Refresh Page
+          </Button>
+        </CardFooter>
       </Card>
     </div>
   );

@@ -11,6 +11,7 @@ import { Plus, Edit, Trash2, Search, AlertTriangle, Lock, Package2, TrendingUp, 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
+import { useOffline } from "@/hooks/useOffline";
 import StationeryDailySales from "./StationeryDailySales";
 import ExportDialog from "@/components/ExportDialog";
 
@@ -52,6 +53,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [salesProfiles, setSalesProfiles] = useState<Array<{id: string, sales_initials: string, full_name: string}>>([]);
   const { isAdmin } = useUser();
+  const { isOffline } = useOffline();
   const lastProcessedTrigger = useRef<number>(0);
   const [formData, setFormData] = useState({
     category: CATEGORIES[0],
@@ -576,7 +578,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                       <TableHead className="font-semibold text-gray-700">Description</TableHead>
                       <TableHead className="font-semibold text-gray-700">Qty</TableHead>
                       <TableHead className="font-semibold text-gray-700">Rate (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Stock</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Total Value (UGX)</TableHead>
                       <TableHead className="font-semibold text-gray-700">Selling Price</TableHead>
                       <TableHead className="font-semibold text-gray-700">Profit/Unit</TableHead>
                       <TableHead className="font-semibold text-gray-700">Stock Date</TableHead>
@@ -587,7 +589,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                   <TableBody>
                     {filteredItems.length > 0 ? (
                       filteredItems.map((item, index) => {
-                        const isLowStock = item.stock <= item.low_stock_threshold;
+                        const isLowStock = item.quantity <= item.low_stock_threshold;
                         return (
                           <TableRow 
                             key={item.id} 
@@ -608,8 +610,8 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                             <TableCell className="text-gray-600">{item.description || "-"}</TableCell>
                             <TableCell className="font-medium">{item.quantity}</TableCell>
                             <TableCell className="font-medium text-blue-600">{formatUGX(item.rate)}</TableCell>
-                            <TableCell className={`font-bold ${isLowStock ? "text-red-600 animate-pulse" : "text-green-600"}`}>
-                              {item.stock}
+                            <TableCell className="font-medium text-green-600">
+                              {formatUGX(item.quantity * item.rate)}
                             </TableCell>
                             <TableCell className="font-medium text-purple-600">{formatUGX(item.selling_price)}</TableCell>
                             <TableCell className={`font-bold ${item.profit_per_unit >= 0 ? "text-green-600" : "text-red-600"}`}>
@@ -625,12 +627,12 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                               {isLowStock ? (
                                 <div className="flex items-center gap-2 text-red-600 font-semibold bg-red-100 px-3 py-1 rounded-full">
                                   <AlertTriangle className="h-4 w-4 animate-bounce" />
-                                  <span>LOW: {item.stock} left (Min: {item.low_stock_threshold})</span>
+                                  <span>LOW: {item.quantity} units (Min: {item.low_stock_threshold})</span>
                                 </div>
                               ) : (
                                 <div className="flex items-center gap-2 text-green-600 font-medium bg-green-100 px-3 py-1 rounded-full">
                                   <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-                                  <span>Good: {item.stock} in stock</span>
+                                  <span>Good: {item.quantity} units</span>
                                 </div>
                               )}
                             </TableCell>

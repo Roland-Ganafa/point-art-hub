@@ -23,10 +23,10 @@ if (typeof window !== 'undefined') {
 }
 
 // Custom fetch with retry logic
-const fetchWithRetry = async (url: string, options: any, retries = 2, backoff = 300) => {
+const fetchWithRetry = async (url: string, options: any, retries = 3, backoff = 300) => {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2500); // 2.5 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
     
     const response = await fetch(url, {
       ...options,
