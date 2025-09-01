@@ -26,6 +26,9 @@ const DirectLogin = () => {
     try {
       console.log("Fast Login: Attempting direct sign in with email:", email);
       
+      // Use a localStorage flag to track login attempts
+      localStorage.setItem('auth_attempt_timestamp', Date.now().toString());
+      
       // Sign in without timeout race condition
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -47,10 +50,14 @@ const DirectLogin = () => {
           description: "Redirecting to dashboard...",
         });
         
-        // Redirect to home page
+        // Set auth method flag for future reference
+        localStorage.setItem('auth_method', 'direct_login');
+        
+        // Force direct navigation to home page with hard reload
+        // This bypasses any React Router issues that might occur
         setTimeout(() => {
           window.location.href = '/';
-        }, 500);
+        }, 300);
       }
     } catch (error: any) {
       console.error("Fast Login exception:", error);
@@ -71,28 +78,28 @@ const DirectLogin = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center space-y-4">
+      <Card className="w-full max-w-md border-2 border-blue-200 shadow-xl">
+        <CardHeader className="text-center space-y-4 bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="flex justify-center">
             <Logo size="lg" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold">Fast Login</CardTitle>
-            <CardDescription className="mt-2">
+            <CardTitle className="text-2xl font-bold text-blue-700">Fast Login</CardTitle>
+            <CardDescription className="mt-2 text-blue-600">
               Streamlined authentication - bypasses session checks
             </CardDescription>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
               {error}
             </div>
           )}
           
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -100,10 +107,11 @@ const DirectLogin = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="border-blue-200 focus:border-blue-400 focus:ring-blue-200"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-gray-700 font-medium">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -111,27 +119,36 @@ const DirectLogin = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="border-blue-200 focus:border-blue-400 focus:ring-blue-200"
               />
             </div>
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>
+            <Button 
+              type="submit" 
+              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl" 
+              disabled={loading}
+            >
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   <span>Logging in...</span>
                 </div>
-              ) : "Log In"}
+              ) : "Fast Secure Login"}
             </Button>
           </form>
           
-          <p className="text-sm text-gray-500 mt-4">
-            This login method bypasses session timeouts by using a direct authentication approach.
-          </p>
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+            <h3 className="text-sm font-medium text-blue-700 mb-2">How This Works:</h3>
+            <p className="text-sm text-gray-600">
+              This fast login method bypasses session timeout checks that can cause authentication errors.
+              It establishes a direct connection to authenticate your credentials more reliably.
+            </p>
+          </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={handleCancel}>
-            Cancel
+        <CardFooter className="flex justify-between bg-gradient-to-r from-blue-50 to-indigo-50 border-t border-blue-100">
+          <Button variant="outline" onClick={handleCancel} className="border-blue-200 text-blue-700 hover:bg-blue-50">
+            Back to Login
           </Button>
-          <Button variant="ghost" onClick={() => window.location.reload()}>
+          <Button variant="ghost" onClick={() => window.location.reload()} className="text-blue-600 hover:bg-blue-50">
             Refresh Page
           </Button>
         </CardFooter>

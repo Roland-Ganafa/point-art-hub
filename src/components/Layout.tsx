@@ -96,7 +96,7 @@ const Layout = ({ children }: LayoutProps) => {
             </Button>
             <Button 
               onClick={() => navigate('/direct-login')} 
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 transition-all duration-300 text-white font-medium shadow-md hover:shadow-lg"
             >
               Use Fast Login
             </Button>
@@ -149,7 +149,7 @@ const Layout = ({ children }: LayoutProps) => {
               if (redirectTimer) window.clearTimeout(redirectTimer);
               window.location.href = '/direct-login';
             }}
-            variant="outline"
+            className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 transition-all duration-300 text-white font-medium shadow-md hover:shadow-lg"
           >
             Fast Login
           </Button>

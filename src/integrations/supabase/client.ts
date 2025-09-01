@@ -22,16 +22,24 @@ if (typeof window !== 'undefined') {
   }
 }
 
-// Custom fetch with retry logic
-const fetchWithRetry = async (url: string, options: any, retries = 3, backoff = 300) => {
+// Custom fetch with retry logic and longer timeout
+const fetchWithRetry = async (url: string, options: any, retries = 5, backoff = 300) => {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout for better reliability
     
-    const response = await fetch(url, {
+    // Enhanced request with more headers for better caching behavior
+    const enhancedOptions = {
       ...options,
+      headers: {
+        ...options.headers,
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+      },
       signal: controller.signal
-    });
+    };
+    
+    const response = await fetch(url, enhancedOptions);
     
     clearTimeout(timeoutId);
     return response;
@@ -42,7 +50,7 @@ const fetchWithRetry = async (url: string, options: any, retries = 3, backoff = 
     
     console.log(`Fetch retry (${retries} left): ${url}`);
     await new Promise(resolve => setTimeout(resolve, backoff));
-    return fetchWithRetry(url, options, retries - 1, backoff * 2);
+    return fetchWithRetry(url, options, retries - 1, backoff * 1.5);
   }
 };
 
@@ -127,10 +135,14 @@ export const supabase = createClient<Database>(url as string, key as string, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
     flowType: 'pkce',
+    // Enhanced session-related options
+    storageKey: 'point-art-hub-auth',
+    debug: true,
   },
   global: {
     headers: {
       'X-Client-Info': 'point-art-hub/1.0',
+      'X-Connection-Quality': 'high',
     },
   },
   db: {
@@ -146,18 +158,50 @@ export const supabase = createClient<Database>(url as string, key as string, {
   fetch: (url, options) => fetchWithRetry(url, options)
 });
 
-// Offline detection
+// Offline detection and improved reconnection
 if (typeof window !== 'undefined') {
+  // Track online status for better recovery
+  let wasOffline = false;
+
+  window.addEventListener('offline', () => {
+    console.log('Connection lost. Operating in offline mode');
+    wasOffline = true;
+  });
+  
   window.addEventListener('online', () => {
     console.log('Connection restored. Refreshing authentication...');
     // Force refresh auth state when connection is restored
-    supabase.auth.refreshSession();
+    if (wasOffline) {
+      // Try to refresh multiple times with increasing delay if needed
+      const refreshAttempts = [0, 1000, 3000];
+      
+      refreshAttempts.forEach((delay, index) => {
+        setTimeout(() => {
+          console.log(`Refresh attempt ${index + 1}/${refreshAttempts.length}`);
+          supabase.auth.refreshSession()
+            .then(() => console.log('Session refreshed successfully'))
+            .catch(err => console.warn('Session refresh attempt failed:', err));
+        }, delay);
+      });
+      
+      wasOffline = false;
+    }
   });
-  
-  window.addEventListener('offline', () => {
-    console.log('Connection lost. Operating in offline mode');
-    // Could implement additional offline behavior here
-  });
+
+  // Also periodically check and refresh session
+  setInterval(() => {
+    if (navigator.onLine) {
+      supabase.auth.getSession()
+        .then(({ data }) => {
+          if (data.session) {
+            // Session exists, periodically refresh it
+            supabase.auth.refreshSession()
+              .catch(err => console.warn('Periodic session refresh failed:', err));
+          }
+        })
+        .catch(err => console.warn('Session check failed:', err));
+    }
+  }, 5 * 60 * 1000); // Check every 5 minutes
 }
 
 // Debug - check if client is created properly

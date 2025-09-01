@@ -102,21 +102,8 @@ const Auth = () => {
               Enter Development Mode
             </Button>
             <Button 
-              onClick={() => {
-                // Load the DirectLogin component
-                import("@/components/DirectLogin").then(module => {
-                  const DirectLogin = module.default;
-                  const loginElement = document.createElement('div');
-                  loginElement.id = 'direct-login-container';
-                  document.body.innerHTML = '';
-                  document.body.appendChild(loginElement);
-                  
-                  // Create a root and render the DirectLogin component
-                  const root = createRoot(loginElement);
-                  root.render(<DirectLogin />);
-                });
-              }} 
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              onClick={() => navigate('/direct-login')} 
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 transition-all duration-300 text-white font-medium shadow-md hover:shadow-lg"
             >
               Use Fast Login Method
             </Button>
@@ -215,13 +202,18 @@ const Auth = () => {
 
     try {
       console.log("Attempting to sign in with email:", email);
+      
+      // Add a flag to track login attempts
+      localStorage.setItem('auth_attempt_timestamp', Date.now().toString());
+      localStorage.setItem('auth_method', 'standard_login');
+      
       const { data, error } = await Promise.race([
         supabase.auth.signInWithPassword({
           email,
           password,
         }),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Sign-in timeout - please try again')), 15000)
+          setTimeout(() => reject(new Error('Sign-in timeout - please try the Fast Login method instead')), 20000)
         )
       ]) as any;
 
@@ -238,19 +230,21 @@ const Auth = () => {
         // Add a small delay to ensure auth state is updated
         setTimeout(() => {
           navigate("/");
-        }, 100);
+        }, 300);
       }
     } catch (error: any) {
       console.error("Sign-in exception:", error);
-      setAuthError(`Sign-in exception: ${error.message}`);
+      setAuthError(`${error.message}`);
       toast({
         title: "Sign-in failed",
-        description: error.message || "Connection timeout. Please check your internet connection and try again.",
+        description: error.message.includes('timeout') ? 
+          "Connection timed out. Please try the Fast Login method instead." : 
+          (error.message || "Connection timeout. Please check your internet connection and try again."),
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -265,6 +259,16 @@ const Auth = () => {
             <CardDescription className="mt-2">
               Inventory & Service Management System
             </CardDescription>
+          </div>
+          
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="text-sm font-semibold text-blue-700 mb-1">Having Login Issues?</h3>
+            <Button 
+              onClick={() => navigate('/direct-login')} 
+              className="w-full mt-2 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 transition-all duration-300"
+            >
+              Try Fast Login Method
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -306,6 +310,18 @@ const Auth = () => {
                     </div>
                   ) : "Sign In"}
                 </Button>
+                
+                <div className="pt-3 text-center">
+                  <p className="text-sm text-gray-500 mb-2">Having connection issues?</p>
+                  <Button 
+                    variant="outline" 
+                    type="button"
+                    onClick={() => navigate('/direct-login')} 
+                    className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                  >
+                    Try Fast Login Method
+                  </Button>
+                </div>
               </form>
             </TabsContent>
             

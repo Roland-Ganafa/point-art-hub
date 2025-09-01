@@ -224,33 +224,65 @@ export const UserProvider = ({ children }: UserProviderProps) => {
           return;
         }
         
-        // Normal Supabase authentication
-        const { data: { session } } = await Promise.race([
-          supabase.auth.getSession(),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Session fetch timeout')), 10000)
-          )
-        ]) as any;
-
-        if (!mounted) return;
-
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Load profile with timeout
+        // Normal Supabase authentication with exponential retry
+        const getSessionWithRetry = async (retries = 3, delay = 1000) => {
           try {
-            const { data: existingProfile, error } = await Promise.race([
-              supabase
-                .from('profiles')
-                .select('*')
-                .eq('user_id', session.user.id)
-                .single(),
-              // Reduced timeout from 8s to 5s to give more time
+            console.log(`Attempt to get session (${4 - retries}/3)`);
+            
+            const { data: { session } } = await Promise.race([
+              supabase.auth.getSession(),
               new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+                setTimeout(() => reject(new Error('Session fetch timeout')), 20000) // Increased from 10000
               )
             ]) as any;
+            
+            return session;
+          } catch (error) {
+            if (retries <= 1) throw error;
+            
+            console.log(`Session fetch failed, retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return getSessionWithRetry(retries - 1, delay * 1.5);
+          }
+        };
+        
+        try {
+          const session = await getSessionWithRetry();
+          
+          if (!mounted) return;
+
+          setSession(session);
+          setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Load profile with retry mechanism
+          try {
+            const getProfileWithRetry = async (retries = 3, delay = 1000) => {
+              try {
+                console.log(`Attempt to get profile (${4 - retries}/3)`);
+                
+                const { data: existingProfile, error } = await Promise.race([
+                  supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('user_id', session.user.id)
+                    .single(),
+                  new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Profile fetch timeout')), 8000) // Increased from 5000
+                  )
+                ]) as any;
+                
+                return { existingProfile, error };
+              } catch (error) {
+                if (retries <= 1) throw error;
+                
+                console.log(`Profile fetch failed, retrying in ${delay}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return getProfileWithRetry(retries - 1, delay * 1.5);
+              }
+            };
+            
+            const { existingProfile, error } = await getProfileWithRetry();
           
             if (!mounted) return;
             
