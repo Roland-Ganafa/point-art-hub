@@ -591,13 +591,9 @@ const StationeryDailySales = () => {
                   <TableHead className="font-semibold text-gray-700">Category</TableHead>
                   <TableHead className="font-semibold text-gray-700">Item</TableHead>
                   <TableHead className="font-semibold text-gray-700">Description</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Qty</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Rate (UGX)</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Total Value (UGX)</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Profit/Unit</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Sold By</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Sold Date</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Sold Time</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Rate</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Quantity</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Sold by</TableHead>
                   <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -616,20 +612,10 @@ const StationeryDailySales = () => {
                       <TableCell className="font-medium">{sale.category}</TableCell>
                       <TableCell className="font-semibold text-gray-800">{sale.item}</TableCell>
                       <TableCell className="text-gray-600">{sale.description || "-"}</TableCell>
-                      <TableCell className="font-medium">{sale.quantity}</TableCell>
                       <TableCell className="font-medium text-blue-600">{formatUGX(sale.rate)}</TableCell>
-                      <TableCell className="font-medium text-green-600">{formatUGX(totalValue)}</TableCell>
-                      <TableCell className={`font-bold ${profit >= 0 ? "text-green-600" : "text-red-600"}`}>
-                        {formatUGX(sale.selling_price - sale.rate)}
-                      </TableCell>
+                      <TableCell className="font-medium">{sale.quantity}</TableCell>
                       <TableCell className="font-medium">
                         {sale.sold_by ? getSalesPersonName(sale.sold_by) : "Not specified"}
-                      </TableCell>
-                      <TableCell className="text-gray-600">
-                        {saleDate.toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-gray-600">
-                        {saleDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="text-xs text-yellow-600 font-medium">Pending Sync</div>
@@ -653,20 +639,10 @@ const StationeryDailySales = () => {
                         <TableCell className="font-medium">{item.category}</TableCell>
                         <TableCell className="font-semibold text-gray-800">{item.item}</TableCell>
                         <TableCell className="text-gray-600">{item.description || "-"}</TableCell>
-                        <TableCell className="font-medium">{item.quantity}</TableCell>
                         <TableCell className="font-medium text-blue-600">{formatUGX(item.rate)}</TableCell>
-                        <TableCell className="font-medium text-green-600">{formatUGX(totalValue)}</TableCell>
-                        <TableCell className={`font-bold ${profit >= 0 ? "text-green-600" : "text-red-600"}`}>
-                          {formatUGX(item.selling_price - item.rate)}
-                        </TableCell>
+                        <TableCell className="font-medium">{item.quantity}</TableCell>
                         <TableCell className="font-medium">
                           {item.sold_by ? getSalesPersonName(item.sold_by) : "Not specified"}
-                        </TableCell>
-                        <TableCell className="text-gray-600">
-                          {saleDate.toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-gray-600">
-                          {saleDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center gap-2 justify-end">
@@ -693,7 +669,7 @@ const StationeryDailySales = () => {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={11} className="h-32 text-center">
+                    <TableCell colSpan={7} className="h-32 text-center">
                       <div className="flex flex-col items-center gap-4">
                         {loading ? (
                           <div className="flex items-center gap-3">

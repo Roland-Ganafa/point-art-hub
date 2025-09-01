@@ -13,25 +13,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import ExportDialog from "@/components/ExportDialog";
+import { Database } from "@/integrations/supabase/types";
 
 const formatUGX = (amount: number | null | undefined): string => {
   if (amount === null || amount === undefined) return "UGX 0";
   return `UGX ${amount.toLocaleString()}`;
 };
 
-interface EmbroideryItem {
-  id: string;
-  job_description: string;
-  quotation: number;
-  balance: number;
-  quantity: number;
-  rate: number;
-  expenditure: number;
-  profit: number;
-  sales: number;
-  done_by: string | null;
-  date: string;
-}
+type EmbroideryItem = Database["public"]["Tables"]["embroidery"]["Row"];
 
 interface EmbroideryModuleProps { openAddTrigger?: number }
 const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
@@ -41,14 +30,13 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const lastProcessedTrigger = useRef<number>(0);
-  const [salesProfiles, setSalesProfiles] = useState<Array<{id: string, sales_initials: string, full_name: string}>>([]);
+  const [salesProfiles, setSalesProfiles] = useState<Array<{id: string, sales_initials: string | null, full_name: string}>>([]);
   const [formData, setFormData] = useState({
     job_description: "",
-    quotation: "",
     quantity: "1",
     rate: "",
     expenditure: "",
-    sold_by: ""
+    done_by: ""
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
@@ -59,19 +47,6 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
     item.job_description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.done_by && item.done_by.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-
-  // Calculate profit when rate or quotation changes
-  useEffect(() => {
-    if (formData.rate && formData.quotation) {
-      const rate = parseFloat(formData.rate) || 0;
-      const quotation = parseFloat(formData.quotation) || 0;
-      const profit = quotation - rate;
-      setFormData(prev => ({
-        ...prev,
-        profit: profit.toFixed(2)
-      }));
-    }
-  }, [formData.rate, formData.quotation]);
 
   // Open the add dialog when triggered from Dashboard
   useEffect(() => {
@@ -143,8 +118,8 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
       errors.job_description = "Job description is required";
     }
 
-    if (!formData.quotation || parseFloat(formData.quotation) <= 0) {
-      errors.quotation = "Quotation must be greater than 0";
+    if (!formData.quantity || parseInt(formData.quantity) <= 0) {
+      errors.quantity = "Quantity must be greater than 0";
     }
 
     if (!formData.rate || parseFloat(formData.rate) <= 0) {
@@ -172,11 +147,10 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
     setEditingId(item.id);
     setFormData({
       job_description: item.job_description,
-      quotation: item.quotation.toString(),
       quantity: item.quantity.toString(),
-      rate: item.rate.toString(),
+      rate: item.rate?.toString() || "",
       expenditure: item.expenditure.toString(),
-      sold_by: item.done_by || ""
+      done_by: item.done_by || ""
     });
     setIsDialogOpen(true);
   };
@@ -231,11 +205,10 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
     try {
       const jobData = {
         job_description: formData.job_description,
-        quotation: parseFloat(formData.quotation),
         quantity: parseInt(formData.quantity || "1"),
         rate: parseFloat(formData.rate || "0"),
         expenditure: parseFloat(formData.expenditure),
-        done_by: formData.sold_by || profile?.id || null
+        done_by: formData.done_by || profile?.id || null
       };
 
       if (editingId) {
@@ -268,11 +241,10 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
       setIsDialogOpen(false);
       setFormData({
         job_description: "",
-        quotation: "",
         quantity: "1",
         rate: "",
         expenditure: "",
-        sold_by: ""
+        done_by: ""
       });
       setEditingId(null);
       setFormErrors({});
@@ -289,11 +261,10 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
   const resetForm = () => {
     setFormData({
       job_description: "",
-      quotation: "",
       quantity: "1",
       rate: "",
       expenditure: "",
-      sold_by: ""
+      done_by: ""
     });
     setEditingId(null);
     setFormErrors({});
@@ -411,46 +382,45 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                           type="number"
                           step="0.01"
                           min="0"
-                          value={formData.quotation}
-                          onChange={(e) => setFormData({ ...formData, quotation: e.target.value })}
-                          required
-                          className={`border-purple-200 focus:border-purple-400 focus:ring-purple-200 transition-all duration-200 ${formErrors.quotation ? "border-red-500 focus:border-red-500" : ""}`}
-                        />
-                        {formErrors.quotation && <span className="text-red-500 text-sm flex items-center gap-1"><Search className="h-3 w-3" />{formErrors.quotation}</span>}
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="font-medium flex items-center gap-2">
-                          <TrendingUp className="h-4 w-4 text-green-500" />
-                          Profit (UGX)
-                        </Label>
-                        <Input
-                          value={formData.quotation && formData.rate ? 
-                            (parseFloat(formData.quotation) - parseFloat(formData.rate)).toFixed(2) : "0"}
+                          value={formData.rate && formData.quantity ? 
+                            (parseFloat(formData.rate) * parseInt(formData.quantity)).toFixed(2) : "0"}
                           disabled
                           className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 font-medium"
                         />
                       </div>
+                      <div className="space-y-2">
+                        <Label className="font-medium">Expenditure (UGX) *</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.expenditure}
+                          onChange={(e) => setFormData({ ...formData, expenditure: e.target.value })}
+                          required
+                          className={`border-purple-200 focus:border-purple-400 focus:ring-purple-200 transition-all duration-200 ${formErrors.expenditure ? "border-red-500 focus:border-red-500" : ""}`}
+                        />
+                        {formErrors.expenditure && <span className="text-red-500 text-sm flex items-center gap-1"><Search className="h-3 w-3" />{formErrors.expenditure}</span>}
+                      </div>
                     </div>
                     
                     <div className="space-y-2">
-                      <Label className="font-medium">Expenditure (UGX) *</Label>
+                      <Label className="font-medium flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-green-500" />
+                        Profit (UGX)
+                      </Label>
                       <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={formData.expenditure}
-                        onChange={(e) => setFormData({ ...formData, expenditure: e.target.value })}
-                        required
-                        className={`border-purple-200 focus:border-purple-400 focus:ring-purple-200 transition-all duration-200 ${formErrors.expenditure ? "border-red-500 focus:border-red-500" : ""}`}
+                        value={formData.rate && formData.quantity && formData.expenditure ? 
+                          (parseFloat(formData.rate) * parseInt(formData.quantity) - parseFloat(formData.expenditure)).toFixed(2) : "0"}
+                        disabled
+                        className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 font-medium"
                       />
-                      {formErrors.expenditure && <span className="text-red-500 text-sm flex items-center gap-1"><Search className="h-3 w-3" />{formErrors.expenditure}</span>}
                     </div>
                     
                     <div className="space-y-2">
                       <Label>Done By (Initials)</Label>
                       <Select
-                        value={formData.sold_by}
-                        onValueChange={(value) => setFormData({ ...formData, sold_by: value })}
+                        value={formData.done_by}
+                        onValueChange={(value) => setFormData({ ...formData, done_by: value })}
                       >
                         <SelectTrigger>
                           <SelectValue 
@@ -525,19 +495,19 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                     <TableRow className="border-b border-purple-100">
                       <TableHead className="font-semibold text-gray-700">Job Description</TableHead>
                       <TableHead className="font-semibold text-gray-700">Quantity</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Rate (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Rate</TableHead>
                       <TableHead className="font-semibold text-gray-700">Quotation</TableHead>
                       <TableHead className="font-semibold text-gray-700">Expenditure</TableHead>
                       <TableHead className="font-semibold text-gray-700">Profit</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Date</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Done By</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Done by</TableHead>
                       <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredItems.length > 0 ? (
                       filteredItems.map((item, index) => {
-                        const profit = item.quotation - item.rate;
+                        const quotation = (item.rate || 0) * item.quantity;
+                        const profit = quotation - item.expenditure;
                         return (
                           <TableRow 
                             key={item.id} 
@@ -547,16 +517,13 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                             <TableCell className="font-semibold text-gray-800 max-w-xs truncate">{item.job_description}</TableCell>
                             <TableCell className="font-medium">{item.quantity}</TableCell>
                             <TableCell className="font-medium text-blue-600">{formatUGX(item.rate)}</TableCell>
-                            <TableCell className="font-medium text-purple-600">{formatUGX(item.quotation)}</TableCell>
+                            <TableCell className="font-medium text-purple-600">{formatUGX(quotation)}</TableCell>
                             <TableCell className="font-medium text-red-600">{formatUGX(item.expenditure)}</TableCell>
                             <TableCell className={`font-bold ${profit >= 0 ? "text-green-600" : "text-red-600"}`}>
                               <div className="flex items-center gap-1">
                                 <TrendingUp className={`h-4 w-4 ${profit >= 0 ? "text-green-500" : "text-red-500"}`} />
                                 {formatUGX(profit)}
                               </div>
-                            </TableCell>
-                            <TableCell className="text-gray-600">
-                              {new Date(item.date).toLocaleDateString()}
                             </TableCell>
                             <TableCell className="text-gray-600">
                               {item.done_by ? salesProfiles.find(p => p.id === item.done_by)?.sales_initials || item.done_by : "-"}
@@ -590,7 +557,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={9} className="h-32 text-center">
+                        <TableCell colSpan={8} className="h-32 text-center">
                           <div className="flex flex-col items-center gap-4">
                             {isLoading ? (
                               <div className="flex items-center gap-3">
