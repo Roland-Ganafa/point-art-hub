@@ -71,24 +71,21 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         return;
       }
       
-      // Use real Supabase service
-      const { data, error } = await Promise.race([
-        supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Profile fetch timeout')), 3000)
-        )
-      ]) as any;
-      
+      // Use real Supabase service with proper error handling
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
       if (error) {
         console.error('Error fetching profile:', error);
         return;
       }
       
-      setProfile(data);
+      if (data) {
+        setProfile(data);
+      }
     } catch (error) {
       console.error('Error in refreshProfile:', error);
     }
@@ -183,9 +180,6 @@ export const UserProvider = ({ children }: UserProviderProps) => {
       
       // Refresh the profile to reflect the change
       await refreshProfile();
-      
-      // Trigger a re-render by updating state
-      setProfile(prev => prev ? { ...prev, role: 'admin' } : null);
       
       return true;
     } catch (error) {

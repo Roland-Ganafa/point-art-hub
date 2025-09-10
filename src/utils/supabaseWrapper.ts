@@ -1,4 +1,4 @@
-/**
+ /**
  * Supabase Wrapper Utility
  * Wraps Supabase operations with timeout handling and retry mechanisms
  */

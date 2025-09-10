@@ -40,7 +40,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const { toast } = useToast();
-  const { isAdmin, profile, loading } = useUser(); // Add loading state
+  const { isAdmin, profile, loading, grantEmergencyAdmin } = useUser(); // Add grantEmergencyAdmin
   const [dashboardStats, setDashboardStats] = useState({
     totalSales: 0,
     totalProfit: 0,
@@ -439,28 +439,34 @@ const Dashboard = () => {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 xl:flex-shrink-0">
             {/* Emergency Admin Button - Only visible to non-admins when profile is loaded */}
-            {(!loading && !isAdmin && profile?.role !== 'admin') && (
+            {(!loading && !isAdmin && profile) && (
               <Button 
                 onClick={async () => {
-                  if (profile?.user_id) {
-                    try {
-                      const { error } = await supabase
-                        .from('profiles')
-                        .update({ role: 'admin' })
-                        .eq('user_id', profile.user_id);
-                      
-                      if (error) throw error;
-                      
+                  try {
+                    const success = await grantEmergencyAdmin();
+                    if (success) {
+                      toast({
+                        title: "Success",
+                        description: "You now have admin access. The page will refresh to apply changes.",
+                      });
                       // Refresh the page to update the UI
-                      window.location.reload();
-                    } catch (error) {
+                      setTimeout(() => {
+                        window.location.reload();
+                      }, 1000);
+                    } else {
                       toast({
                         title: "Error",
-                        description: "Failed to grant admin access. Check console for details.",
+                        description: "Failed to grant admin access. Please try again.",
                         variant: "destructive",
                       });
-                      console.error("Emergency admin access error:", error);
                     }
+                  } catch (error) {
+                    toast({
+                      title: "Error",
+                      description: "An unexpected error occurred. Check console for details.",
+                      variant: "destructive",
+                    });
+                    console.error("Emergency admin access error:", error);
                   }
                 }}
                 className="order-0 sm:order-0 bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl px-6 py-2.5 font-semibold"
