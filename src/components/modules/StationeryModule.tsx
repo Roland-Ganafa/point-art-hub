@@ -14,6 +14,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useOffline } from "@/hooks/useOffline";
 import StationeryDailySales from "./StationeryDailySales";
 import ExportDialog from "@/components/ExportDialog";
+import { Database } from "@/integrations/supabase/types";
 
 const CATEGORIES = [
   "Office Supplies",
@@ -44,6 +45,8 @@ interface StationeryItem {
   profit_per_unit: number;
 }
 
+type ProfileItem = Pick<Database["public"]["Tables"]["profiles"]["Row"], "id" | "sales_initials" | "full_name">;
+
 interface StationeryModuleProps { openAddTrigger?: number }
 const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
   const [items, setItems] = useState<StationeryItem[]>([]);
@@ -51,7 +54,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [salesProfiles, setSalesProfiles] = useState<Array<{id: string, sales_initials: string, full_name: string}>>([]);
+  const [salesProfiles, setSalesProfiles] = useState<ProfileItem[]>([]);
   const { isAdmin } = useUser();
   const { isOffline } = useOffline();
   const lastProcessedTrigger = useRef<number>(0);
@@ -111,7 +114,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
         
       if (error) throw error;
       console.log("Sales profiles fetched:", data);
-      setSalesProfiles(data || []);
+      setSalesProfiles(data as unknown as ProfileItem[] || []);
       
       // If no profiles with initials found, check all profiles
       if (!data || data.length === 0) {
@@ -136,8 +139,8 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
         .order("item", { ascending: true });
 
       if (error) throw error;
-      setItems(data || []);
-    } catch (error) {
+      setItems(data as unknown as StationeryItem[] || []);
+    } catch (error: any) {
       toast({
         title: "Error fetching items",
         description: error.message,
@@ -189,7 +192,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
       const { error } = await supabase
         .from("stationery")
         .delete()
-        .eq("id", id);
+        .eq("id", id as any);
 
       if (error) throw error;
 
@@ -199,7 +202,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
       });
 
       fetchItems();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error deleting item",
         description: error.message,
@@ -252,7 +255,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
     }
     
     try {
-      const itemData = {
+      const itemData: any = {
         ...formData,
         quantity: parseInt(formData.quantity) || 0,
         rate: parseFloat(formData.rate) || 0,
@@ -268,7 +271,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
         const { error } = await supabase
           .from("stationery")
           .update(itemData)
-          .eq("id", editingId);
+          .eq("id", editingId as any);
 
         if (error) throw error;
 
@@ -280,7 +283,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
         // Create new item
         const { error } = await supabase
           .from("stationery")
-          .insert([itemData]);
+          .insert([itemData] as any);
 
         if (error) throw error;
 
@@ -304,7 +307,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
       });
       setEditingId(null);
       fetchItems();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: editingId ? "Error updating item" : "Error adding item",
         description: error.message,
@@ -692,7 +695,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
 
         <TabsContent value="daily-sales" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden">
-            <StationeryDailySales items={items} />
+            <StationeryDailySales />
           </div>
         </TabsContent>
       </Tabs>

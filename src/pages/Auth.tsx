@@ -9,7 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/Logo";
 import { createRoot } from 'react-dom/client';
-import AuthDiagnostic from "@/components/AuthDiagnostic";
+// Comment out the import since the file is empty
+// import AuthDiagnostic from "@/components/AuthDiagnostic";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -398,43 +399,10 @@ const Auth = () => {
               <Button 
                 variant="outline" 
                 className="w-full" 
-                onClick={() => import("@/components/AuthDiagnostic").then(module => {
-                  const AuthDiagnostic = module.default;
-                  const diagnosticElement = document.createElement('div');
-                  diagnosticElement.id = 'auth-diagnostic-container';
-                  document.body.appendChild(diagnosticElement);
-                  
-                  // Create a modal-like experience
-                  diagnosticElement.style.position = 'fixed';
-                  diagnosticElement.style.top = '0';
-                  diagnosticElement.style.left = '0';
-                  diagnosticElement.style.right = '0';
-                  diagnosticElement.style.bottom = '0';
-                  diagnosticElement.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-                  diagnosticElement.style.zIndex = '9999';
-                  diagnosticElement.style.overflowY = 'auto';
-                  diagnosticElement.style.padding = '2rem';
-                  
-                  // Close button
-                  const closeButton = document.createElement('button');
-                  closeButton.innerText = 'Close';
-                  closeButton.style.position = 'absolute';
-                  closeButton.style.top = '1rem';
-                  closeButton.style.right = '1rem';
-                  closeButton.style.padding = '0.5rem 1rem';
-                  closeButton.style.backgroundColor = '#f44336';
-                  closeButton.style.color = 'white';
-                  closeButton.style.border = 'none';
-                  closeButton.style.borderRadius = '0.25rem';
-                  closeButton.style.cursor = 'pointer';
-                  closeButton.onclick = () => document.body.removeChild(diagnosticElement);
-                  
-                  diagnosticElement.appendChild(closeButton);
-                  
-                  // Render the diagnostic component
-                  const root = createRoot(diagnosticElement);
-                  root.render(<AuthDiagnostic />);
-                })}
+                onClick={() => {
+                  // Since AuthDiagnostic is not available, we'll just show an alert
+                  alert("Diagnostics feature is not available in this version.");
+                }}
               >
                 Run Diagnostics
               </Button>

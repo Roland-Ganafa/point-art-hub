@@ -1,4 +1,3 @@
-import Layout from "@/components/Layout";
 import Dashboard from "@/components/Dashboard";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useUser } from "@/contexts/UserContext";
@@ -15,11 +14,9 @@ const Index = () => {
   }
 
   return (
-    <Layout>
-      <ErrorBoundary>
-        <Dashboard />
-      </ErrorBoundary>
-    </Layout>
+    <ErrorBoundary>
+      <Dashboard />
+    </ErrorBoundary>
   );
 };
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ const formatUGX = (amount: number | null | undefined): string => {
 };
 
 type ArtServiceItem = Database["public"]["Tables"]["art_services"]["Row"];
+type ProfileItem = Pick<Database["public"]["Tables"]["profiles"]["Row"], "id" | "sales_initials" | "full_name">;
 
 interface ArtServicesModuleProps { openAddTrigger?: number }
 const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
@@ -30,7 +31,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const lastProcessedTrigger = useRef<number>(0);
-  const [salesProfiles, setSalesProfiles] = useState<Array<{id: string, sales_initials: string | null, full_name: string}>>([]);
+  const [salesProfiles, setSalesProfiles] = useState<ProfileItem[]>([]);
   const [formData, setFormData] = useState({
     service_name: "",
     description: "",
@@ -42,6 +43,20 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const { isAdmin, profile } = useUser();
+
+  // Define resetForm first before it's used in other functions
+  const resetForm = useCallback(() => {
+    setFormData({
+      service_name: "",
+      description: "",
+      quantity: "1",
+      rate: "",
+      expenditure: "",
+      done_by: ""
+    });
+    setEditingId(null);
+    setFormErrors({});
+  }, []);
 
   // Filter items based on search
   const filteredItems = items.filter(item => 
@@ -71,7 +86,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
         .not("sales_initials", "is", null);
         
       if (error) throw error;
-      setSalesProfiles(data || []);
+      setSalesProfiles(data as ProfileItem[] || []);
       
       // If no profiles with initials found, check all profiles
       if (!data || data.length === 0) {
@@ -100,7 +115,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
           variant: "destructive",
         });
       } else {
-        setItems(data || []);
+        setItems(data as unknown as ArtServiceItem[] || []);
       }
     } catch (error) {
       toast({
@@ -128,7 +143,10 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
       errors.rate = "Rate must be greater than 0";
     }
 
-    if (!formData.expenditure || parseFloat(formData.expenditure) < 0) {
+    // Allow expenditure to be 0 or greater
+    if (formData.expenditure === "" || isNaN(parseFloat(formData.expenditure))) {
+      errors.expenditure = "Expenditure must be a valid number";
+    } else if (parseFloat(formData.expenditure) < 0) {
       errors.expenditure = "Expenditure must be 0 or greater";
     }
 
@@ -174,7 +192,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
       const { error } = await supabase
         .from("art_services")
         .delete()
-        .eq("id", id);
+        .eq("id", id as any);
 
       if (error) throw error;
 
@@ -193,7 +211,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -206,75 +224,78 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
     }
 
     try {
+      setIsLoading(true);
+      
+      // Parse values safely - handle NaN values
+      const quantity = parseInt(formData.quantity) || 1;
+      const rate = parseFloat(formData.rate) || 0;
+      const expenditure = parseFloat(formData.expenditure) || 0;
+      const deposit = 0; // Default deposit value
+      
+      // Create service data object - DO NOT include GENERATED columns
       const serviceData = {
-        service_name: formData.service_name,
-        description: formData.description,
-        quantity: parseInt(formData.quantity || "1"),
-        rate: parseFloat(formData.rate || "0"),
-        expenditure: parseFloat(formData.expenditure),
-        done_by: formData.done_by || profile?.id || null
+        service_name: formData.service_name.trim(),
+        description: formData.description ? formData.description.trim() : null,
+        quantity: quantity,
+        rate: rate,
+        expenditure: expenditure,
+        deposit: deposit,
+        done_by: formData.done_by === "not_specified" ? null : (formData.done_by || (profile?.id || null)),
+        date: new Date().toISOString().split('T')[0]
       };
+
+      console.log("Submitting art service data:", serviceData);
 
       if (editingId) {
         // Update existing job
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("art_services")
           .update(serviceData)
-          .eq("id", editingId);
-
-        if (error) throw error;
-
+          .eq("id", editingId)
+          .select();
+          
+        if (error) {
+          console.error("Supabase error during update:", error);
+          throw error;
+        }
+        
         toast({
           title: "Success",
-          description: "Art service job updated successfully",
+          description: "Art service job updated successfully"
         });
       } else {
         // Create new job
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("art_services")
-          .insert([serviceData]);
-
-        if (error) throw error;
-
+          .insert([serviceData])
+          .select();
+          
+        if (error) {
+          console.error("Supabase error during insert:", error);
+          throw error;
+        }
+        
         toast({
           title: "Success",
-          description: "Art service job added successfully",
+          description: "Art service job added successfully"
         });
       }
 
+      // Close dialog, reset form and refresh data
       setIsDialogOpen(false);
-      setFormData({
-        service_name: "",
-        description: "",
-        quantity: "1",
-        rate: "",
-        expenditure: "",
-        done_by: ""
-      });
-      setEditingId(null);
-      setFormErrors({});
+      resetForm();
       fetchItems();
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error in art service submission:", error);
       toast({
         title: editingId ? "Error updating job" : "Error adding job",
-        description: error.message,
+        description: error.message || "An unknown error occurred",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      service_name: "",
-      description: "",
-      quantity: "1",
-      rate: "",
-      expenditure: "",
-      done_by: ""
-    });
-    setEditingId(null);
-    setFormErrors({});
-  };
+  }, [formData, editingId, validateForm, toast, resetForm, profile]);
 
   return (
     <div className="space-y-8 p-6">
@@ -324,13 +345,18 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
               />
               
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                if (open === false) {
+                  resetForm();
+                }
                 setIsDialogOpen(open);
-                if (!open) resetForm();
               }}>
                 <DialogTrigger asChild>
                   <Button 
-                    onClick={resetForm}
                     className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                    onClick={() => {
+                      resetForm();
+                      setIsDialogOpen(true);
+                    }}
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     Add Job

@@ -2,6 +2,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
+// Import the connection monitor
+import ConnectionMonitor from '../../utils/connectionMonitor';
+
 // Supabase configuration
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -21,38 +24,6 @@ if (typeof window !== 'undefined') {
     console.log("Key Length:", SUPABASE_PUBLISHABLE_KEY.length);
   }
 }
-
-// Custom fetch with retry logic and longer timeout
-const fetchWithRetry = async (url: string, options: any, retries = 5, backoff = 300) => {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout for better reliability
-    
-    // Enhanced request with more headers for better caching behavior
-    const enhancedOptions = {
-      ...options,
-      headers: {
-        ...options.headers,
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      },
-      signal: controller.signal
-    };
-    
-    const response = await fetch(url, enhancedOptions);
-    
-    clearTimeout(timeoutId);
-    return response;
-  } catch (err) {
-    if (retries === 0) {
-      throw err;
-    }
-    
-    console.log(`Fetch retry (${retries} left): ${url}`);
-    await new Promise(resolve => setTimeout(resolve, backoff));
-    return fetchWithRetry(url, options, retries - 1, backoff * 1.5);
-  }
-};
 
 // Function to handle environment variable issues
 const handleMissingEnvVars = () => {
@@ -153,9 +124,7 @@ export const supabase = createClient<Database>(url as string, key as string, {
     params: {
       eventsPerSecond: 10,
     },
-  },
-  // Use custom fetch with retry logic
-  fetch: (url, options) => fetchWithRetry(url, options)
+  }
 });
 
 // Offline detection and improved reconnection
@@ -209,24 +178,22 @@ if (typeof window !== 'undefined') {
   if (supabase) {
     console.log("Supabase client created successfully");
     
-    // Test the connection to Supabase
+    // Test the connection to Supabase with timeout handling
     (async () => {
       try {
-        const start = Date.now();
-        const { error } = await supabase.from('profiles').select('count').limit(1).maybeSingle();
-        const end = Date.now();
-        
-        if (error) {
-          console.error("Supabase connection test failed:", error);
-          // Try setting a local flag to indicate connection issues
-          localStorage.setItem('supabase_connection_error', JSON.stringify({ 
-            timestamp: Date.now(),
-            error: error.message
-          }));
-        } else {
-          console.log(`Supabase connection successful. Latency: ${end - start}ms`);
+        // Import connection monitor dynamically to avoid circular dependencies
+        const ConnectionMonitor = (await import('../../utils/connectionMonitor')).default;
+        const isConnected = await ConnectionMonitor.testSupabaseConnection();
+        if (isConnected) {
+          console.log("Supabase connection successful");
           // Clear any previous connection error
           localStorage.removeItem('supabase_connection_error');
+        } else {
+          console.error("Supabase connection test failed");
+          localStorage.setItem('supabase_connection_error', JSON.stringify({ 
+            timestamp: Date.now(),
+            error: 'Connection test failed'
+          }));
         }
       } catch (err) {
         console.error("Supabase connection test error:", err);

@@ -32,45 +32,17 @@ const Layout = ({ children }: LayoutProps) => {
     }
   }, [user, profile, isAdmin]);
 
-  // Add a timeout to ensure we don't get stuck on the redirect screen
-  useEffect(() => {
-    let timer: number | null = null;
-    
-    if (!user && !loading) {
-      // Set a timeout to force navigation after 3 seconds if we're stuck
-      timer = window.setTimeout(() => {
-        console.log('Redirect timeout triggered - forcing navigation to /auth');
+  // Handle redirect for non-authenticated users
+  const shouldRedirect = !user && !loading;
+  
+  React.useEffect(() => {
+    if (shouldRedirect) {
+      const timer = setTimeout(() => {
         navigate('/auth');
-      }, 3000);
-      
-      setRedirectTimer(timer);
+      }, 0);
+      return () => clearTimeout(timer);
     }
-    
-    // Clear the timeout if we have a user
-    if (user && redirectTimer) {
-      window.clearTimeout(redirectTimer);
-      setRedirectTimer(null);
-    }
-    
-    // Clean up timeout on unmount
-    return () => {
-      if (timer) window.clearTimeout(timer);
-      if (redirectTimer) window.clearTimeout(redirectTimer);
-    };
-  }, [user, loading, navigate, redirectTimer]);
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      navigate('/auth');
-    } catch (error) {
-      toast({
-        title: "Error signing out",
-        description: "Please try again",
-        variant: "destructive",
-      });
-    }
-  };
+  }, [shouldRedirect, navigate]);
 
   if (loading) {
     return (
@@ -121,8 +93,7 @@ const Layout = ({ children }: LayoutProps) => {
   }
 
   if (!user) {
-    // Add direct link to login page if stuck
-    navigate('/auth');
+    // Show redirect message while navigation happens
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <div className="text-lg mb-4">Redirecting to login...</div>
@@ -160,6 +131,19 @@ const Layout = ({ children }: LayoutProps) => {
       </div>
     );
   }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate('/auth');
+    } catch (error) {
+      toast({
+        title: "Error signing out",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex transition-colors duration-200">

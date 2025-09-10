@@ -325,21 +325,25 @@ const Dashboard = () => {
 
   // Preload modules when user shows intent (hovering over tabs)
   const handleTabHover = (tabName: string) => {
+    // For lazy-loaded components, we don't need to manually catch errors
+    // The Suspense boundary will handle loading states and errors
+    // We can optionally trigger a preload by accessing the promise
     switch (tabName) {
       case "stationery":
-        StationeryModule.catch(() => {});
+        // Trigger preload by accessing the promise, errors are handled by Suspense
+        StationeryModule.then(() => {}).catch(() => {});
         break;
       case "gift-store":
-        GiftStoreModule.catch(() => {});
+        GiftStoreModule.then(() => {}).catch(() => {});
         break;
       case "embroidery":
-        EmbroideryModule.catch(() => {});
+        EmbroideryModule.then(() => {}).catch(() => {});
         break;
       case "machines":
-        MachinesModule.catch(() => {});
+        MachinesModule.then(() => {}).catch(() => {});
         break;
       case "art-services":
-        ArtServicesModule.catch(() => {});
+        ArtServicesModule.then(() => {}).catch(() => {});
         break;
     }
   };
