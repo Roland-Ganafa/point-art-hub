@@ -18,6 +18,7 @@ import { Database } from "@/integrations/supabase/types";
 
 type StationeryDailySale = Database["public"]["Tables"]["stationery_daily_sales"]["Row"];
 type ProfileItem = Pick<Database["public"]["Tables"]["profiles"]["Row"], "id" | "sales_initials" | "full_name">;
+type StationeryItem = Database["public"]["Tables"]["stationery"]["Row"];
 
 // Define interface for offline stationery sales
 interface OfflineStationerySale {
@@ -41,6 +42,7 @@ const StationeryDailySales = () => {
   const { toast } = useToast();
   const { profile } = useUser();
   const [items, setItems] = useState<StationeryDailySale[]>([]);
+  const [stationeryItems, setStationeryItems] = useState<StationeryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [salesProfiles, setSalesProfiles] = useState<ProfileItem[]>([]);
@@ -49,6 +51,7 @@ const StationeryDailySales = () => {
     date: new Date().toISOString().slice(0, 10),
     category: "",
     item: "",
+    itemId: "", // Add item ID for linking to stationery table
     description: "",
     quantity: "1",
     rate: "",
@@ -86,7 +89,7 @@ const StationeryDailySales = () => {
 
       // First fetch the sales data
       const { data, error } = await supabase
-        .from("stationery_daily_sales")
+        .from("stationery_sales") // Changed from "stationery_daily_sales" to "stationery_sales"
         .select("*")
         .gte("date", startOfDay)
         .lte("date", endOfDay)
@@ -100,11 +103,29 @@ const StationeryDailySales = () => {
       
       // Also refresh sales profiles
       await fetchSalesProfiles();
+      
+      // Fetch stationery items for dropdown
+      await fetchStationeryItems();
     } catch (error) {
       console.error("Error in fetchData:", error);
       toast({ title: "Error fetching daily sales", description: "An unexpected error occurred", variant: "destructive" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStationeryItems = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("stationery")
+        .select("*")
+        .order("category", { ascending: true })
+        .order("item", { ascending: true });
+        
+      if (error) throw error;
+      setStationeryItems(data as unknown as StationeryItem[] || []);
+    } catch (error) {
+      console.error("Error fetching stationery items:", error);
     }
   };
 
@@ -146,13 +167,8 @@ const StationeryDailySales = () => {
     e.preventDefault();
     
     // Validate required fields
-    if (!formData.category.trim()) {
-      toast({ title: "Validation Error", description: "Category is required", variant: "destructive" });
-      return;
-    }
-    
-    if (!formData.item.trim()) {
-      toast({ title: "Validation Error", description: "Item name is required", variant: "destructive" });
+    if (!formData.itemId) {
+      toast({ title: "Validation Error", description: "Please select an item", variant: "destructive" });
       return;
     }
     
@@ -175,18 +191,38 @@ const StationeryDailySales = () => {
       return;
     }
     
+    // Check if there's enough stock
+    const selectedItem = stationeryItems.find(item => item.id === formData.itemId);
+    if (!selectedItem) {
+      toast({ 
+        title: "Item Not Found", 
+        description: "The selected item does not exist in the inventory", 
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    if (quantity > selectedItem.stock) {
+      toast({ 
+        title: "Insufficient Stock", 
+        description: `Only ${selectedItem.stock} units available for ${selectedItem.item}`, 
+        variant: "destructive" 
+      });
+      return;
+    }
+    
     const payload: any = {
-      date: formData.date,
-      category: formData.category,
-      item: formData.item,
-      description: formData.description ? formData.description.trim() : null,
+      item_id: formData.itemId,
       quantity: quantity,
-      rate: rate,
       selling_price: sellingPrice,
-      profit_per_unit: sellingPrice - rate,
-      total_value: quantity * rate,
+      total_amount: sellingPrice * quantity,
+      profit: (sellingPrice - rate) * quantity,
       sold_by: formData.soldBy === "not_specified" ? null : formData.soldBy
+      // Removed date field since it has a default value of now()
     };
+    
+    // Log the payload for debugging
+    console.log("Sale payload:", payload);
     
     try {
       // If offline, store sale locally
@@ -217,6 +253,7 @@ const StationeryDailySales = () => {
           date: new Date().toISOString().slice(0, 10),
           category: "",
           item: "",
+          itemId: "",
           description: "",
           quantity: "1",
           rate: "",
@@ -233,14 +270,14 @@ const StationeryDailySales = () => {
       if (editingId) {
         // Update existing record
         const result = await supabase
-          .from("stationery_daily_sales")
+          .from("stationery_sales")
           .update(payload)
           .eq("id", editingId as any);
         error = result.error;
       } else {
         // Create new record
         const result = await supabase
-          .from("stationery_daily_sales")
+          .from("stationery_sales")
           .insert([payload] as any);
         error = result.error;
       }
@@ -257,6 +294,7 @@ const StationeryDailySales = () => {
         date: new Date().toISOString().slice(0, 10),
         category: "",
         item: "",
+        itemId: "",
         description: "",
         quantity: "1",
         rate: "",
@@ -266,23 +304,38 @@ const StationeryDailySales = () => {
       setEditingId(null);
       setIsDialogOpen(false);
       fetchData();
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error in handleSubmit:", error);
+      
+      // Provide more specific error messages
+      let errorMessage = error.message || error.details || "An unexpected error occurred";
+      
+      // Handle foreign key constraint violations specifically
+      if (error.code === '23503') {
+        errorMessage = "Unable to record sale due to user profile issues. Please contact an administrator.";
+        console.error("Foreign key constraint violation:", error.details);
+      }
+      
       toast({
         title: editingId ? "Error updating sale" : "Error recording sale",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     }
   };
 
   const handleEdit = (item: StationeryDailySale) => {
+    // Find the corresponding stationery item
+    const stationeryItem = stationeryItems.find(si => si.id === item.item_id);
+    
     setFormData({
       date: item.date,
-      category: item.category,
-      item: item.item,
+      category: stationeryItem?.category || "",
+      item: stationeryItem?.item || "",
+      itemId: item.item_id || "",
       description: item.description || "",
       quantity: item.quantity.toString(),
-      rate: item.rate.toString(),
+      rate: item.rate?.toString() || "",
       selling_price: item.selling_price.toString(),
       soldBy: item.sold_by || ""
     });
@@ -295,7 +348,7 @@ const StationeryDailySales = () => {
     
     try {
       const { error } = await supabase
-        .from("stationery_daily_sales")
+        .from("stationery_sales") // Changed from "stationery_daily_sales" to "stationery_sales"
         .delete()
         .eq("id", id as any);
 
@@ -316,12 +369,24 @@ const StationeryDailySales = () => {
   };
 
   const totalSales = items.reduce((sum, item) => sum + (item.selling_price * item.quantity), 0);
-  const totalProfit = items.reduce((sum, item) => sum + ((item.selling_price - item.rate) * item.quantity), 0);
+  const totalProfit = items.reduce((sum, item) => sum + ((item.selling_price - (item.rate || 0)) * item.quantity), 0);
 
   // Get sales person name from profiles
   const getSalesPersonName = (soldById: string) => {
     const profile = salesProfiles.find(p => p.id === soldById);
     return profile ? `${profile.sales_initials} - ${profile.full_name}` : "Unknown";
+  };
+
+  // Get item name from stationery items
+  const getItemName = (itemId: string) => {
+    const item = stationeryItems.find(i => i.id === itemId);
+    return item ? item.item : "Unknown Item";
+  };
+
+  // Get item category from stationery items
+  const getItemCategory = (itemId: string) => {
+    const item = stationeryItems.find(i => i.id === itemId);
+    return item ? item.category : "Unknown Category";
   };
 
   return (
@@ -353,6 +418,7 @@ const StationeryDailySales = () => {
                 date: new Date().toISOString().slice(0, 10),
                 category: "",
                 item: "",
+                itemId: "",
                 description: "",
                 quantity: "1",
                 rate: "",
@@ -388,23 +454,32 @@ const StationeryDailySales = () => {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label className="font-medium">Category *</Label>
-                  <Input
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    required
-                    className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
-                  />
-                </div>
-                
-                <div className="space-y-2">
                   <Label className="font-medium">Item *</Label>
-                  <Input
-                    value={formData.item}
-                    onChange={(e) => setFormData({ ...formData, item: e.target.value })}
-                    required
-                    className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
-                  />
+                  <Select
+                    value={formData.itemId}
+                    onValueChange={(value) => {
+                      const selectedItem = stationeryItems.find(item => item.id === value);
+                      setFormData({ 
+                        ...formData, 
+                        itemId: value,
+                        category: selectedItem?.category || "",
+                        item: selectedItem?.item || "",
+                        rate: selectedItem?.rate?.toString() || "",
+                        selling_price: selectedItem?.selling_price?.toString() || ""
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="border-blue-200 focus:border-blue-400 focus:ring-blue-200">
+                      <SelectValue placeholder="Select item" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {stationeryItems.map(item => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.item} (Stock: {item.stock})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 <div className="space-y-2">
@@ -556,8 +631,8 @@ const StationeryDailySales = () => {
                         className="group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-blue-50 hover:to-purple-50"
                         style={{ animationDelay: `${index * 50}ms` }}
                       >
-                        <TableCell className="font-medium text-gray-600">{item.category}</TableCell>
-                        <TableCell className="font-semibold text-gray-800 max-w-xs truncate">{item.item}</TableCell>
+                        <TableCell className="font-medium text-gray-600">{getItemCategory(item.item_id)}</TableCell>
+                        <TableCell className="font-semibold text-gray-800 max-w-xs truncate">{getItemName(item.item_id)}</TableCell>
                         <TableCell className="text-gray-600">{item.description || "-"}</TableCell>
                         <TableCell className="font-medium text-blue-600">UGX {formatUGX(item.rate)}</TableCell>
                         <TableCell className="font-medium">{item.quantity}</TableCell>

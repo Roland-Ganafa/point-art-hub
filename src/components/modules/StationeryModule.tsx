@@ -262,7 +262,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
         selling_price: parseFloat(formData.selling_price) || 0,
         profit_per_unit: parseFloat(formData.profit_per_unit) || 0,
         low_stock_threshold: parseInt(formData.low_stock_threshold) || 5,
-        stock: parseInt(formData.quantity) || 0,
+        stock: parseInt(formData.quantity) || 0, // Stock should be equal to initial quantity
         sold_by: formData.sold_by === "not_specified" ? null : formData.sold_by,
       };
 

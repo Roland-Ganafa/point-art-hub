@@ -40,24 +40,40 @@ const Auth = () => {
 
   useEffect(() => {
     // Check if user is already authenticated with timeout
+    
+    // Check if user is already authenticated with enhanced timeout handling
     const checkUser = async () => {
       setAuthError(null);
       try {
-        console.log("Checking authentication status...");
-        const { data: { session }, error } = await Promise.race([
-          supabase.auth.getSession(),
-          // Increased timeout for better reliability
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Session check timeout')), 10000)
-          )
-        ]) as any;
-      
-        if (error) {
-          console.error("Auth error:", error);
-          setAuthError(`Authentication error: ${error.message}`);
+        console.log("Checking authentication status with enhanced timeout...");
+        
+        // Use Promise.race with better timeout handling
+        const sessionCheckPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => {
+            console.warn("Session check timeout - this is expected in some cases");
+            reject(new Error('SESSION_CHECK_TIMEOUT'));
+          }, 8000)
+        );
+        
+        const result = await Promise.race([sessionCheckPromise, timeoutPromise]) as any;
+        
+        // Handle timeout gracefully
+        if (result && result.error && result.error.message === 'SESSION_CHECK_TIMEOUT') {
+          console.log("Session check timed out, but continuing with login form");
+          setInitialLoad(false);
+          return;
         }
-      
-        if (session) {
+        
+        if (result && result.error) {
+          console.error("Auth error:", result.error);
+          // Don't set auth error for timeouts, just show login form
+          if (!result.error.message.includes('timeout')) {
+            setAuthError(`Authentication error: ${result.error.message}`);
+          }
+        }
+        
+        if (result && result.data && result.data.session) {
           console.log("User is authenticated, redirecting to home");
           navigate("/");
         } else {
@@ -65,9 +81,11 @@ const Auth = () => {
         }
       } catch (error: any) {
         console.warn('Session check failed:', error);
-        // Modified error message to be clearer
-        setAuthError(`Unable to connect to authentication service. Please try again.`);
-        // Continue to show auth form
+        // For timeout errors, don't show error message, just show login form
+        if (!error.message.includes('timeout') && error.message !== 'SESSION_CHECK_TIMEOUT') {
+          setAuthError(`Unable to connect to authentication service. Please try again.`);
+        }
+        // Continue to show auth form regardless
       } finally {
         setInitialLoad(false);
       }

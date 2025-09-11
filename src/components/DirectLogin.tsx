@@ -18,6 +18,7 @@ const DirectLogin = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -26,21 +27,39 @@ const DirectLogin = () => {
     try {
       console.log("Fast Login: Attempting direct sign in with email:", email);
       
-      // Use a localStorage flag to track login attempts
+      // Use localStorage flag to track login attempts
       localStorage.setItem('auth_attempt_timestamp', Date.now().toString());
       
-      // Sign in without timeout race condition
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Implement custom timeout handling for the login request
+      const loginPromise = supabase.auth.signInWithPassword({
         email,
         password,
       });
-
-      if (error) {
-        console.error("Fast Login error:", error);
-        setError(error.message);
+      
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('LOGIN_TIMEOUT')), 12000)
+      );
+      
+      const result = await Promise.race([loginPromise, timeoutPromise]) as any;
+      
+      // Handle timeout
+      if (result && result.error && result.error.message === 'LOGIN_TIMEOUT') {
+        console.error("Fast Login timeout");
+        setError("Login request timed out. Please check your connection and try again.");
+        toast({
+          title: "Fast Login timeout",
+          description: "The login request took too long. Please check your internet connection and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (result && result.error) {
+        console.error("Fast Login error:", result.error);
+        setError(result.error.message);
         toast({
           title: "Fast Login failed",
-          description: error.message,
+          description: result.error.message,
           variant: "destructive",
         });
       } else {
@@ -54,19 +73,29 @@ const DirectLogin = () => {
         localStorage.setItem('auth_method', 'direct_login');
         
         // Force direct navigation to home page with hard reload
-        // This bypasses any React Router issues that might occur
         setTimeout(() => {
           window.location.href = '/';
         }, 300);
       }
     } catch (error: any) {
       console.error("Fast Login exception:", error);
-      setError(error.message || "An unexpected error occurred");
-      toast({
-        title: "Login failed",
-        description: error.message || "An unexpected error occurred",
-        variant: "destructive",
-      });
+      
+      // Handle timeout errors specifically
+      if (error.message === 'LOGIN_TIMEOUT') {
+        setError("Login request timed out. Please check your connection and try again.");
+        toast({
+          title: "Login timeout",
+          description: "The login request took too long. Please check your internet connection and try again.",
+          variant: "destructive",
+        });
+      } else {
+        setError(error.message || "An unexpected error occurred");
+        toast({
+          title: "Login failed",
+          description: error.message || "An unexpected error occurred",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }

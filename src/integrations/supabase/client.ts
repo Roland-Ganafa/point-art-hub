@@ -98,6 +98,35 @@ const storage = {
   },
 };
 
+// Custom fetch implementation for better timeout handling
+const customFetch = async (url: string, options: RequestInit = {}) => {
+  // Increase timeout for better reliability
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+  
+  try {
+    const response = await fetch(url, { 
+      ...options, 
+      signal: controller.signal,
+      // Add headers for better connection handling
+      headers: {
+        ...options.headers,
+        'X-Client-Info': 'point-art-hub/1.0',
+      }
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    // Log timeout errors specifically
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.warn('Request timeout after 15 seconds:', url);
+      throw new Error('REQUEST_TIMEOUT');
+    }
+    throw error;
+  }
+};
+
 // Create Supabase client with enhanced error handling and optimized connection
 export const supabase = createClient<Database>(url as string, key as string, {
   auth: {
@@ -115,6 +144,7 @@ export const supabase = createClient<Database>(url as string, key as string, {
       'X-Client-Info': 'point-art-hub/1.0',
       'X-Connection-Quality': 'high',
     },
+    fetch: customFetch, // Use our custom fetch implementation
   },
   db: {
     schema: 'public',

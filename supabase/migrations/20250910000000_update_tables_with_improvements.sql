@@ -51,7 +51,10 @@ CREATE INDEX IF NOT EXISTS idx_gift_store_status ON public.gift_store(status);
 CREATE OR REPLACE FUNCTION public.update_updated_by_column()
 RETURNS TRIGGER AS $$
 BEGIN
-  NEW.updated_by = auth.uid();
+  -- Only set updated_by if the user exists in the profiles table
+  IF EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid()) THEN
+    NEW.updated_by = auth.uid();
+  END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -99,6 +102,12 @@ CREATE TABLE IF NOT EXISTS public.product_categories (
 
 -- Enable Row Level Security
 ALTER TABLE public.product_categories ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Anyone can view product_categories" ON public.product_categories;
+DROP POLICY IF EXISTS "Authenticated users can insert product_categories" ON public.product_categories;
+DROP POLICY IF EXISTS "Authenticated users can update product_categories" ON public.product_categories;
+DROP POLICY IF EXISTS "Authenticated users can delete product_categories" ON public.product_categories;
 
 -- Create policies for product_categories
 CREATE POLICY "Anyone can view product_categories" 

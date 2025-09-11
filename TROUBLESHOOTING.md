@@ -80,6 +80,24 @@ The system now includes timeout handling with retry mechanisms:
 2. Check that security policies are correctly applied
 3. Ensure your user has the correct role (admin/user)
 
+### 3. Foreign Key Constraint Violations
+
+**Symptoms:**
+- "Key (column)=(value) is not present in table" errors
+- 409 Conflict errors when inserting data
+- Sales recording failures
+
+**Solution:**
+This typically occurs when there's a mismatch between user IDs and profile references. The system includes automatic fixes:
+1. Run the latest database migrations to apply the improved constraint handling
+2. Ensure all users have corresponding profiles in the profiles table
+3. Check that the `updated_by` triggers properly validate user existence
+
+The system now includes enhanced validation to prevent these issues:
+- Updated triggers check for profile existence before setting references
+- Invalid references are automatically cleared by migration scripts
+- Better error handling provides clearer feedback to users
+
 ## Development Mode
 
 ### When to Use Development Mode

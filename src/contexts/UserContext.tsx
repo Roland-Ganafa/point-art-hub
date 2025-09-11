@@ -1,9 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-// Comment out the imports since the files are empty
-// import { mockAuthService } from '@/utils/MockAuthService';
-// import { mockDatabaseService } from '@/utils/MockDatabaseService';
 
 // Check if development mode is enabled
 const isDevelopmentMode = () => {
@@ -116,11 +113,13 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         }
       }
 
+      // Create the profile with proper error handling
       const { data, error } = await Promise.race([
         supabase
           .from('profiles')
           .insert([
             {
+              id: user.id, // Use the user ID as the profile ID to ensure consistency
               user_id: user.id,
               full_name: user.user_metadata?.full_name || user.email || 'Unknown User',
               role: role,
@@ -136,6 +135,18 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
       if (error) {
         console.error('Error creating profile:', error);
+        // If there's a conflict, try to fetch the existing profile
+        if (error.code === '23505') { // Unique violation
+          const { data: existingData, error: fetchError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', user.id as any)
+            .single();
+          
+          if (!fetchError && existingData) {
+            return existingData;
+          }
+        }
         return null;
       }
 

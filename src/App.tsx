@@ -19,6 +19,7 @@ import SalesAnalyticsDashboard from './pages/SalesAnalyticsDashboard';
 import NotificationsPage from './pages/NotificationsPage';
 import HelpCenter from './pages/HelpCenter';
 import InvoiceManagement from './pages/InvoiceManagement';
+import Settings from './pages/Settings';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -95,6 +96,14 @@ function App() {
                   element={
                     <Layout>
                       <InvoiceManagement />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <Layout>
+                      <Settings />
                     </Layout>
                   }
                 />
