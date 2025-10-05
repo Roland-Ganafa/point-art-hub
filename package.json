@@ -8,7 +8,16 @@
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "fix:database": "node apply-database-fix.js",
+    "verify:fix": "node verify-fix.js",
+    "fix:stationery": "node apply-database-fix.js",
+    "check:rls": "node check-rls-policies.js",
+    "check:schema": "node check-table-schema.js",
+    "check:role": "node check-user-role.js",
+    "verify:final": "node final-verification.js",
+    "debug:auth": "node debug-auth.js",
+    "debug:comprehensive": "node comprehensive-debug.js"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",

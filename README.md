@@ -5456,6 +5456,83 @@ npm run test:ui --prefix ".\\point-art-hub-main"
 - Stock levels update automatically with sales
 
 
+### Admin Account Management:
+
+
+#### Creating a New Admin Account:
+
+
+There are several ways to create admin accounts in Point Art Hub:
+
+
+1.
+
+
+   **Using the Node.js Script** (Recommended for initial setup):
+
+
+   ```bash
+   node create-admin.js
+   ```
+
+
+   This script will create a new admin user with the credentials specified in the script.
+
+
+2.
+
+
+   **Using SQL Directly** (For advanced users):
+
+
+   Execute the `update-admin-role.sql` script in your Supabase SQL editor to manually update a user's role to admin.
+
+
+3.
+
+
+   **Using Browser Console** (For existing users):
+
+
+   - Log in as the user you want to make admin
+
+
+   - Open browser console (F12)
+
+
+   - Run `window.grantEmergencyAdmin()` to grant admin privileges
+
+
+#### Emergency Admin Access:
+
+
+If you're locked out of admin features:
+
+
+1.
+
+
+   Log in to the application
+
+
+2.
+
+
+   Open browser console (F12)
+
+
+3.
+
+
+   Type `window.grantEmergencyAdmin()` and press Enter
+
+
+4.
+
+
+   Refresh the page to see admin features
+
+
 ## 🛠️ Troubleshooting
 
 

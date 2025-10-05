@@ -6,10 +6,14 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
 
 // Check if environment variables are set
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('❌ Error: Supabase environment variables are not set.');
@@ -22,6 +26,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function testDatabaseConnection() {
   console.log('🔍 Testing Point Art Hub database connection...');
+  console.log('🌐 Supabase URL:', supabaseUrl);
   
   try {
     // Test 1: Check if we can connect to Supabase

@@ -175,10 +175,11 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         return true;
       }
       
+      // Fix the Content-Type error by ensuring we send proper JSON
       const { data, error } = await supabase
         .from('profiles')
         .update({ role: 'admin' })
-        .eq('user_id', user.id as any)
+        .eq('user_id', user.id)
         .select()
         .single();
 
@@ -407,6 +408,19 @@ export const UserProvider = ({ children }: UserProviderProps) => {
       subscription.unsubscribe();
     };
   }, [useDevelopmentMode]);
+
+  // Expose grantEmergencyAdmin to global scope for emergency access
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).grantEmergencyAdmin = grantEmergencyAdmin;
+    }
+    
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete (window as any).grantEmergencyAdmin;
+      }
+    };
+  }, [grantEmergencyAdmin]);
 
   const signOut = async () => {
     setAuthError(null);

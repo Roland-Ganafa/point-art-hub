@@ -106,16 +106,17 @@
     }, 2000);
 
   } catch (error) {
-    console.error('❌ Unexpected error:', error.message);
-    console.log('\n💡 Alternative options:');
-    console.log('1. Try the Admin Profile interface');
-    console.log('2. Use the Node.js deletion script');
-    console.log('3. Contact system administrator');
-  }
-  } catch (importError) {
-    console.error('❌ Failed to import Supabase:', importError.message);
-    console.log('\n💡 Alternative approach - Direct API deletion:');
-    
+    if (error.message.includes('Failed to import')) {
+      console.error('❌ Failed to import Supabase:', error.message);
+      console.log('\n💡 Alternative approach - Direct API deletion:');
+    } else {
+      console.error('❌ Unexpected error:', error.message);
+      console.log('\n💡 Alternative options:');
+      console.log('1. Try the Admin Profile interface');
+      console.log('2. Use the Node.js deletion script');
+      console.log('3. Contact system administrator');
+    }
+
     // Fallback: Direct fetch to Supabase REST API
     try {
       const supabaseUrl = 'https://uizibdtiuvjjikbrkdcv.supabase.co';

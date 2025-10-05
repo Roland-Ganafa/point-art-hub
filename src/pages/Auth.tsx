@@ -8,9 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/Logo";
-import { createRoot } from 'react-dom/client';
-// Comment out the import since the file is empty
-// import AuthDiagnostic from "@/components/AuthDiagnostic";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -27,72 +24,68 @@ const Auth = () => {
     console.log("Checking Supabase environment variables:");
     console.log("VITE_SUPABASE_URL:", import.meta.env.VITE_SUPABASE_URL ? "SET" : "NOT SET");
     console.log("VITE_SUPABASE_ANON_KEY:", import.meta.env.VITE_SUPABASE_ANON_KEY ? "SET" : "NOT SET");
-    // More detailed debugging
-    try {
-      const urlStart = import.meta.env.VITE_SUPABASE_URL?.substring(0, 10);
-      const keyLength = import.meta.env.VITE_SUPABASE_ANON_KEY?.length || 0;
-      console.log(`URL starts with: ${urlStart || "not available"}... (length: ${import.meta.env.VITE_SUPABASE_URL?.length || 0})`);
-      console.log(`Key length: ${keyLength}`);
-    } catch (error) {
-      console.error("Error checking environment variables:", error);
-    }
   }, []);
 
   useEffect(() => {
-    // Check if user is already authenticated with timeout
+    // Prevent infinite loops by checking if we're already on the auth page
+    const currentPath = window.location.pathname;
     
-    // Check if user is already authenticated with enhanced timeout handling
+    // Skip auth check if we're already on auth-related pages
+    if (currentPath === '/auth' || currentPath === '/direct-login' || currentPath === '/bypass-auth') {
+      setInitialLoad(false);
+      return;
+    }
+
     const checkUser = async () => {
       setAuthError(null);
+      
       try {
-        console.log("Checking authentication status with enhanced timeout...");
+        console.log("Checking authentication status...");
         
-        // Use Promise.race with better timeout handling
-        const sessionCheckPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => {
-            console.warn("Session check timeout - this is expected in some cases");
-            reject(new Error('SESSION_CHECK_TIMEOUT'));
-          }, 8000)
-        );
+        // Add an AbortController for better timeout handling
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
         
-        const result = await Promise.race([sessionCheckPromise, timeoutPromise]) as any;
-        
-        // Handle timeout gracefully
-        if (result && result.error && result.error.message === 'SESSION_CHECK_TIMEOUT') {
-          console.log("Session check timed out, but continuing with login form");
-          setInitialLoad(false);
-          return;
-        }
-        
-        if (result && result.error) {
-          console.error("Auth error:", result.error);
-          // Don't set auth error for timeouts, just show login form
-          if (!result.error.message.includes('timeout')) {
-            setAuthError(`Authentication error: ${result.error.message}`);
+        try {
+          const { data, error } = await supabase.auth.getSession();
+          clearTimeout(timeoutId);
+          
+          if (error) {
+            console.error("Auth error:", error);
+            if (!error.message.includes('timeout')) {
+              setAuthError(`Authentication error: ${error.message}`);
+            }
+          } else if (data?.session) {
+            console.log("User is authenticated, redirecting to home");
+            // Only navigate if we're not already heading there
+            if (currentPath !== '/') {
+              navigate("/", { replace: true });
+            }
+          } else {
+            console.log("No active session found - displaying login form");
+          }
+        } catch (error: any) {
+          clearTimeout(timeoutId);
+          if (error.name === 'AbortError') {
+            console.log("Session check timed out, showing login form");
+          } else {
+            console.warn('Session check failed:', error);
+            if (!error.message?.includes('timeout')) {
+              setAuthError(`Unable to connect to authentication service. Please try again.`);
+            }
           }
         }
-        
-        if (result && result.data && result.data.session) {
-          console.log("User is authenticated, redirecting to home");
-          navigate("/");
-        } else {
-          console.log("No active session found - displaying login form");
-        }
       } catch (error: any) {
-        console.warn('Session check failed:', error);
-        // For timeout errors, don't show error message, just show login form
-        if (!error.message.includes('timeout') && error.message !== 'SESSION_CHECK_TIMEOUT') {
-          setAuthError(`Unable to connect to authentication service. Please try again.`);
-        }
-        // Continue to show auth form regardless
+        console.error("Unexpected error during auth check:", error);
       } finally {
         setInitialLoad(false);
       }
     };
+    
     checkUser();
   }, [navigate]);
 
+  // Loading state
   if (initialLoad) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
@@ -122,7 +115,7 @@ const Auth = () => {
             </Button>
             <Button 
               onClick={() => navigate('/direct-login')} 
-              className="w-full bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 transition-all duration-300 text-white font-medium shadow-md hover:shadow-lg"
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800"
             >
               Use Fast Login Method
             </Button>
@@ -165,13 +158,15 @@ const Auth = () => {
 
     try {
       console.log("Attempting to sign up with email:", email);
-      // Use the deployed URL for email confirmation redirects instead of localhost
       const redirectUrl = window.location.hostname === 'localhost' 
         ? `${window.location.origin}/` 
-        : 'https://point-art-hub.vercel.app/'; // Updated with actual deployed URL
+        : 'https://point-art-hub.vercel.app/';
       
-      const { data, error } = await Promise.race([
-        supabase.auth.signUp({
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      
+      try {
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -180,26 +175,41 @@ const Auth = () => {
               full_name: fullName,
             },
           },
-        }),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Sign-up timeout - please try again')), 15000)
-        )
-      ]) as any;
-
-      if (error) {
-        console.error("Sign-up error:", error);
-        setAuthError(`Sign-up failed: ${error.message}`);
-        toast({
-          title: "Error signing up",
-          description: error.message,
-          variant: "destructive",
         });
-      } else {
-        console.log("Sign-up successful:", data);
-        toast({
-          title: "Success!",
-          description: `Thank you ${fullName}! Please check your email to confirm your account.`,
-        });
+        
+        clearTimeout(timeoutId);
+        
+        if (error) {
+          console.error("Sign-up error:", error);
+          setAuthError(`Sign-up failed: ${error.message}`);
+          toast({
+            title: "Error signing up",
+            description: error.message,
+            variant: "destructive",
+          });
+        } else {
+          console.log("Sign-up successful:", data);
+          toast({
+            title: "Success!",
+            description: `Thank you ${fullName}! Please check your email to confirm your account.`,
+          });
+          // Clear form after successful signup
+          setEmail("");
+          setPassword("");
+          setFullName("");
+        }
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          setAuthError('Sign-up timeout - please try again');
+          toast({
+            title: "Sign-up timeout",
+            description: "The request took too long. Please try again.",
+            variant: "destructive",
+          });
+        } else {
+          throw error;
+        }
       }
     } catch (error: any) {
       console.error("Sign-up exception:", error);
@@ -209,9 +219,9 @@ const Auth = () => {
         description: error.message || "Connection timeout. Please check your internet connection and try again.",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -222,43 +232,60 @@ const Auth = () => {
     try {
       console.log("Attempting to sign in with email:", email);
       
-      // Add a flag to track login attempts
+      // Store login attempt info
       localStorage.setItem('auth_attempt_timestamp', Date.now().toString());
       localStorage.setItem('auth_method', 'standard_login');
       
-      const { data, error } = await Promise.race([
-        supabase.auth.signInWithPassword({
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
+      
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
-        }),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Sign-in timeout - please try the Fast Login method instead')), 20000)
-        )
-      ]) as any;
-
-      if (error) {
-        console.error("Sign-in error:", error);
-        setAuthError(`Sign-in failed: ${error.message}`);
-        toast({
-          title: "Error signing in",
-          description: error.message,
-          variant: "destructive",
         });
-      } else {
-        console.log("Sign-in successful:", data);
-        // Add a small delay to ensure auth state is updated
-        setTimeout(() => {
-          navigate("/");
-        }, 300);
+        
+        clearTimeout(timeoutId);
+        
+        if (error) {
+          console.error("Sign-in error:", error);
+          setAuthError(`Sign-in failed: ${error.message}`);
+          toast({
+            title: "Error signing in",
+            description: error.message,
+            variant: "destructive",
+          });
+        } else if (data?.session) {
+          console.log("Sign-in successful:", data);
+          toast({
+            title: "Welcome back!",
+            description: "You have successfully signed in.",
+          });
+          
+          // Use replace to prevent back button issues
+          setTimeout(() => {
+            navigate("/", { replace: true });
+          }, 300);
+        }
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          setAuthError('Sign-in timeout - please try the Fast Login method instead');
+          toast({
+            title: "Sign-in timeout",
+            description: "Connection timed out. Please try the Fast Login method instead.",
+            variant: "destructive",
+          });
+        } else {
+          throw error;
+        }
       }
     } catch (error: any) {
       console.error("Sign-in exception:", error);
       setAuthError(`${error.message}`);
       toast({
         title: "Sign-in failed",
-        description: error.message.includes('timeout') ? 
-          "Connection timed out. Please try the Fast Login method instead." : 
-          (error.message || "Connection timeout. Please check your internet connection and try again."),
+        description: error.message || "Connection timeout. Please check your internet connection and try again.",
         variant: "destructive",
       });
     } finally {
@@ -284,7 +311,7 @@ const Auth = () => {
             <h3 className="text-sm font-semibold text-blue-700 mb-1">Having Login Issues?</h3>
             <Button 
               onClick={() => navigate('/direct-login')} 
-              className="w-full mt-2 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 transition-all duration-300"
+              className="w-full mt-2 bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800"
             >
               Try Fast Login Method
             </Button>
@@ -308,6 +335,7 @@ const Auth = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    disabled={loading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -319,6 +347,7 @@ const Auth = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    disabled={loading}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
@@ -337,6 +366,7 @@ const Auth = () => {
                     type="button"
                     onClick={() => navigate('/direct-login')} 
                     className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                    disabled={loading}
                   >
                     Try Fast Login Method
                   </Button>
@@ -355,6 +385,7 @@ const Auth = () => {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
+                    disabled={loading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -366,6 +397,7 @@ const Auth = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    disabled={loading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -378,6 +410,7 @@ const Auth = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={6}
+                    disabled={loading}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
@@ -394,7 +427,7 @@ const Auth = () => {
         </CardContent>
       </Card>
       
-      {/* Collapsible Diagnostics Section */}
+      {/* Diagnostics Section */}
       <div className="w-full max-w-md">
         <details className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
           <summary className="px-4 py-2 cursor-pointer text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -408,21 +441,41 @@ const Auth = () => {
                 <li>Ensure you're using a supported browser (Chrome, Firefox, Safari, Edge)</li>
                 <li>Try clearing your browser cache and cookies</li>
                 <li>Disable any ad blockers or privacy extensions</li>
-                <li>Run the diagnostics below to check for configuration issues</li>
+                <li>Try using the Fast Login method above</li>
               </ol>
             </div>
             
-            {/* Import and use the AuthDiagnostic component */}
-            <div className="mt-4">
+            <div className="mt-4 space-y-2">
               <Button 
                 variant="outline" 
                 className="w-full" 
                 onClick={() => {
-                  // Since AuthDiagnostic is not available, we'll just show an alert
-                  alert("Diagnostics feature is not available in this version.");
+                  const diagnostics = {
+                    supabaseUrl: import.meta.env.VITE_SUPABASE_URL ? 'Configured' : 'Missing',
+                    supabaseKey: import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Configured' : 'Missing',
+                    localStorage: typeof Storage !== 'undefined' ? 'Available' : 'Not Available',
+                    cookies: navigator.cookieEnabled ? 'Enabled' : 'Disabled',
+                    browser: navigator.userAgent,
+                    timestamp: new Date().toISOString()
+                  };
+                  
+                  console.log('Diagnostics:', diagnostics);
+                  alert(`Diagnostics Results:\n\n${JSON.stringify(diagnostics, null, 2)}`);
                 }}
               >
                 Run Diagnostics
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={() => {
+                  localStorage.clear();
+                  sessionStorage.clear();
+                  alert('Cache cleared! Please refresh the page.');
+                }}
+              >
+                Clear Local Cache
               </Button>
             </div>
           </div>

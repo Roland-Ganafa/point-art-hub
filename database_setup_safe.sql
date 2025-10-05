@@ -355,10 +355,10 @@ CREATE TRIGGER update_gift_daily_sales_updated_at
 -- 8. FINISH
 -- =============================================================================
 
--- Refresh the schema cache
-SELECT pg_notify('pgrst', 'reload schema');
-
 -- Success message (commented out as RAISE NOTICE is not supported in all environments)
 -- Point Art Hub database setup completed successfully!
 -- You can now create your first user through the application sign-up page.
 -- The first user will automatically be assigned admin privileges.
+
+-- Note: Schema cache refresh has been removed due to pg_notify compatibility issues.
+-- You may need to refresh your Supabase dashboard manually after running this script.

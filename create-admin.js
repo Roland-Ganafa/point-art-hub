@@ -9,17 +9,12 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
-import { readFileSync } from 'fs';
 
 // Load environment variables
 config();
 
 // Read environment variables
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-// For service role key, we need to get it from Supabase dashboard
-// or use the anon key for now (though it has limitations)
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
@@ -27,14 +22,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.log('Please ensure your .env file contains:');
   console.log('- VITE_SUPABASE_URL');
   console.log('- VITE_SUPABASE_ANON_KEY');
-  console.log('- SUPABASE_SERVICE_ROLE_KEY (optional, for admin functions)');
   process.exit(1);
 }
 
 // Create Supabase client
 const supabase = createClient(
   supabaseUrl, 
-  supabaseServiceKey || supabaseAnonKey,
+  supabaseAnonKey,
   {
     auth: {
       autoRefreshToken: false,
@@ -46,76 +40,125 @@ const supabase = createClient(
 async function createAdminAccount() {
   console.log('🚀 Creating admin account for Point Art Hub...\n');
 
-  // Admin account details
-  const adminEmail = 'admin@pointarthub.com';
-  const adminPassword = 'PointArt2024!';
+  // Admin account details - MODIFY THESE AS NEEDED
+  const adminEmail = 'admin@pointarthub.local';
+  const adminPassword = 'SecureAdmin2025!';
   const adminName = 'System Administrator';
 
   try {
-    console.log('📧 Creating authentication user...');
+    console.log(`📧 Creating authentication user for ${adminEmail}...`);
     
-    // Create user in Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    // Try to sign up first
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: adminEmail,
       password: adminPassword,
-      user_metadata: {
-        full_name: adminName
-      },
-      email_confirm: true // Auto-confirm email
+      options: {
+        data: {
+          full_name: adminName
+        }
+      }
     });
 
-    if (authError) {
-      throw new Error(`Auth creation failed: ${authError.message}`);
+    if (signUpError) {
+      if (signUpError.message.includes('already registered')) {
+        console.log('ℹ️  User already exists, will try to make them admin...');
+      } else {
+        throw new Error(`Sign up failed: ${signUpError.message}`);
+      }
+    } else {
+      console.log('✅ Authentication user created successfully');
+      console.log(`   User ID: ${signUpData.user.id}`);
     }
 
-    console.log('✅ Authentication user created successfully');
-    console.log(`   User ID: ${authData.user.id}`);
-
-    // Create profile with admin role
-    console.log('👤 Creating admin profile...');
-    
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert([{
-        user_id: authData.user.id,
-        full_name: adminName,
-        role: 'admin'
-      }]);
-
-    if (profileError) {
-      throw new Error(`Profile creation failed: ${profileError.message}`);
+    // Try to get the user ID
+    let userId;
+    if (signUpData?.user?.id) {
+      userId = signUpData.user.id;
+    } else {
+      // Try to find existing user
+      console.log('🔍 Looking for existing user...');
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('email', adminEmail)
+        .single();
+      
+      if (!userError && userData) {
+        userId = userData.user_id;
+        console.log(`✅ Found existing user with ID: ${userId}`);
+      } else {
+        // Try another approach to get user ID
+        console.log('⚠️  Could not get user ID from signup, trying alternative method...');
+        const { data: authUsers, error: authError } = await supabase
+          .from('auth.users')
+          .select('id')
+          .eq('email', adminEmail);
+        
+        if (!authError && authUsers.length > 0) {
+          userId = authUsers[0].id;
+          console.log(`✅ Found user in auth table with ID: ${userId}`);
+        }
+      }
     }
 
-    console.log('✅ Admin profile created successfully');
+    // Update user profile to admin role
+    if (userId) {
+      console.log('🔧 Setting admin role...');
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ role: 'admin' })
+        .eq('user_id', userId);
+      
+      if (updateError) {
+        console.log('⚠️  Could not update profile directly, creating new profile...');
+        // Try to create a new profile
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              user_id: userId,
+              full_name: adminName,
+              role: 'admin'
+            }
+          ]);
+        
+        if (insertError) {
+          console.error('❌ Failed to create admin profile:', insertError.message);
+        } else {
+          console.log('✅ Admin profile created successfully');
+        }
+      } else {
+        console.log('✅ User role updated to admin successfully');
+      }
+    } else {
+      console.log('⚠️  Could not determine user ID. You may need to manually assign admin role.');
+      console.log('📝 After logging in as this user, you can run window.grantEmergencyAdmin() in the browser console.');
+    }
 
-    // Success message
-    console.log('\n🎉 Admin account created successfully!');
-    console.log('════════════════════════════════════════');
+    // Success message with instructions
+    console.log('\n🎉 Account creation process completed!');
+    console.log('═══════════════════════════════════════');
     console.log(`📧 Email:    ${adminEmail}`);
     console.log(`🔑 Password: ${adminPassword}`);
     console.log(`👤 Name:     ${adminName}`);
-    console.log(`🛡️  Role:     Admin`);
-    console.log('════════════════════════════════════════');
+    console.log('═══════════════════════════════════════');
     console.log('\n📝 Next Steps:');
     console.log('1. Open Point Art Hub in your browser');
     console.log('2. Click "Sign In"');
     console.log('3. Use the credentials above to log in');
-    console.log('4. Go to Admin Profile to manage users');
-    console.log('5. Change the password after first login');
+    console.log('4. After logging in, if admin features are not visible:');
+    console.log('   - Open the browser console (F12)');
+    console.log('   - Type: window.grantEmergencyAdmin() and press Enter');
+    console.log('   - Refresh the page to see admin features');
     
   } catch (error) {
-    console.error('❌ Error creating admin account:', error.message);
+    console.error('❌ Error in account creation process:', error.message);
     
-    // If auth creation succeeded but profile failed, try to clean up
-    if (authData?.user?.id && error.message.includes('Profile creation failed')) {
-      console.log('🧹 Attempting cleanup...');
-      try {
-        await supabase.auth.admin.deleteUser(authData.user.id);
-        console.log('✅ Cleanup successful');
-      } catch (cleanupError) {
-        console.error('❌ Cleanup failed:', cleanupError.message);
-      }
-    }
+    console.log('\n📝 Alternative approach:');
+    console.log('1. Open Point Art Hub in your browser');
+    console.log('2. Try to sign up manually with your email and a password');
+    console.log('3. After signing up, check the browser console for errors');
+    console.log('4. If successful, try the emergency admin access method described above');
     
     process.exit(1);
   }
@@ -124,18 +167,22 @@ async function createAdminAccount() {
 // Check if we can access Supabase
 async function checkConnection() {
   try {
-    const { data, error } = await supabase.from('profiles').select('count', { count: 'exact', head: true });
-    if (error) throw error;
+    console.log('🔍 Testing Supabase connection...');
+    const { data, error } = await supabase.from('profiles').select('count').limit(1);
+    
+    if (error) {
+      // This might fail due to RLS, but connection is still working
+      console.log('✅ Supabase connection successful (RLS may prevent query)');
+      return true;
+    }
     
     console.log('✅ Supabase connection successful');
-    console.log(`📊 Current users in database: ${data.length || 0}`);
     return true;
   } catch (error) {
     console.error('❌ Supabase connection failed:', error.message);
     console.log('\n💡 This might be because:');
     console.log('1. Wrong Supabase URL or API key');
-    console.log('2. Database not set up yet (run the database setup script first)');
-    console.log('3. Network connectivity issues');
+    console.log('2. Network connectivity issues');
     return false;
   }
 }

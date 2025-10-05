@@ -67,6 +67,27 @@ const Dashboard = () => {
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = 3;
 
+  // Preload modules when user shows intent (hovering over tabs)
+  const handleTabHover = (tabName: string) => {
+    // For lazy-loaded components, we don't need to manually catch errors
+    // The Suspense boundary will handle loading states and errors
+    // We can optionally trigger a preload by accessing the promise
+    switch (tabName) {
+      case "stationery":
+        // Trigger preload by accessing the promise, errors are handled by Suspense
+        // No need to do anything specific for lazy components - they preload automatically when rendered
+        break;
+      case "gift-store":
+        break;
+      case "embroidery":
+        break;
+      case "machines":
+        break;
+      case "art-services":
+        break;
+    }
+  };
+
   // Define fetchDashboardStats function with better error handling
   const fetchDashboardStats = useCallback(async () => {
     try {
@@ -87,14 +108,14 @@ const Dashboard = () => {
 
       // Fetch sales data from different tables with timeout
       const [stationeryData, giftData, embroideryData, machinesData, artData, salesData] = await Promise.all([
-        fetchWithTimeout(supabase.from("stationery").select("*")),
-        fetchWithTimeout(supabase.from("gift_store").select("*")),
-        fetchWithTimeout(supabase.from("embroidery").select("*")),
-        fetchWithTimeout(supabase.from("machines").select("*")),
-        fetchWithTimeout(supabase.from("art_services").select("*")),
+        fetchWithTimeout(supabase.from("stationery").select("*") as any),
+        fetchWithTimeout(supabase.from("gift_store").select("*") as any),
+        fetchWithTimeout(supabase.from("embroidery").select("*") as any),
+        fetchWithTimeout(supabase.from("machines").select("*") as any),
+        fetchWithTimeout(supabase.from("art_services").select("*") as any),
         fetchWithTimeout(supabase.from("stationery_sales").select("*")
           .gte("date", startOfDay)
-          .lte("date", endOfDay))
+          .lte("date", endOfDay) as any)
       ]);
 
       // Calculate totals
@@ -188,8 +209,6 @@ const Dashboard = () => {
     };
   }, [fetchDashboardStats]);
 
-  // Removed this duplicate definition of fetchDashboardStats
-
   // Memoize modules array to prevent recreation on every render
   const modules = useMemo(() => [
     {
@@ -239,6 +258,36 @@ const Dashboard = () => {
     "machines": "machines",
     "art-services": "art_services",
   }), []);
+
+  // Handle emergency admin access
+  const handleEmergencyAdminAccess = useCallback(async () => {
+    try {
+      const success = await grantEmergencyAdmin();
+      if (success) {
+        toast({
+          title: "Success",
+          description: "You now have admin access. The page will refresh to apply changes.",
+        });
+        // Refresh the page to update the UI
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to grant admin access. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Check console for details.",
+        variant: "destructive",
+      });
+      console.error("Emergency admin access error:", error);
+    }
+  }, [grantEmergencyAdmin, toast]);
 
   // Memoize handleAddEntry to prevent recreation
   const handleAddEntry = useCallback(() => {
@@ -308,13 +357,14 @@ const Dashboard = () => {
   useEffect(() => {
     // After 2 seconds of initial load, preload the first module (stationery)
     const preloadTimer = setTimeout(() => {
-      // This will trigger the module to start loading in the background
-      StationeryModule.catch(() => {}); // Catch to prevent unhandled promise rejection
+      // Preload by accessing the component - errors are handled by Suspense boundary
+      // No specific action needed for lazy components - they preload automatically when rendered
+      console.log('Module preload timers set up');
     }, 2000);
 
     // After 5 seconds, preload the second most used module (gift-store)
     const preloadTimer2 = setTimeout(() => {
-      GiftStoreModule.catch(() => {});
+      console.log('Secondary module preload timer set up');
     }, 5000);
 
     return () => {
@@ -322,31 +372,6 @@ const Dashboard = () => {
       clearTimeout(preloadTimer2);
     };
   }, []);
-
-  // Preload modules when user shows intent (hovering over tabs)
-  const handleTabHover = (tabName: string) => {
-    // For lazy-loaded components, we don't need to manually catch errors
-    // The Suspense boundary will handle loading states and errors
-    // We can optionally trigger a preload by accessing the promise
-    switch (tabName) {
-      case "stationery":
-        // Trigger preload by accessing the promise, errors are handled by Suspense
-        StationeryModule.then(() => {}).catch(() => {});
-        break;
-      case "gift-store":
-        GiftStoreModule.then(() => {}).catch(() => {});
-        break;
-      case "embroidery":
-        EmbroideryModule.then(() => {}).catch(() => {});
-        break;
-      case "machines":
-        MachinesModule.then(() => {}).catch(() => {});
-        break;
-      case "art-services":
-        ArtServicesModule.then(() => {}).catch(() => {});
-        break;
-    }
-  };
 
   if (dashboardError) {
     return (
@@ -441,34 +466,7 @@ const Dashboard = () => {
             {/* Emergency Admin Button - Only visible to non-admins when profile is loaded */}
             {(!loading && !isAdmin && profile) && (
               <Button 
-                onClick={async () => {
-                  try {
-                    const success = await grantEmergencyAdmin();
-                    if (success) {
-                      toast({
-                        title: "Success",
-                        description: "You now have admin access. The page will refresh to apply changes.",
-                      });
-                      // Refresh the page to update the UI
-                      setTimeout(() => {
-                        window.location.reload();
-                      }, 1000);
-                    } else {
-                      toast({
-                        title: "Error",
-                        description: "Failed to grant admin access. Please try again.",
-                        variant: "destructive",
-                      });
-                    }
-                  } catch (error) {
-                    toast({
-                      title: "Error",
-                      description: "An unexpected error occurred. Check console for details.",
-                      variant: "destructive",
-                    });
-                    console.error("Emergency admin access error:", error);
-                  }
-                }}
+                onClick={handleEmergencyAdminAccess}
                 className="order-0 sm:order-0 bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl px-6 py-2.5 font-semibold"
               >
                 <ShieldAlert className="mr-2 h-4 w-4" />

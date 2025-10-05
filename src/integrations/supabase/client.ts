@@ -105,14 +105,28 @@ const customFetch = async (url: string, options: RequestInit = {}) => {
   const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
   
   try {
+    // Ensure proper Content-Type for JSON requests
+    const headers: HeadersInit = {
+      ...options.headers,
+      'apikey': key, // Include the API key
+      'Authorization': `Bearer ${key}`, // Include as Authorization header
+      'X-Client-Info': 'point-art-hub/1.0',
+    };
+    
+    // If we're sending JSON data, make sure Content-Type is set correctly
+    if (options.body && typeof options.body === 'string' && !headers['Content-Type']) {
+      try {
+        JSON.parse(options.body);
+        headers['Content-Type'] = 'application/json';
+      } catch (e) {
+        // Not JSON, don't set Content-Type
+      }
+    }
+    
     const response = await fetch(url, { 
       ...options, 
       signal: controller.signal,
-      // Add headers for better connection handling
-      headers: {
-        ...options.headers,
-        'X-Client-Info': 'point-art-hub/1.0',
-      }
+      headers
     });
     clearTimeout(timeoutId);
     return response;

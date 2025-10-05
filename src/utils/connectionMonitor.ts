@@ -124,6 +124,16 @@ class ConnectionMonitor {
       const timeoutId = setTimeout(() => controller.abort(), this.connectionTimeout);
       
       try {
+        // First check if we have a session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // If no session, we can't test database access
+        if (!session) {
+          console.log('No active session, skipping database connection test');
+          clearTimeout(timeoutId);
+          return true; // Not an error, just no session
+        }
+        
         const { error } = await supabase.from('profiles').select('count').limit(1).maybeSingle();
         clearTimeout(timeoutId);
         

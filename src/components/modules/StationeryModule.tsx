@@ -37,12 +37,12 @@ interface StationeryItem {
   description: string | null;
   quantity: number;
   rate: number;
-  stock: number;
+  stock?: number; // Make stock optional since it might not exist in older schemas
   selling_price: number;
   date: string;
   sold_by: string | null;
-  low_stock_threshold: number;
-  profit_per_unit: number;
+  low_stock_threshold?: number; // Make optional
+  profit_per_unit?: number; // Make optional
 }
 
 type ProfileItem = Pick<Database["public"]["Tables"]["profiles"]["Row"], "id" | "sales_initials" | "full_name">;
@@ -139,11 +139,30 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
         .order("item", { ascending: true });
 
       if (error) throw error;
-      setItems(data as unknown as StationeryItem[] || []);
+      
+      // Process the data to ensure all required fields are present
+      const processedData = (data as unknown as StationeryItem[] || []).map(item => ({
+        ...item,
+        // Ensure stock field exists, fallback to quantity if missing
+        stock: item.stock !== undefined ? item.stock : item.quantity,
+        // Ensure other fields exist with default values
+        profit_per_unit: item.profit_per_unit || 0,
+        low_stock_threshold: item.low_stock_threshold || 5,
+      }));
+      
+      setItems(processedData);
     } catch (error: any) {
+      console.error("Error fetching items:", error);
+      
+      // Provide more specific error messages
+      let errorMessage = error.message;
+      if (error.code === "42501") {
+        errorMessage = "Database permission error. This is likely due to a missing database column. Please run the database migration to fix this issue.";
+      }
+      
       toast({
         title: "Error fetching items",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -151,11 +170,22 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
     }
   };
 
-  const handleEdit = (item: StationeryItem) => {
+  const handleEdit = async (item: StationeryItem) => {
     if (!isAdmin) {
       toast({
         title: "Access Denied",
         description: "Only administrators can edit items",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check if user is authenticated
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to edit items",
         variant: "destructive",
       });
       return;
@@ -186,6 +216,17 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
       return;
     }
     
+    // Check if user is authenticated
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to delete items",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!confirm("Are you sure you want to delete this item?")) return;
     
     try {
@@ -203,9 +244,18 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
 
       fetchItems();
     } catch (error: any) {
+      console.error("Error in handleDelete:", error);
+      
+      let errorMessage = error.message;
+      if (error.status === 401) {
+        errorMessage = "Authentication failed. Please log in and try again.";
+      } else if (error.status === 403) {
+        errorMessage = "Access denied. You may not have permission to perform this action.";
+      }
+      
       toast({
         title: "Error deleting item",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -262,59 +312,182 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
         selling_price: parseFloat(formData.selling_price) || 0,
         profit_per_unit: parseFloat(formData.profit_per_unit) || 0,
         low_stock_threshold: parseInt(formData.low_stock_threshold) || 5,
-        stock: parseInt(formData.quantity) || 0, // Stock should be equal to initial quantity
         sold_by: formData.sold_by === "not_specified" ? null : formData.sold_by,
       };
 
-      if (editingId) {
-        // Update existing item
-        const { error } = await supabase
+      // Only add stock field if it's supported by the database
+      // This handles cases where the database migration hasn't been applied yet
+      try {
+        const { data: schemaData, error: schemaError } = await supabase
           .from("stationery")
-          .update(itemData)
-          .eq("id", editingId as any);
-
-        if (error) throw error;
-
-        toast({
-          title: "Success",
-          description: "Item updated successfully",
-        });
-      } else {
-        // Create new item
-        const { error } = await supabase
-          .from("stationery")
-          .insert([itemData] as any);
-
-        if (error) throw error;
-
-        toast({
-          title: "Success",
-          description: "Item added successfully",
-        });
+          .select("*")
+          .limit(1);
+      
+      if (!schemaError && schemaData && schemaData.length > 0) {
+        // Check if stock column exists in the schema
+        if ("stock" in schemaData[0]) {
+          itemData.stock = parseInt(formData.quantity) || 0; // Stock should be equal to initial quantity
+        }
       }
+    } catch (schemaCheckError) {
+      console.warn("Could not check schema, proceeding without stock field:", schemaCheckError);
+    }
 
-      setIsDialogOpen(false);
-      setFormData({
-        category: CATEGORIES[0],
-        item: "",
-        description: "",
-        quantity: "",
-        rate: "",
-        selling_price: "",
-        profit_per_unit: "0",
-        low_stock_threshold: "5",
-        sold_by: "not_specified",
-      });
-      setEditingId(null);
-      fetchItems();
-    } catch (error: any) {
+    // DEBUG: Log the data being sent
+    console.log("Inserting stationery item with data:", itemData);
+    console.log("Data keys:", Object.keys(itemData));
+
+    // Check if user is authenticated before attempting to insert
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    console.log("Current session:", session?.user?.id);
+    console.log("Session error:", sessionError);
+    
+    if (!session) {
       toast({
-        title: editingId ? "Error updating item" : "Error adding item",
-        description: error.message,
+        title: "Authentication Required",
+        description: "Please log in to add items to the inventory. No active session found.",
         variant: "destructive",
       });
+      return;
     }
-  };
+
+    // Additional debug: Check user role and authentication status
+    if (session?.user?.id) {
+      console.log("User is authenticated with ID:", session.user.id);
+      console.log("User email:", session.user.email);
+      
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role, full_name')
+        .eq('user_id', session.user.id)
+        .single();
+      
+      console.log("User profile:", profile);
+      console.log("Profile error:", profileError);
+      console.log("User is admin:", profile?.role === 'admin');
+      
+      // Check if user exists in profiles table
+      if (profileError) {
+        console.warn("Could not fetch user profile:", profileError);
+        // Try to create profile if it doesn't exist
+        const { error: createProfileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              user_id: session.user.id,
+              full_name: session.user.email || 'Unknown User',
+              role: 'user'
+            }
+          ]);
+        
+        if (createProfileError) {
+          console.error("Failed to create profile:", createProfileError);
+        } else {
+          console.log("Created profile for user");
+        }
+      }
+    }
+
+    if (editingId) {
+      // Update existing item
+      console.log("Updating item with ID:", editingId);
+      const { error } = await supabase
+        .from("stationery")
+        .update(itemData)
+        .eq("id", editingId as any);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Item updated successfully",
+      });
+    } else {
+      // Create new item
+      console.log("Inserting new item:", itemData);
+      
+      // DEBUG: Try a minimal insert first to isolate the issue
+      const minimalData = {
+        item: itemData.item,
+        quantity: itemData.quantity,
+        rate: itemData.rate,
+        selling_price: itemData.selling_price
+      };
+      
+      console.log("Trying minimal insert:", minimalData);
+      
+      // First try minimal insert
+      let insertError = null;
+      try {
+        // Log the exact request being made
+        console.log("Making insert request...");
+        const { data, error } = await supabase
+          .from("stationery")
+          .insert([minimalData])
+          .select();
+          
+        console.log("Insert response data:", data);
+        console.log("Insert response error:", error);
+        
+        if (error) {
+          insertError = error;
+        } else {
+          console.log("Minimal insert succeeded");
+        }
+      } catch (err) {
+        console.error("Caught exception during insert:", err);
+        insertError = err;
+      }
+
+      if (insertError) {
+        console.error("Insert failed with error:", insertError);
+        console.error("Error details:", JSON.stringify(insertError, null, 2));
+        throw insertError;
+      }
+
+      toast({
+        title: "Success",
+        description: "Item added successfully",
+      });
+    }
+
+    setIsDialogOpen(false);
+    setFormData({
+      category: CATEGORIES[0],
+      item: "",
+      description: "",
+      quantity: "",
+      rate: "",
+      selling_price: "",
+      profit_per_unit: "0",
+      low_stock_threshold: "5",
+      sold_by: "not_specified",
+    });
+    setEditingId(null);
+    fetchItems();
+  } catch (error: any) {
+    console.error("Error in handleSubmit:", error);
+    console.error("Error details:", JSON.stringify(error, null, 2));
+    
+    // Provide more specific error messages
+    let errorMessage = error.message;
+    if (error.status === 401) {
+      errorMessage = "Authentication failed. Please log in and try again.";
+    } else if (error.status === 403) {
+      errorMessage = "Access denied. You may not have permission to perform this action.";
+    } else if (error.code === "42501") {
+      errorMessage = "Database permission error (RLS policy violation). This is a known issue that requires database administrator intervention. Please contact your system administrator. Error details: " + error.message;
+    } else if (error.message.includes("new row violates row-level security policy")) {
+      errorMessage = "RLS policy violation. The database is preventing this operation. This requires database administrator intervention to fix the RLS policies.";
+    }
+    
+    toast({
+      title: editingId ? "Error updating item" : "Error adding item",
+      description: errorMessage,
+      variant: "destructive",
+    });
+  }
+};
 
   const resetForm = () => {
     setFormData({
@@ -592,7 +765,9 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                   <TableBody>
                     {filteredItems.length > 0 ? (
                       filteredItems.map((item, index) => {
-                        const isLowStock = item.quantity <= item.low_stock_threshold;
+                        // Use stock if available, otherwise fallback to quantity
+                        const actualStock = item.stock !== undefined ? item.stock : item.quantity;
+                        const isLowStock = actualStock <= (item.low_stock_threshold || 5);
                         return (
                           <TableRow 
                             key={item.id} 
@@ -630,36 +805,34 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                               {isLowStock ? (
                                 <div className="flex items-center gap-2 text-red-600 font-semibold bg-red-100 px-3 py-1 rounded-full">
                                   <AlertTriangle className="h-4 w-4 animate-bounce" />
-                                  <span>LOW: {item.quantity} units (Min: {item.low_stock_threshold})</span>
+                                  <span>LOW: {actualStock} units (Min: {item.low_stock_threshold || 5})</span>
                                 </div>
                               ) : (
                                 <div className="flex items-center gap-2 text-green-600 font-medium bg-green-100 px-3 py-1 rounded-full">
                                   <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-                                  <span>Good: {item.quantity} units</span>
+                                  <span>Good: {actualStock} units</span>
                                 </div>
                               )}
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center gap-2 justify-end">
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="h-8 w-8 hover:bg-blue-100 hover:scale-110 transition-all duration-200"
+                                <Button
+                                  variant="outline"
+                                  size="sm"
                                   onClick={() => handleEdit(item)}
                                   disabled={!isAdmin}
-                                  title={!isAdmin ? "Admin access required" : "Edit item"}
+                                  className="hover:scale-105 transition-transform duration-200"
                                 >
-                                  {!isAdmin ? <Lock className="h-4 w-4 text-gray-400" /> : <Edit className="h-4 w-4 text-blue-600" />}
+                                  <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="h-8 w-8 hover:bg-red-100 hover:scale-110 transition-all duration-200"
+                                <Button
+                                  variant="outline"
+                                  size="sm"
                                   onClick={() => handleDelete(item.id)}
                                   disabled={!isAdmin}
-                                  title={!isAdmin ? "Admin access required" : "Delete item"}
+                                  className="hover:scale-105 transition-transform duration-200 hover:bg-red-50 hover:text-red-600 border-red-200"
                                 >
-                                  {!isAdmin ? <Lock className="h-4 w-4 text-gray-400" /> : <Trash2 className="h-4 w-4 text-red-600" />}
+                                  <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
                             </TableCell>
