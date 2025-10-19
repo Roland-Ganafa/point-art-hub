@@ -522,7 +522,7 @@ const Dashboard = () => {
               onMouseEnter={() => handleTabHover("gift-store")}
             >
               <Gift className="h-4 w-4 mr-2" />
-              <span className="hidden md:inline">Gifts</span>
+              <span className="hidden md:inline">Gift Store</span>
               <span className="md:hidden">Gifts</span>
             </TabsTrigger>
             <TabsTrigger 
@@ -559,12 +559,13 @@ const Dashboard = () => {
         {(isAdmin || profile?.role === 'admin') && (
           <TabsContent value="overview" className="space-y-10 animate-in fade-in-50 duration-500">
             {/* Quick Stats Summary */}
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Quick Stats</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 hover:shadow-xl transition-all duration-300 hover:scale-105 group">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex-1">
-                      <p className="text-green-600 font-semibold text-sm uppercase tracking-wide">Today's Sales</p>
+                      <p className="text-green-600 font-semibold text-sm uppercase tracking-wide">Total Sales</p>
                       <p className="text-3xl font-bold text-green-700 mt-2">UGX {dashboardStats.totalSales.toLocaleString()}</p>
                     </div>
                     <div className="p-3 bg-green-500 rounded-xl group-hover:scale-110 transition-transform duration-300 shadow-lg">
@@ -618,7 +619,7 @@ const Dashboard = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex-1">
-                      <p className="text-purple-600 font-semibold text-sm uppercase tracking-wide">Services</p>
+                      <p className="text-purple-600 font-semibold text-sm uppercase tracking-wide">Services Done</p>
                       <p className="text-3xl font-bold text-purple-700 mt-2">{dashboardStats.servicesDone.toLocaleString()}</p>
                     </div>
                     <div className="p-3 bg-purple-500 rounded-xl group-hover:scale-110 transition-transform duration-300 shadow-lg">
@@ -670,7 +671,7 @@ const Dashboard = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0">
-                              <CardTitle className="text-xl font-bold group-hover:text-blue-600 transition-colors duration-300 truncate">{module.name}</CardTitle>
+                              <CardTitle className="text-xl font-bold group-hover:text-blue-600 transition-colors duration-300 truncate">{module.name} Module</CardTitle>
                               <CardDescription className="text-sm mt-1 group-hover:text-gray-600 transition-colors line-clamp-2">{module.description}</CardDescription>
                             </div>
                             <div className="ml-3 flex-shrink-0">

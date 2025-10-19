@@ -95,7 +95,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', user.id as any)
+        .eq('user_id', user.id)
         .single();
 
       // Determine the role - preserve existing admin role or default to 'user'
@@ -140,7 +140,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
           const { data: existingData, error: fetchError } = await supabase
             .from('profiles')
             .select('*')
-            .eq('user_id', user.id as any)
+            .eq('user_id', user.id)
             .single();
           
           if (!fetchError && existingData) {
@@ -355,7 +355,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
                 supabase
                   .from('profiles')
                   .select('*')
-                  .eq('user_id', session.user.id as any)
+                  .eq('user_id', session.user.id)
                   .single(),
                 // Reduced timeout from 8s to 5s
                 new Promise((_, reject) => 

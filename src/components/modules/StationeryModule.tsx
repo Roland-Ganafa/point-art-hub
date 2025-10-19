@@ -233,7 +233,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
       const { error } = await supabase
         .from("stationery")
         .delete()
-        .eq("id", id as any);
+        .eq("id", id);
 
       if (error) throw error;
 
@@ -394,7 +394,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
       const { error } = await supabase
         .from("stationery")
         .update(itemData)
-        .eq("id", editingId as any);
+        .eq("id", editingId);
 
       if (error) throw error;
 
@@ -561,14 +561,15 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                     className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                   >
                     <Plus className="mr-2 h-4 w-4" />
-                    Add Item
+                    {isDialogOpen ? 'Close' : 'Add Item'}
                   </Button>
                 </DialogTrigger>
-                  <DialogContent className="max-w-md bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
+                  <DialogContent className="max-w-md bg-white/95 backdrop-blur-sm border-0 shadow-2xl" aria-describedby="add-item-desc">
                     <DialogHeader>
                       <DialogTitle className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                        {editingId ? '✏️ Edit Item' : '✨ Add New Item'}
+                        {editingId ? 'Edit Item' : 'Add New Item'}
                       </DialogTitle>
+                      <p id="add-item-desc" className="text-sm text-muted-foreground mt-1">Fill in the item details and submit to save.</p>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
                       <div className="space-y-2">
@@ -721,7 +722,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                           </div>
                         ) : (
                           <div className="flex items-center gap-2">
-                            {editingId ? '✏️ Update Item' : '✨ Add Item'}
+                            {editingId ? 'Update Item' : 'Add Item'}
                           </div>
                         )}
                       </Button>
