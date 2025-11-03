@@ -137,7 +137,7 @@ const Auth = () => {
               Reload Page
             </Button>
           </div>
-          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400 text-center">
+          <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 text-center">
             If you continue experiencing issues, try:
             <ul className="list-disc list-inside mt-2 text-left">
               <li>Using a different browser</li>
@@ -145,7 +145,7 @@ const Auth = () => {
               <li>Disabling browser extensions</li>
               <li>Checking your internet connection</li>
             </ul>
-          </p>
+          </div>
         </div>
       </div>
     );
@@ -236,10 +236,31 @@ const Auth = () => {
       localStorage.setItem('auth_attempt_timestamp', Date.now().toString());
       localStorage.setItem('auth_method', 'standard_login');
       
+      // Clear any existing session data that might be causing conflicts
+      try {
+        const { data: existingSession } = await supabase.auth.getSession();
+        if (existingSession?.session) {
+          console.log("Clearing existing session before login");
+          await supabase.auth.signOut();
+        }
+      } catch (signOutError) {
+        console.log("Error clearing existing session:", signOutError);
+      }
+      
+      // Add a small delay to ensure session is cleared
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 20000);
       
       try {
+        // Log the exact request being made for debugging
+        console.log("Making authentication request with:", {
+          email: email,
+          passwordLength: password.length,
+          timestamp: new Date().toISOString()
+        });
+        
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -249,10 +270,20 @@ const Auth = () => {
         
         if (error) {
           console.error("Sign-in error:", error);
-          setAuthError(`Sign-in failed: ${error.message}`);
+          console.error("Error status:", error.status);
+          console.error("Error message:", error.message);
+          
+          // More specific error handling
+          let errorMessage = error.message;
+          if (error.message.includes('Invalid login credentials')) {
+            errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+          } else if (error.status === 400) {
+            errorMessage = 'Authentication request failed. This might be due to a temporary network issue or browser cache. Please try clearing your browser cache and cookies, then try again.';
+          }
+          setAuthError(`Sign-in failed: ${errorMessage}`);
           toast({
             title: "Error signing in",
-            description: error.message,
+            description: errorMessage,
             variant: "destructive",
           });
         } else if (data?.session) {
@@ -277,15 +308,23 @@ const Auth = () => {
             variant: "destructive",
           });
         } else {
-          throw error;
+          // More detailed error message
+          const errorMessage = error.message || "Connection timeout. Please check your internet connection and try again.";
+          setAuthError(`Sign-in failed: ${errorMessage}`);
+          toast({
+            title: "Sign-in failed",
+            description: errorMessage,
+            variant: "destructive",
+          });
         }
       }
     } catch (error: any) {
       console.error("Sign-in exception:", error);
-      setAuthError(`${error.message}`);
+      const errorMessage = error.message || "An unexpected error occurred. Please try again.";
+      setAuthError(`Sign-in failed: ${errorMessage}`);
       toast({
         title: "Sign-in failed",
-        description: error.message || "Connection timeout. Please check your internet connection and try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -435,7 +474,7 @@ const Auth = () => {
           </summary>
           <div className="p-4">
             <div className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              <p className="mb-2">If you're having trouble with login/signup:</p>
+              <div className="mb-2">If you're having trouble with login/signup:</div>
               <ol className="list-decimal list-inside space-y-1">
                 <li>Check that cookies and local storage are enabled in your browser</li>
                 <li>Ensure you're using a supported browser (Chrome, Firefox, Safari, Edge)</li>

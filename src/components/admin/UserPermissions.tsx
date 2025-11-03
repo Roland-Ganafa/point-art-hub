@@ -10,12 +10,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { 
-  Accordion, 
-  AccordionContent, 
-  AccordionItem, 
-  AccordionTrigger 
-} from "@/components/ui/accordion";
+
 import { 
   Shield, 
   Users, 
@@ -23,13 +18,10 @@ import {
   Package, 
   Settings,
   Eye,
-  Edit,
-  Plus,
-  Trash2
+  CheckCircle,
+  AlertTriangle,
+  ChevronDown
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { logUserAction } from "@/utils/auditLogger";
 
 interface Permission {
   id: string;
@@ -47,8 +39,9 @@ interface UserRole {
 }
 
 const UserPermissions = () => {
-  const { toast } = useToast();
   const [selectedRole, setSelectedRole] = useState("user");
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(["User Management"]);
   const [permissions, setPermissions] = useState<Permission[]>([
     // User Management Permissions
     { id: "view_users", name: "View Users", description: "Can view user profiles and information", category: "User Management", enabled: true },
@@ -138,29 +131,39 @@ const UserPermissions = () => {
 
   const handleSavePermissions = async () => {
     try {
-      // In a real implementation, this would save to a permissions table
-      // For now, we'll just show a success message
-      toast({
-        title: "Permissions Updated",
-        description: `Permissions for ${roleTemplates.find(r => r.id === selectedRole)?.name} role have been updated.`,
+      // Show success message
+      const roleName = roleTemplates.find(r => r.id === selectedRole)?.name;
+      setMessage({ 
+        type: 'success', 
+        text: `Permissions for ${roleName} role have been updated.` 
       });
       
-      // Log the action
-      await logUserAction(
-        null, // In a real implementation, this would be the current user
-        "PERMISSIONS_UPDATED",
-        {
-          role: selectedRole,
-          enabled_permissions: permissions.filter(p => p.enabled).map(p => p.id)
-        }
-      );
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update permissions",
-        variant: "destructive",
+      // In a real implementation, you would:
+      // 1. Save to Supabase permissions table
+      // 2. Log the action with auditLogger
+      // 3. Update user roles in the database
+      
+      console.log('Saving permissions:', {
+        role: selectedRole,
+        enabled_permissions: permissions.filter(p => p.enabled).map(p => p.id)
       });
+      
+      setTimeout(() => setMessage(null), 5000);
+    } catch (error) {
+      setMessage({ 
+        type: 'error', 
+        text: 'Failed to update permissions' 
+      });
+      setTimeout(() => setMessage(null), 5000);
     }
+  };
+
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => 
+      prev.includes(category) 
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
   };
 
   const groupedPermissions = permissions.reduce((acc, permission) => {
@@ -191,6 +194,24 @@ const UserPermissions = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Success/Error Message */}
+        {message && (
+          <div className={`mb-4 p-3 rounded-lg border ${
+            message.type === 'success' 
+              ? 'bg-green-50 border-green-200 text-green-700' 
+              : 'bg-red-50 border-red-200 text-red-700'
+          }`}>
+            <div className="flex items-center gap-2">
+              {message.type === 'success' ? (
+                <CheckCircle className="h-4 w-4" />
+              ) : (
+                <AlertTriangle className="h-4 w-4" />
+              )}
+              <span className="text-sm font-medium">{message.text}</span>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Role Selection */}
           <div className="lg:col-span-1">
@@ -224,45 +245,55 @@ const UserPermissions = () => {
           
           {/* Permissions List */}
           <div className="lg:col-span-2">
-            <Accordion type="multiple" className="w-full">
-              {Object.entries(groupedPermissions).map(([category, perms]) => (
-                <AccordionItem value={category} key={category}>
-                  <AccordionTrigger className="hover:no-underline">
-                    <div className="flex items-center gap-2">
-                      {getPermissionIcon(category)}
-                      <span className="font-medium">{category}</span>
-                      <span className="text-xs text-muted-foreground">
-                        ({perms.filter(p => p.enabled).length}/{perms.length})
-                      </span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="space-y-4 pt-2">
-                      {perms.map(permission => (
-                        <div key={permission.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50">
-                          <Checkbox
-                            id={permission.id}
-                            checked={permission.enabled}
-                            onCheckedChange={(checked) => handlePermissionChange(permission.id, checked as boolean)}
-                          />
-                          <div className="grid gap-1.5">
-                            <Label 
-                              htmlFor={permission.id} 
-                              className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                              {permission.name}
-                            </Label>
-                            <p className="text-sm text-muted-foreground">
-                              {permission.description}
-                            </p>
+            <div className="space-y-2">
+              {Object.entries(groupedPermissions).map(([category, perms]) => {
+                const isExpanded = expandedCategories.includes(category);
+                return (
+                  <div key={category} className="border rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleCategory(category)}
+                      className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        {getPermissionIcon(category)}
+                        <span className="font-medium">{category}</span>
+                        <span className="text-xs text-muted-foreground">
+                          ({perms.filter(p => p.enabled).length}/{perms.length})
+                        </span>
+                      </div>
+                      <ChevronDown 
+                        className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                    
+                    {isExpanded && (
+                      <div className="p-4 space-y-4 bg-white">
+                        {perms.map(permission => (
+                          <div key={permission.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50">
+                            <Checkbox
+                              id={permission.id}
+                              checked={permission.enabled}
+                              onCheckedChange={(checked) => handlePermissionChange(permission.id, checked as boolean)}
+                            />
+                            <div className="grid gap-1.5">
+                              <Label 
+                                htmlFor={permission.id} 
+                                className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
+                                {permission.name}
+                              </Label>
+                              <p className="text-sm text-muted-foreground">
+                                {permission.description}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
             
             <div className="flex justify-end mt-6">
               <Button onClick={handleSavePermissions}>

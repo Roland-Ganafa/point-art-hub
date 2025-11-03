@@ -18,7 +18,6 @@ const DirectLogin = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -29,6 +28,20 @@ const DirectLogin = () => {
       
       // Use localStorage flag to track login attempts
       localStorage.setItem('auth_attempt_timestamp', Date.now().toString());
+      
+      // Clear any existing session data that might be causing conflicts
+      try {
+        const { data: existingSession } = await supabase.auth.getSession();
+        if (existingSession?.session) {
+          console.log("Clearing existing session before fast login");
+          await supabase.auth.signOut();
+        }
+      } catch (signOutError) {
+        console.log("Error clearing existing session:", signOutError);
+      }
+      
+      // Add a small delay to ensure session is cleared
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Implement custom timeout handling for the login request
       const loginPromise = supabase.auth.signInWithPassword({
@@ -56,10 +69,18 @@ const DirectLogin = () => {
       
       if (result && result.error) {
         console.error("Fast Login error:", result.error);
-        setError(result.error.message);
+        console.error("Error status:", result.error.status);
+        console.error("Error message:", result.error.message);
+        
+        let errorMessage = result.error.message;
+        if (result.error.status === 400) {
+          errorMessage = 'Authentication failed. Please try clearing your browser cache and cookies, then try again.';
+        }
+        
+        setError(errorMessage);
         toast({
           title: "Fast Login failed",
-          description: result.error.message,
+          description: errorMessage,
           variant: "destructive",
         });
       } else {
@@ -89,10 +110,11 @@ const DirectLogin = () => {
           variant: "destructive",
         });
       } else {
-        setError(error.message || "An unexpected error occurred");
+        const errorMessage = error.message || "An unexpected error occurred";
+        setError(errorMessage);
         toast({
           title: "Login failed",
-          description: error.message || "An unexpected error occurred",
+          description: errorMessage,
           variant: "destructive",
         });
       }

@@ -51,6 +51,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [useDevelopmentMode, setUseDevelopmentMode] = useState<boolean>(isDevelopmentMode());
+  const [profileLoading, setProfileLoading] = useState<boolean>(false);
 
   useEffect(() => {
     // Check if development mode is enabled
@@ -60,11 +61,13 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   const refreshProfile = useCallback(async () => {
     if (!user) return;
     
+    setProfileLoading(true);
     try {
       // Use mock service if in development mode
       if (useDevelopmentMode) {
         // Since mockAuthService is not available, we'll just return
         console.log("Development mode active but mock service not available");
+        setProfileLoading(false);
         return;
       }
       
@@ -77,14 +80,18 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
       if (error) {
         console.error('Error fetching profile:', error);
+        setProfileLoading(false);
         return;
       }
       
       if (data) {
+        console.log('Profile refreshed:', data);
         setProfile(data);
       }
     } catch (error) {
       console.error('Error in refreshProfile:', error);
+    } finally {
+      setProfileLoading(false);
     }
   }, [user, useDevelopmentMode]);
 
@@ -175,7 +182,45 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         return true;
       }
       
-      // Fix the Content-Type error by ensuring we send proper JSON
+      // First, check if profile exists
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error('Error checking for existing profile:', fetchError);
+        return false;
+      }
+      
+      // If no profile exists, create one
+      if (!existingProfile) {
+        console.log('No profile found, creating one...');
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              user_id: user.id,
+              full_name: user.user_metadata?.full_name || user.email || 'Unknown User',
+              role: 'admin'
+            }
+          ])
+          .select()
+          .single();
+        
+        if (createError) {
+          console.error('Error creating profile:', createError);
+          return false;
+        }
+        
+        console.log('Profile created successfully:', newProfile);
+        await refreshProfile();
+        return true;
+      }
+      
+      // If profile exists, update it to admin
+      console.log('Profile found, updating to admin role...');
       const { data, error } = await supabase
         .from('profiles')
         .update({ role: 'admin' })
@@ -249,6 +294,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
           if (session?.user) {
             // Load profile with retry mechanism
             try {
+              setProfileLoading(true);
               const getProfileWithRetry = async (retries = 3, delay = 1000) => {
                 try {
                   console.log(`Attempt to get profile (${4 - retries}/3)`);
@@ -288,6 +334,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
                 const newProfile = await createProfile(session.user);
                 if (mounted) setProfile(newProfile);
               } else if (existingProfile) {
+                console.log('Setting profile:', existingProfile);
                 setProfile(existingProfile);
               }
             } catch (profileError: any) {
@@ -305,6 +352,8 @@ export const UserProvider = ({ children }: UserProviderProps) => {
                   updated_at: null
                 });
               }
+            } finally {
+              setProfileLoading(false);
             }
           }
         
@@ -351,6 +400,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
           if (session?.user && event === 'SIGNED_IN') {
             // Only fetch profile on sign in, not on every auth change
             try {
+              setProfileLoading(true);
               const { data: existingProfile, error } = await Promise.race([
                 supabase
                   .from('profiles')
@@ -373,6 +423,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
                 const newProfile = await createProfile(session.user);
                 if (mounted) setProfile(newProfile);
               } else if (existingProfile) {
+                console.log('Setting profile from auth listener:', existingProfile);
                 setProfile(existingProfile);
               }
             } catch (profileError) {
@@ -389,6 +440,8 @@ export const UserProvider = ({ children }: UserProviderProps) => {
                   updated_at: null
                 });
               }
+            } finally {
+              setProfileLoading(false);
             }
           } else if (!session?.user) {
             setProfile(null);
@@ -440,6 +493,13 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
   // Enhanced admin check that considers both profile role and emergency access
   const isAdmin = profile?.role === 'admin';
+  
+  // Log admin status for debugging
+  console.log('UserContext - isAdmin:', isAdmin);
+  console.log('UserContext - profile:', profile);
+  console.log('UserContext - user:', user);
+  console.log('UserContext - loading:', loading);
+  console.log('UserContext - profileLoading:', profileLoading);
 
   return (
     <UserContext.Provider
@@ -447,7 +507,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         user,
         profile,
         session,
-        loading,
+        loading: loading || profileLoading,
         isAdmin,
         signOut,
         refreshProfile,

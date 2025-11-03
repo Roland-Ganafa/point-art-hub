@@ -9,12 +9,12 @@
       "type": "image/x-icon"
     },
     {
-      "src": "/point-art-logo-optimized.svg",
+      "src": "/point-art-logo.svg",
       "sizes": "192x192",
       "type": "image/svg+xml"
     },
     {
-      "src": "/point-art-logo-optimized.svg",
+      "src": "/point-art-logo.svg",
       "sizes": "512x512",
       "type": "image/svg+xml"
     }

@@ -34,7 +34,14 @@ self.addEventListener('install', (event) => {
 
 // Fetch event - serve cached content when offline
 self.addEventListener('fetch', (event) => {
-  // Handle API requests
+  // CRITICAL: Never intercept Supabase auth requests - they must go directly to the server
+  if (event.request.url.includes('supabase.co/auth/') || 
+      event.request.url.includes('/auth/v1/')) {
+    // Let Supabase auth requests pass through without any caching or interception
+    return;
+  }
+
+  // Handle API requests (but NOT auth requests)
   if (event.request.url.includes('/api/') || event.request.url.includes('/rest/v1/')) {
     event.respondWith(
       fetch(event.request)

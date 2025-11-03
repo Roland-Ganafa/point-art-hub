@@ -1,156 +1,158 @@
 // Fix Admin Role Script
-// This script will create or update your profile to have admin role
-// Copy and paste this into your browser console
+// Run this in the browser console to fix admin role issues
 
-(async function fixAdminRole() {
-  console.log('🔧 Fixing admin role for user: ganafaroland@gmail.com');
+/**
+ * Diagnose and fix admin role issues for the current user
+ */
+async function diagnoseAndFixAdminRole() {
+  console.log('🔍 Diagnosing admin role issues...');
   
-  // Try to access Supabase client
-  let supabaseClient = null;
-  
-  // Method 1: Try to import the client
-  try {
-    const module = await import('/src/integrations/supabase/client.ts');
-    supabaseClient = module.supabase;
-    console.log('✅ Supabase client imported successfully');
-  } catch (error) {
-    console.log('ℹ️ Could not import Supabase client directly');
+  // Check if Supabase client is available
+  if (!window.supabase) {
+    console.error('❌ Supabase client not available');
+    return false;
   }
   
-  // Method 2: Check if available in window
-  if (!supabaseClient && typeof window !== 'undefined' && window.supabase) {
-    supabaseClient = window.supabase;
-    console.log('✅ Found Supabase client in window object');
+  // Get current user
+  const { data: { user }, error: userError } = await window.supabase.auth.getUser();
+  if (userError || !user) {
+    console.error('❌ Not logged in or error getting user:', userError?.message || 'Not logged in');
+    return false;
   }
   
-  // Method 3: Try to access through the application
-  if (!supabaseClient) {
-    // Try common locations where Supabase might be stored
-    const locations = [
-      window.app?.supabase,
-      window.App?.supabase,
-      window.pointArtHub?.supabase
-    ];
-    
-    for (const location of locations) {
-      if (location) {
-        supabaseClient = location;
-        console.log('✅ Found Supabase client in application');
-        break;
-      }
-    }
+  console.log('✅ Current user:', user.email);
+  
+  // Check if profile exists
+  console.log('🔍 Checking for existing profile...');
+  const { data: profile, error: profileError } = await window.supabase
+    .from('profiles')
+    .select('*')
+    .eq('user_id', user.id)
+    .single();
+  
+  if (profileError && profileError.code !== 'PGRST116') {
+    console.error('❌ Error fetching profile:', profileError.message);
+    return false;
   }
   
-  // If we still don't have Supabase client, provide manual instructions
-  if (!supabaseClient) {
-    console.log('❌ Could not access Supabase client automatically');
-    console.log('📋 Manual steps to fix admin role:');
-    console.log('1. Go to your Supabase dashboard');
-    console.log('2. Open the SQL Editor');
-    console.log('3. Run this query:');
-    console.log(`
--- First, check if profile exists
-SELECT * FROM profiles WHERE user_id = (
-  SELECT id FROM auth.users WHERE email = 'ganafaroland@gmail.com'
-);
-
--- If profile exists, update role
-UPDATE profiles 
-SET role = 'admin' 
-WHERE user_id = (
-  SELECT id FROM auth.users WHERE email = 'ganafaroland@gmail.com'
-);
-
--- If profile doesn't exist, create it
-INSERT INTO profiles (user_id, full_name, role)
-SELECT id, 'Ganafaro Land', 'admin'
-FROM auth.users 
-WHERE email = 'ganafaroland@gmail.com'
-ON CONFLICT (user_id) 
-DO UPDATE SET role = 'admin';
-    `);
-    return;
-  }
-  
-  try {
-    // Get current session
-    const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
-    
-    if (sessionError) {
-      console.error('❌ Session error:', sessionError);
-      return;
-    }
-    
-    if (!session) {
-      console.error('❌ No active session');
-      return;
-    }
-    
-    console.log('📧 Current user:', session.user.email);
-    
-    // Check if profile exists
-    const { data: existingProfile, error: fetchError } = await supabaseClient
+  if (!profile) {
+    console.log('⚠️ No profile found, creating one with admin role...');
+    const { data: newProfile, error: createError } = await window.supabase
       .from('profiles')
-      .select('*')
-      .eq('user_id', session.user.id)
+      .insert([
+        {
+          user_id: user.id,
+          full_name: user.user_metadata?.full_name || user.email || 'Admin User',
+          role: 'admin'
+        }
+      ])
+      .select()
       .single();
     
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('❌ Error fetching profile:', fetchError);
-      // This might be due to RLS policies, try to bypass by removing RLS
-      console.log('💡 This might be due to RLS policies. Try running remove-rls.sql first.');
-      return;
+    if (createError) {
+      console.error('❌ Error creating profile:', createError.message);
+      return false;
     }
     
-    if (existingProfile) {
-      console.log('👤 Existing profile found:', existingProfile);
-      
-      // Update existing profile to admin
-      const { data: updatedProfile, error: updateError } = await supabaseClient
-        .from('profiles')
-        .update({ role: 'admin' })
-        .eq('user_id', session.user.id)
-        .select()
-        .single();
-      
-      if (updateError) {
-        console.error('❌ Error updating profile:', updateError);
-        return;
-      }
-      
-      console.log('✅ Profile updated successfully!');
-      console.log('👤 Updated profile:', updatedProfile);
-    } else {
-      console.log('🆕 No existing profile found, creating new one...');
-      
-      // Create new profile with admin role
-      const { data: newProfile, error: insertError } = await supabaseClient
-        .from('profiles')
-        .insert([
-          {
-            user_id: session.user.id,
-            full_name: session.user.user_metadata?.full_name || session.user.email || 'Ganafaro Land',
-            role: 'admin'
-          }
-        ])
-        .select()
-        .single();
-      
-      if (insertError) {
-        console.error('❌ Error creating profile:', insertError);
-        return;
-      }
-      
-      console.log('✅ New profile created successfully!');
-      console.log('👤 New profile:', newProfile);
-    }
-    
-    console.log('🎉 Admin role has been set!');
-    console.log('🔄 Please refresh the page to see admin features');
-    
-  } catch (error) {
-    console.error('❌ Error in fixAdminRole:', error);
+    console.log('✅ Profile created successfully with admin role:', newProfile);
+    console.log('🔄 Refresh the page to see changes');
+    return true;
   }
-})();
+  
+  console.log('✅ Profile found:', profile);
+  
+  // Check current role
+  if (profile.role === 'admin') {
+    console.log('✅ User is already an admin');
+    return true;
+  }
+  
+  // Update role to admin
+  console.log('🔧 Updating role to admin...');
+  const { data: updatedProfile, error: updateError } = await window.supabase
+    .from('profiles')
+    .update({ role: 'admin' })
+    .eq('user_id', user.id)
+    .select()
+    .single();
+  
+  if (updateError) {
+    console.error('❌ Error updating profile:', updateError.message);
+    return false;
+  }
+  
+  console.log('✅ Profile updated to admin role:', updatedProfile);
+  console.log('🔄 Refresh the page to see changes');
+  return true;
+}
 
-console.log('🚀 Admin role fix script executed. Check results above.');
+/**
+ * Force admin role by first deleting any existing profile and creating a new one
+ */
+async function forceAdminRole() {
+  console.log('🔧 Forcing admin role...');
+  
+  // Check if Supabase client is available
+  if (!window.supabase) {
+    console.error('❌ Supabase client not available');
+    return false;
+  }
+  
+  // Get current user
+  const { data: { user }, error: userError } = await window.supabase.auth.getUser();
+  if (userError || !user) {
+    console.error('❌ Not logged in or error getting user:', userError?.message || 'Not logged in');
+    return false;
+  }
+  
+  console.log('✅ Current user:', user.email);
+  
+  // Delete existing profile if it exists
+  console.log('🗑️ Deleting existing profile (if any)...');
+  const { error: deleteError } = await window.supabase
+    .from('profiles')
+    .delete()
+    .eq('user_id', user.id);
+  
+  if (deleteError) {
+    console.error('❌ Error deleting profile:', deleteError.message);
+    // Continue anyway as the profile might not exist
+  }
+  
+  // Create new profile with admin role
+  console.log('🆕 Creating new profile with admin role...');
+  const fullName = user.user_metadata?.full_name || user.email || 'Admin User';
+  const { data: newProfile, error: createError } = await window.supabase
+    .from('profiles')
+    .insert([
+      {
+        user_id: user.id,
+        full_name: fullName,
+        role: 'admin'
+      }
+    ])
+    .select()
+    .single();
+  
+  if (createError) {
+    console.error('❌ Error creating profile:', createError.message);
+    return false;
+  }
+  
+  console.log('✅ New profile created with admin role:', newProfile);
+  console.log('🔄 Refresh the page to see changes');
+  return true;
+}
+
+// Export functions
+window.diagnoseAndFixAdminRole = diagnoseAndFixAdminRole;
+window.forceAdminRole = forceAdminRole;
+
+console.log('🔧 Admin Role Fix Scripts Loaded!');
+console.log('');
+console.log('Available functions:');
+console.log('  diagnoseAndFixAdminRole() - Diagnose and fix admin role issues');
+console.log('  forceAdminRole() - Force create admin profile (deletes existing first)');
+console.log('');
+console.log('Example usage:');
+console.log('  await diagnoseAndFixAdminRole()');

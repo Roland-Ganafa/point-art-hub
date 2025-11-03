@@ -5,7 +5,6 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import Layout from './components/Layout';
 import Auth from './pages/Auth';
-import BypassAuth from './components/BypassAuth';
 import DirectLogin from './components/DirectLogin';
 import NotFound from './pages/NotFound';
 import './App.css';
@@ -13,6 +12,7 @@ import './App.css';
 // Import pages
 import Index from './pages/Index';
 import Profile from './pages/Profile';
+import AdminProfile from './pages/AdminProfile';
 import CustomerManagement from './pages/CustomerManagement';
 import Reports from './pages/Reports';
 import SalesAnalyticsDashboard from './pages/SalesAnalyticsDashboard';
@@ -33,7 +33,6 @@ function App() {
             <BrowserRouter>
               <Routes>
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/bypass-auth" element={<BypassAuth />} />
                 <Route path="/direct-login" element={<DirectLogin />} />
                 <Route
                   path="/"
@@ -48,6 +47,14 @@ function App() {
                   element={
                     <Layout>
                       <Profile />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <Layout>
+                      <AdminProfile />
                     </Layout>
                   }
                 />

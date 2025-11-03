@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Service Worker - Point Art Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 700px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #f5576c;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .status {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 10px 10px 0;
+            transition: transform 0.2s;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .button-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+        }
+        
+        .alert-info {
+            background: #cfe2ff;
+            border: 2px solid #0d6efd;
+            color: #084298;
+        }
+        
+        .alert-success {
+            background: #d1e7dd;
+            border: 2px solid #198754;
+            color: #0f5132;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Service Worker Fix</h1>
+        <p class="subtitle">Fixing CORS and Authentication Issues</p>
+        
+        <div class="alert alert-warning">
+            <strong>⚠️ Problem Detected:</strong><br>
+            The service worker is blocking Supabase authentication requests, causing CORS errors.
+            This tool will fix the issue by clearing the old service worker.
+        </div>
+        
+        <div>
+            <button onclick="clearServiceWorker()" class="button">Clear Service Worker</button>
+            <button onclick="clearAllCache()" class="button">Clear All Cache</button>
+            <button onclick="fullReset()" class="button-success">Full Reset (Recommended)</button>
+        </div>
+        
+        <div class="status" id="status">
+Waiting for action...
+
+Click "Full Reset" to fix all authentication issues.
+        </div>
+        
+        <div class="alert alert-info" id="next-steps" style="display: none;">
+            <strong>✅ Success!</strong><br>
+            <ol style="margin-left: 20px; margin-top: 10px;">
+                <li>Close this tab</li>
+                <li>Go back to Point Art Hub</li>
+                <li>Hard refresh: Press <strong>Ctrl + Shift + R</strong> (or <strong>Cmd + Shift + R</strong> on Mac)</li>
+                <li>Try logging in again</li>
+            </ol>
+        </div>
+    </div>
+    
+    <script>
+        const statusEl = document.getElementById('status');
+        const nextStepsEl = document.getElementById('next-steps');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const emoji = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            statusEl.textContent += `\n[${timestamp}] ${emoji} ${message}`;
+            statusEl.scrollTop = statusEl.scrollHeight;
+        }
+        
+        async function clearServiceWorker() {
+            log('Starting service worker cleanup...', 'info');
+            
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    log(`Found ${registrations.length} service worker(s)`, 'info');
+                    
+                    for (let registration of registrations) {
+                        const success = await registration.unregister();
+                        if (success) {
+                            log('Service worker unregistered successfully', 'success');
+                        } else {
+                            log('Failed to unregister service worker', 'error');
+                        }
+                    }
+                    
+                    if (registrations.length === 0) {
+                        log('No service workers found', 'info');
+                    }
+                    
+                    log('Service worker cleanup complete!', 'success');
+                    return true;
+                } catch (error) {
+                    log('Error unregistering service worker: ' + error.message, 'error');
+                    return false;
+                }
+            } else {
+                log('Service workers not supported in this browser', 'warning');
+                return false;
+            }
+        }
+        
+        async function clearAllCache() {
+            log('Starting cache cleanup...', 'info');
+            
+            if ('caches' in window) {
+                try {
+                    const cacheNames = await caches.keys();
+                    log(`Found ${cacheNames.length} cache(s)`, 'info');
+                    
+                    for (let cacheName of cacheNames) {
+                        const success = await caches.delete(cacheName);
+                        if (success) {
+                            log(`Deleted cache: ${cacheName}`, 'success');
+                        }
+                    }
+                    
+                    if (cacheNames.length === 0) {
+                        log('No caches found', 'info');
+                    }
+                    
+                    log('Cache cleanup complete!', 'success');
+                    return true;
+                } catch (error) {
+                    log('Error clearing cache: ' + error.message, 'error');
+                    return false;
+                }
+            } else {
+                log('Cache API not supported in this browser', 'warning');
+                return false;
+            }
+        }
+        
+        async function clearLocalStorage() {
+            log('Clearing localStorage...', 'info');
+            try {
+                const itemCount = localStorage.length;
+                localStorage.clear();
+                log(`Cleared ${itemCount} localStorage items`, 'success');
+                return true;
+            } catch (error) {
+                log('Error clearing localStorage: ' + error.message, 'error');
+                return false;
+            }
+        }
+        
+        async function clearSessionStorage() {
+            log('Clearing sessionStorage...', 'info');
+            try {
+                const itemCount = sessionStorage.length;
+                sessionStorage.clear();
+                log(`Cleared ${itemCount} sessionStorage items`, 'success');
+                return true;
+            } catch (error) {
+                log('Error clearing sessionStorage: ' + error.message, 'error');
+                return false;
+            }
+        }
+        
+        async function fullReset() {
+            statusEl.textContent = 'Starting full reset...\n';
+            log('This will clear all service workers, caches, and storage', 'info');
+            log('', 'info');
+            
+            // Step 1: Clear service workers
+            log('Step 1: Clearing service workers...', 'info');
+            await clearServiceWorker();
+            log('', 'info');
+            
+            // Step 2: Clear caches
+            log('Step 2: Clearing all caches...', 'info');
+            await clearAllCache();
+            log('', 'info');
+            
+            // Step 3: Clear localStorage
+            log('Step 3: Clearing localStorage...', 'info');
+            await clearLocalStorage();
+            log('', 'info');
+            
+            // Step 4: Clear sessionStorage
+            log('Step 4: Clearing sessionStorage...', 'info');
+            await clearSessionStorage();
+            log('', 'info');
+            
+            log('═══════════════════════════════════', 'success');
+            log('FULL RESET COMPLETE!', 'success');
+            log('═══════════════════════════════════', 'success');
+            log('', 'info');
+            log('Next steps:', 'info');
+            log('1. Close this tab', 'info');
+            log('2. Hard refresh Point Art Hub (Ctrl+Shift+R)', 'info');
+            log('3. Try logging in again', 'info');
+            
+            nextStepsEl.style.display = 'block';
+            
+            // Optionally redirect after a delay
+            log('', 'info');
+            log('Redirecting to home page in 5 seconds...', 'info');
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 5000);
+        }
+        
+        // Auto-detect if there are service workers or cache issues
+        window.addEventListener('load', async () => {
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                if (registrations.length > 0) {
+                    log(`⚠️ Detected ${registrations.length} active service worker(s)`, 'warning');
+                    log('Click "Full Reset" to fix authentication issues', 'info');
+                }
+            }
+            
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                if (cacheNames.length > 0) {
+                    log(`ℹ️ Found ${cacheNames.length} cache(s)`, 'info');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
