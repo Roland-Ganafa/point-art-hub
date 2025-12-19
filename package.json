@@ -53,24 +53,36 @@
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
+<<<<<<< HEAD
     "@testing-library/react": "^14.3.1",
+=======
+    "@testing-library/react": "^14.1.2",
+>>>>>>> a7aef898cee93f9dc81e7f965f46f94ee1d1d6af
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20.10.5",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
+<<<<<<< HEAD
     "@vitejs/plugin-react": "^4.2.1",
     "@vitejs/plugin-react-swc": "^4.1.0",
+=======
+    "@vitejs/plugin-react": "^4.3.4",
+>>>>>>> a7aef898cee93f9dc81e7f965f46f94ee1d1d6af
     "autoprefixer": "^10.4.16",
     "eslint": "^8.56.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
+<<<<<<< HEAD
     "jsdom": "^23.2.0",
+=======
+    "jsdom": "^24.1.1",
+>>>>>>> a7aef898cee93f9dc81e7f965f46f94ee1d1d6af
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.3",
-    "vite": "^5.0.10",
-    "vitest": "^1.0.4"
+    "vite": "^7.1.10",
+    "vitest": "^2.1.5"
   }
 }
