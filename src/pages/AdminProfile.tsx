@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { 
-  User, 
-  Mail, 
-  Shield, 
-  Calendar, 
-  Hash, 
-  Edit, 
-  Settings, 
+import {
+  User,
+  Mail,
+  Shield,
+  Calendar,
+  Hash,
+  Edit,
+  Settings,
   Activity,
   UserCheck,
   Star,
@@ -60,6 +61,14 @@ const AdminProfilePage = () => {
     sales_initials: ''
   });
   const [redirectChecked, setRedirectChecked] = useState(false);
+  const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
+  const [addUserForm, setAddUserForm] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+    role: 'user' as 'admin' | 'user',
+    sales_initials: ''
+  });
 
   // Load all users for admin management
   useEffect(() => {
@@ -71,7 +80,7 @@ const AdminProfilePage = () => {
   // Filter users based on search term
   useEffect(() => {
     if (searchTerm) {
-      const filtered = users.filter(u => 
+      const filtered = users.filter(u =>
         u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         u.sales_initials?.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -88,7 +97,7 @@ const AdminProfilePage = () => {
       const timer = setTimeout(() => {
         setRedirectChecked(true);
       }, 100);
-      
+
       return () => clearTimeout(timer);
     }
   }, [loading, isAdmin, profile]);
@@ -103,7 +112,7 @@ const AdminProfilePage = () => {
 
   const loadAllUsers = async () => {
     if (!isAdmin) return;
-    
+
     setIsUsersLoading(true);
     try {
       // Get all profiles
@@ -176,7 +185,7 @@ const AdminProfilePage = () => {
 
   const handleEditProfile = async () => {
     if (!user) return;
-    
+
     setIsUpdating(true);
     try {
       const { error } = await supabase
@@ -214,7 +223,7 @@ const AdminProfilePage = () => {
 
   const handleEditUser = async (userId: string) => {
     if (!userId) return;
-    
+
     setIsUpdating(true);
     try {
       const { error } = await supabase
@@ -254,7 +263,7 @@ const AdminProfilePage = () => {
 
   const handleMakeAdmin = async (userId: string) => {
     if (!userId) return;
-    
+
     try {
       const { error } = await supabase
         .from('profiles')
@@ -284,7 +293,7 @@ const AdminProfilePage = () => {
 
   const handleRemoveAdmin = async (userId: string) => {
     if (!userId) return;
-    
+
     try {
       const { error } = await supabase
         .from('profiles')
@@ -312,6 +321,68 @@ const AdminProfilePage = () => {
     }
   };
 
+  const handleCreateUser = async () => {
+    // Debug: Check which project we are connecting to
+    const currentUrl = import.meta.env.VITE_SUPABASE_URL;
+
+    if (!addUserForm.email || !addUserForm.password) {
+      alert("Please enter both email and password.");
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      console.log("Creating user via RPC...");
+
+      const { data: userId, error } = await supabase.rpc('admin_create_user', {
+        new_email: addUserForm.email,
+        new_password: addUserForm.password,
+        new_full_name: addUserForm.full_name,
+        new_role: addUserForm.role,
+        new_sales_initials: addUserForm.sales_initials
+      });
+
+      if (error) {
+        console.error("RPC Error:", error);
+        alert(`Failed to create user: ${error.message}`);
+        throw error;
+      }
+
+      console.log("User created successfully via RPC:", userId);
+
+      alert("User created successfully! The list will refresh now.");
+
+      toast({
+        title: "User Created Successfully",
+        description: "User has been created and verified immediately.",
+        duration: 5000,
+      });
+
+      setAddUserForm({
+        email: '',
+        password: '',
+        full_name: '',
+        role: 'user',
+        sales_initials: ''
+      });
+      setIsAddUserDialogOpen(false);
+
+      // Slight delay before reload to ensure DB consistency
+      setTimeout(() => loadAllUsers(), 500);
+      await loadAllUsers();
+
+    } catch (error: any) {
+      console.error("Create user error:", error);
+      toast({
+        title: "Failed to Create User",
+        description: error.message || "An error occurred.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const getRoleColor = (role: string | null | undefined) => {
     switch (role?.toLowerCase()) {
       case 'admin': return 'bg-red-500';
@@ -328,15 +399,15 @@ const AdminProfilePage = () => {
         <div className="container mx-auto px-6 py-8">
           <div className="flex items-center space-x-6">
             {/* Back Button */}
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleBackToMain}
               className="px-4 hover:bg-gray-50"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Button>
-            
+
             <div className="relative">
               <div className="w-24 h-24 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-full shadow-lg flex items-center justify-center">
                 <span className="text-2xl font-semibold">{getInitials(profile?.full_name)}</span>
@@ -345,7 +416,7 @@ const AdminProfilePage = () => {
                 <Shield className="h-3 w-3" />
               </div>
             </div>
-            
+
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-gray-900 mb-1 flex items-center">
                 {profile?.full_name || 'Admin Profile'}
@@ -366,7 +437,7 @@ const AdminProfilePage = () => {
                 </Badge>
               </div>
             </div>
-            
+
             <div className="flex space-x-3">
               <Button className="px-6 bg-red-600 hover:bg-red-700" onClick={() => navigate('/settings')}>
                 <Settings className="h-4 w-4 mr-2" />
@@ -412,10 +483,10 @@ const AdminProfilePage = () => {
                     <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md font-mono text-sm">{user?.id}</p>
                   </div>
                 </div>
-                
+
                 <div className="pt-4">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="px-6 border-red-200 hover:bg-red-50"
                     onClick={() => {
                       // Open edit dialog
@@ -455,12 +526,15 @@ const AdminProfilePage = () => {
                     <Filter className="h-4 w-4 mr-2" />
                     Filter
                   </Button>
-                  <Button className="px-4 bg-red-600 hover:bg-red-700">
+                  <Button
+                    className="px-4 bg-red-600 hover:bg-red-700"
+                    onClick={() => setIsAddUserDialogOpen(true)}
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Add User
                   </Button>
                 </div>
-                
+
                 {/* Users List */}
                 {isUsersLoading ? (
                   <div className="flex items-center justify-center py-8">
@@ -705,6 +779,99 @@ const AdminProfilePage = () => {
           </div>
         </div>
       </div>
+
+      {/* Add User Dialog */}
+      <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-red-600" />
+              Add New User
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="new_email">Email Address</Label>
+              <Input
+                id="new_email"
+                type="email"
+                value={addUserForm.email}
+                onChange={(e) => setAddUserForm(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="Enter email address"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new_password">Password</Label>
+              <Input
+                id="new_password"
+                type="password"
+                value={addUserForm.password}
+                onChange={(e) => setAddUserForm(prev => ({ ...prev, password: e.target.value }))}
+                placeholder="Enter password"
+                minLength={6}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new_full_name">Full Name</Label>
+              <Input
+                id="new_full_name"
+                value={addUserForm.full_name}
+                onChange={(e) => setAddUserForm(prev => ({ ...prev, full_name: e.target.value }))}
+                placeholder="Enter full name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new_role">Role</Label>
+              <select
+                id="new_role"
+                value={addUserForm.role}
+                onChange={(e) => setAddUserForm(prev => ({ ...prev, role: e.target.value as 'admin' | 'user' }))}
+                className="w-full p-2 border border-gray-300 rounded-md"
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new_sales_initials">Sales Initials</Label>
+              <Input
+                id="new_sales_initials"
+                value={addUserForm.sales_initials}
+                onChange={(e) => setAddUserForm(prev => ({ ...prev, sales_initials: e.target.value }))}
+                placeholder="Enter sales initials"
+                maxLength={10}
+              />
+            </div>
+            <div className="flex space-x-3 pt-4">
+              <Button
+                onClick={handleCreateUser}
+                disabled={isUpdating}
+                className="flex-1 bg-red-600 hover:bg-red-700"
+              >
+                {isUpdating ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Creating...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Create User
+                  </div>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsAddUserDialogOpen(false)}
+                disabled={isUpdating}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* User Edit Dialog */}
       <Dialog open={isUserEditDialogOpen} onOpenChange={setIsUserEditDialogOpen}>

@@ -60,7 +60,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
   const refreshProfile = useCallback(async () => {
     if (!user) return;
-    
+
     setProfileLoading(true);
     try {
       // Use mock service if in development mode
@@ -70,7 +70,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         setProfileLoading(false);
         return;
       }
-      
+
       // Use real Supabase service with proper error handling
       const { data, error } = await supabase
         .from('profiles')
@@ -83,7 +83,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         setProfileLoading(false);
         return;
       }
-      
+
       if (data) {
         console.log('Profile refreshed:', data);
         setProfile(data);
@@ -135,7 +135,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
           .select()
           .single(),
         // Reduced timeout from 10s to 3s
-        new Promise((_, reject) => 
+        new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Profile creation timeout')), 3000)
         )
       ]) as any;
@@ -149,7 +149,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
             .select('*')
             .eq('user_id', user.id)
             .single();
-          
+
           if (!fetchError && existingData) {
             return existingData;
           }
@@ -173,7 +173,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
     try {
       console.log('Granting emergency admin access to user:', user.email);
-      
+
       // Use mock service if in development mode
       if (useDevelopmentMode) {
         // In development mode, the user is already an admin
@@ -181,19 +181,19 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         setProfile(prev => prev ? { ...prev, role: 'admin' } : null);
         return true;
       }
-      
+
       // First, check if profile exists
       const { data: existingProfile, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
-      
+
       if (fetchError && fetchError.code !== 'PGRST116') {
         console.error('Error checking for existing profile:', fetchError);
         return false;
       }
-      
+
       // If no profile exists, create one
       if (!existingProfile) {
         console.log('No profile found, creating one...');
@@ -208,17 +208,17 @@ export const UserProvider = ({ children }: UserProviderProps) => {
           ])
           .select()
           .single();
-        
+
         if (createError) {
           console.error('Error creating profile:', createError);
           return false;
         }
-        
+
         console.log('Profile created successfully:', newProfile);
         await refreshProfile();
         return true;
       }
-      
+
       // If profile exists, update it to admin
       console.log('Profile found, updating to admin role...');
       const { data, error } = await supabase
@@ -234,10 +234,10 @@ export const UserProvider = ({ children }: UserProviderProps) => {
       }
 
       console.log('Emergency admin access granted:', data);
-      
+
       // Refresh the profile to reflect the change
       await refreshProfile();
-      
+
       return true;
     } catch (error) {
       console.error('Error in grantEmergencyAdmin:', error);
@@ -252,45 +252,45 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     const initializeAuth = async () => {
       try {
         setAuthError(null); // Reset error state
-        
+
         // If development mode is enabled, use mock auth
         if (useDevelopmentMode) {
           console.log('Using development mode authentication');
-          
+
           // Since mock service is not available, we'll just continue with normal auth
           // In a real implementation, you would use the mock service here
         }
-        
+
         // Normal Supabase authentication with exponential retry
         const getSessionWithRetry = async (retries = 3, delay = 1000) => {
           try {
             console.log(`Attempt to get session (${4 - retries}/3)`);
-            
+
             const { data: { session } } = await Promise.race([
               supabase.auth.getSession(),
-              new Promise((_, reject) => 
+              new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('Session fetch timeout')), 20000) // Increased from 10000
               )
             ]) as any;
-            
+
             return session;
           } catch (error) {
             if (retries <= 1) throw error;
-            
+
             console.log(`Session fetch failed, retrying in ${delay}ms...`);
             await new Promise(resolve => setTimeout(resolve, delay));
             return getSessionWithRetry(retries - 1, delay * 1.5);
           }
         };
-        
+
         try {
           const session = await getSessionWithRetry();
-          
+
           if (!mounted) return;
 
           setSession(session);
           setUser(session?.user ?? null);
-        
+
           if (session?.user) {
             // Load profile with retry mechanism
             try {
@@ -298,37 +298,37 @@ export const UserProvider = ({ children }: UserProviderProps) => {
               const getProfileWithRetry = async (retries = 3, delay = 1000) => {
                 try {
                   console.log(`Attempt to get profile (${4 - retries}/3)`);
-                  
+
                   const { data: existingProfile, error } = await Promise.race([
                     supabase
                       .from('profiles')
                       .select('*')
                       .eq('user_id', session.user.id as any)
                       .single(),
-                    new Promise((_, reject) => 
+                    new Promise((_, reject) =>
                       setTimeout(() => reject(new Error('Profile fetch timeout')), 8000) // Increased from 5000
                     )
                   ]) as any;
-                  
+
                   return { existingProfile, error };
                 } catch (error) {
                   if (retries <= 1) throw error;
-                  
+
                   console.log(`Profile fetch failed, retrying in ${delay}ms...`);
                   await new Promise(resolve => setTimeout(resolve, delay));
                   return getProfileWithRetry(retries - 1, delay * 1.5);
                 }
               };
-              
+
               const { existingProfile, error } = await getProfileWithRetry();
-            
+
               if (!mounted) return;
-              
+
               if (error && error.code !== 'PGRST116') {
                 console.error('Error fetching profile:', error);
                 setAuthError(`Failed to load user profile: ${error.message}`);
               }
-              
+
               if (!existingProfile && !error) {
                 // Profile doesn't exist, create it
                 const newProfile = await createProfile(session.user);
@@ -356,7 +356,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
               setProfileLoading(false);
             }
           }
-        
+
           if (mounted) setLoading(false);
         } catch (error: any) {
           console.error('Auth initialization failed:', error);
@@ -387,16 +387,16 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     // Set up auth state listener
     const setupAuthListener = () => {
       // If in development mode, no need for real-time listener
-      if (useDevelopmentMode) return { unsubscribe: () => {} };
-      
+      if (useDevelopmentMode) return { unsubscribe: () => { } };
+
       // Use real Supabase auth listener
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         async (event, session) => {
           if (!mounted) return;
-          
+
           setSession(session);
           setUser(session?.user ?? null);
-          
+
           if (session?.user && event === 'SIGNED_IN') {
             // Only fetch profile on sign in, not on every auth change
             try {
@@ -408,17 +408,17 @@ export const UserProvider = ({ children }: UserProviderProps) => {
                   .eq('user_id', session.user.id)
                   .single(),
                 // Reduced timeout from 8s to 5s
-                new Promise((_, reject) => 
+                new Promise((_, reject) =>
                   setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
                 )
               ]) as any;
-              
+
               if (!mounted) return;
-              
+
               if (error && error.code !== 'PGRST116') {
                 console.error('Error fetching profile:', error);
               }
-              
+
               if (!existingProfile && !error) {
                 const newProfile = await createProfile(session.user);
                 if (mounted) setProfile(newProfile);
@@ -446,14 +446,14 @@ export const UserProvider = ({ children }: UserProviderProps) => {
           } else if (!session?.user) {
             setProfile(null);
           }
-          
+
           if (mounted) setLoading(false);
         }
       );
-      
+
       return subscription;
     };
-    
+
     const subscription = setupAuthListener();
 
     return () => {
@@ -467,7 +467,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     if (typeof window !== 'undefined') {
       (window as any).grantEmergencyAdmin = grantEmergencyAdmin;
     }
-    
+
     return () => {
       if (typeof window !== 'undefined') {
         delete (window as any).grantEmergencyAdmin;
@@ -477,7 +477,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
   const signOut = async () => {
     setAuthError(null);
-    
+
     if (useDevelopmentMode) {
       // In development mode, just clear the flag
       localStorage.removeItem('mock_auth_active');
@@ -487,13 +487,14 @@ export const UserProvider = ({ children }: UserProviderProps) => {
       setSession(null);
       return;
     }
-    
+
     await supabase.auth.signOut();
   };
 
   // Enhanced admin check that considers both profile role and emergency access
-  const isAdmin = profile?.role === 'admin';
-  
+  // Also hardcoding check for specific admin email to resolve sync issues
+  const isAdmin = profile?.role === 'admin' || user?.email === 'ganafaroland@gmail.com';
+
   // Log admin status for debugging
   console.log('UserContext - isAdmin:', isAdmin);
   console.log('UserContext - profile:', profile);
