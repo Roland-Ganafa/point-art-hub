@@ -24,6 +24,7 @@ interface GiftStoreItem {
   item: string;
   category: string;
   custom_category: string | null;
+  description: string | null;
   quantity: number;
   rate: number;
   stock?: number;
@@ -47,6 +48,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
     item: "",
     category: "kids_toys",
     custom_category: "",
+    description: "",
     quantity: "",
     rate: "",
     selling_price: "",
@@ -57,7 +59,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
   const { isAdmin, profile } = useUser();
 
   // Filter items based on search
-  const filteredItems = items.filter(item => 
+  const filteredItems = items.filter(item =>
     item.item.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.custom_category && item.custom_category.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -112,7 +114,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
           profit_per_unit: (item as any).profit_per_unit !== undefined ? (item as any).profit_per_unit : undefined,
           low_stock_threshold: (item as any).low_stock_threshold !== undefined ? (item as any).low_stock_threshold : undefined,
         })) || [];
-        
+
         setItems(processedData);
       }
     } catch (error: any) {
@@ -186,12 +188,13 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
       });
       return;
     }
-    
+
     setEditingId(item.id);
     setFormData({
       item: item.item,
       category: item.category,
       custom_category: item.custom_category || "",
+      description: item.description || "",
       quantity: item.quantity.toString(),
       rate: item.rate.toString(),
       selling_price: item.selling_price !== undefined ? item.selling_price.toString() : "",
@@ -209,9 +212,9 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
       });
       return;
     }
-    
+
     if (!confirm("Are you sure you want to delete this item?")) return;
-    
+
     try {
       const { error } = await supabase
         .from("gift_store")
@@ -237,16 +240,16 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     console.log("=== GIFT STORE FORM SUBMISSION ===");
     console.log("Form data before validation:", formData);
     console.log("User profile:", profile);
     console.log("Is admin:", isAdmin);
-    
+
     const isValid = validateForm();
     console.log("Form validation result:", isValid);
     console.log("Form errors:", formErrors);
-    
+
     if (!isValid) {
       toast({
         title: "Validation Error",
@@ -260,6 +263,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
       // Prepare item data, handling optional fields
       const itemData: any = {
         item: formData.item,
+        description: formData.description,
         category: formData.category as "cleaning" | "kids_toys" | "birthday" | "custom",
         quantity: parseInt(formData.quantity),
         rate: parseFloat(formData.rate),
@@ -305,7 +309,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
         itemData.custom_category = null;
         console.log("Set custom_category to null for non-custom category");
       }
-      
+
       if (formData.selling_price) {
         const sellingPrice = parseFloat(formData.selling_price);
         itemData.selling_price = sellingPrice;
@@ -323,7 +327,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
           profit_per_unit: itemData.profit_per_unit
         });
       }
-      
+
       // Handle low_stock_threshold - set to default 5 if not provided
       if (formData.low_stock_threshold && formData.low_stock_threshold !== "") {
         itemData.low_stock_threshold = parseInt(formData.low_stock_threshold);
@@ -401,6 +405,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
         item: "",
         category: "kids_toys",
         custom_category: "",
+        description: "",
         quantity: "",
         rate: "",
         selling_price: "",
@@ -426,6 +431,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
       item: "",
       category: "kids_toys",
       custom_category: "",
+      description: "",
       quantity: "",
       rate: "",
       selling_price: "",
@@ -440,15 +446,15 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
     <div className="space-y-8 p-6">
       <Tabs defaultValue="inventory" className="space-y-8">
         <TabsList className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-1 shadow-lg">
-          <TabsTrigger 
-            value="inventory" 
+          <TabsTrigger
+            value="inventory"
             className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <ShoppingCart className="h-4 w-4" />
             Inventory
           </TabsTrigger>
-          <TabsTrigger 
-            value="daily-sales" 
+          <TabsTrigger
+            value="daily-sales"
             className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <TrendingUp className="h-4 w-4" />
@@ -475,20 +481,20 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              
+
               <ExportDialog
                 data={items}
                 type="gift_store"
                 moduleTitle="Gift Store Inventory"
                 disabled={items.length === 0}
               />
-              
+
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 setIsDialogOpen(open);
                 if (!open) resetForm();
               }}>
                 <DialogTrigger asChild>
-                  <Button 
+                  <Button
                     onClick={resetForm}
                     className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                   >
@@ -505,9 +511,9 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
                       <Label className="font-medium">Category *</Label>
-                      <Select 
-                        value={formData.category} 
-                        onValueChange={(value) => setFormData({ ...formData, category: value })} 
+                      <Select
+                        value={formData.category}
+                        onValueChange={(value) => setFormData({ ...formData, category: value })}
                         required
                       >
                         <SelectTrigger className={`border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200 ${formErrors.category ? "border-red-500 focus:border-red-500" : ""}`}>
@@ -521,7 +527,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                       </Select>
                       {formErrors.category && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{formErrors.category}</span>}
                     </div>
-                    
+
                     {formData.category === "custom" && (
                       <div className="space-y-2">
                         <Label className="font-medium">Custom Category *</Label>
@@ -534,7 +540,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                         {formErrors.custom_category && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{formErrors.custom_category}</span>}
                       </div>
                     )}
-                    
+
                     <div className="space-y-2">
                       <Label className="font-medium">Item Name *</Label>
                       <Input
@@ -545,7 +551,16 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                       />
                       {formErrors.item && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{formErrors.item}</span>}
                     </div>
-                    
+
+                    <div className="space-y-2">
+                      <Label className="font-medium">Description</Label>
+                      <Input
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
+                      />
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="font-medium">Quantity *</Label>
@@ -573,7 +588,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                         {formErrors.rate && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-33 w-3" />{formErrors.rate}</span>}
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="font-medium">Selling Price (UGX) *</Label>
@@ -594,14 +609,14 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                           Profit/Unit (UGX)
                         </Label>
                         <Input
-                          value={formData.selling_price && formData.rate ? 
+                          value={formData.selling_price && formData.rate ?
                             (parseFloat(formData.selling_price) - parseFloat(formData.rate)).toFixed(2) : "0"}
                           disabled
                           className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 font-medium"
                         />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label className="font-medium">Low Stock Threshold</Label>
                       <Input
@@ -613,10 +628,10 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                       />
                       {formErrors.low_stock_threshold && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{formErrors.low_stock_threshold}</span>}
                     </div>
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl" 
+
+                    <Button
+                      type="submit"
+                      className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl"
                       disabled={isLoading}
                     >
                       {isLoading ? (
@@ -676,15 +691,14 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                         const lowStockThreshold = item.low_stock_threshold !== undefined ? item.low_stock_threshold : 5;
                         const isLowStock = stock !== null && stock <= lowStockThreshold;
                         const profit = sellingPrice !== null && item.rate ? sellingPrice - item.rate : null;
-                        
+
                         return (
-                          <TableRow 
-                            key={item.id} 
-                            className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 ${
-                              isLowStock 
-                                ? "bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 border-l-4 border-red-400" 
+                          <TableRow
+                            key={item.id}
+                            className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 ${isLowStock
+                                ? "bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 border-l-4 border-red-400"
                                 : "hover:from-green-50 hover:to-emerald-50"
-                            }`}
+                              }`}
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
                             <TableCell className="font-medium">
@@ -694,7 +708,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                               </div>
                             </TableCell>
                             <TableCell className="font-semibold text-gray-800">{item.item}</TableCell>
-                            <TableCell className="text-gray-600">{item.category === "custom" ? item.custom_category : "-"}</TableCell>
+                            <TableCell className="text-gray-600">{item.description || item.custom_category || "-"}</TableCell>
                             <TableCell className="font-medium">{item.quantity}</TableCell>
                             <TableCell className="font-medium text-blue-600">{formatUGX(item.rate)}</TableCell>
                             <TableCell className="font-medium text-green-600">{formatUGX(item.quantity * item.rate)}</TableCell>
@@ -723,9 +737,9 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center gap-2 justify-end">
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   className="h-8 w-8 hover:bg-blue-100 hover:scale-110 transition-all duration-200"
                                   onClick={() => handleEdit(item)}
                                   disabled={!isAdmin}
@@ -733,9 +747,9 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                                 >
                                   {!isAdmin ? <Lock className="h-4 w-4 text-gray-400" /> : <Edit className="h-4 w-4 text-blue-600" />}
                                 </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   className="h-8 w-8 hover:bg-red-100 hover:scale-110 transition-all duration-200"
                                   onClick={() => handleDelete(item.id)}
                                   disabled={!isAdmin}
