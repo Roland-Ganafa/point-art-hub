@@ -86,7 +86,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
       if (data) {
         console.log('Profile refreshed:', data);
-        setProfile(data);
+        setProfile(data as Profile); // Cast to Profile
       }
     } catch (error) {
       console.error('Error in refreshProfile:', error);

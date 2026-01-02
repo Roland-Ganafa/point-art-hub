@@ -5,7 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog';
 import {
   User,
   Mail,
@@ -70,6 +78,8 @@ const AdminProfilePage = () => {
     sales_initials: ''
   });
 
+
+
   // Load all users for admin management
   useEffect(() => {
     if (isAdmin) {
@@ -111,22 +121,38 @@ const AdminProfilePage = () => {
   }, [redirectChecked, isAdmin, navigate]);
 
   const loadAllUsers = async () => {
-    if (!isAdmin) return;
+    console.log('=== loadAllUsers called ===');
+    console.log('isAdmin:', isAdmin);
+    console.log('user:', user);
+    console.log('profile:', profile);
+
+    if (!isAdmin) {
+      console.error('❌ User is not admin, cannot load users');
+      return;
+    }
 
     setIsUsersLoading(true);
     try {
+      console.log('📡 Fetching all profiles from Supabase...');
+
       // Get all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (profilesError) throw profilesError;
+      console.log('📊 Query result:', { profiles, profilesError });
 
-      setUsers(profiles);
-      setFilteredUsers(profiles);
+      if (profilesError) {
+        console.error('❌ Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
+
+      console.log(`✅ Successfully fetched ${profiles?.length || 0} profiles`);
+      setUsers((profiles || []) as UserProfile[]);
+      setFilteredUsers((profiles || []) as UserProfile[]);
     } catch (error) {
-      console.error('Error loading users:', error);
+      console.error('💥 Error loading users:', error);
       toast({
         title: "Error Loading Users",
         description: "There was an error loading the user list. Please try again.",
@@ -782,120 +808,63 @@ const AdminProfilePage = () => {
 
       {/* Add User Dialog */}
       <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5 text-red-600" />
-              Add New User
-            </DialogTitle>
+            <DialogTitle>Add New User</DialogTitle>
+            <DialogDescription>
+              To ensure security and proper password hashing, new users should register themselves.
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label htmlFor="new_email">Email Address</Label>
-              <Input
-                id="new_email"
-                type="email"
-                value={addUserForm.email}
-                onChange={(e) => setAddUserForm(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="Enter email address"
-              />
+
+          <div className="py-4 space-y-4">
+            <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
+              <h4 className="font-semibold text-blue-900 mb-2">How to add a user:</h4>
+              <ol className="list-decimal list-inside space-y-2 text-blue-800 text-sm">
+                <li>Logout of your admin account</li>
+                <li>Click <strong>"Sign Up"</strong> on the login page</li>
+                <li>Create the new account with their email & password</li>
+                <li>Log back in as Admin</li>
+                <li>The new user will appear in this list</li>
+                <li>Click <strong>"Make Admin"</strong> if they need admin access</li>
+              </ol>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="new_password">Password</Label>
-              <Input
-                id="new_password"
-                type="password"
-                value={addUserForm.password}
-                onChange={(e) => setAddUserForm(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="Enter password"
-                minLength={6}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="new_full_name">Full Name</Label>
-              <Input
-                id="new_full_name"
-                value={addUserForm.full_name}
-                onChange={(e) => setAddUserForm(prev => ({ ...prev, full_name: e.target.value }))}
-                placeholder="Enter full name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="new_role">Role</Label>
-              <select
-                id="new_role"
-                value={addUserForm.role}
-                onChange={(e) => setAddUserForm(prev => ({ ...prev, role: e.target.value as 'admin' | 'user' }))}
-                className="w-full p-2 border border-gray-300 rounded-md"
-              >
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="new_sales_initials">Sales Initials</Label>
-              <Input
-                id="new_sales_initials"
-                value={addUserForm.sales_initials}
-                onChange={(e) => setAddUserForm(prev => ({ ...prev, sales_initials: e.target.value }))}
-                placeholder="Enter sales initials"
-                maxLength={10}
-              />
-            </div>
-            <div className="flex space-x-3 pt-4">
-              <Button
-                onClick={handleCreateUser}
-                disabled={isUpdating}
-                className="flex-1 bg-red-600 hover:bg-red-700"
-              >
-                {isUpdating ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Creating...
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    Create User
-                  </div>
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setIsAddUserDialogOpen(false)}
-                disabled={isUpdating}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
+
+            <div className="text-sm text-gray-500">
+              This process ensures that user passwords are securely handled by Supabase Auth and never exposed.
             </div>
           </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddUserDialogOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* User Edit Dialog */}
+      {/* Edit User Dialog */}
       <Dialog open={isUserEditDialogOpen} onOpenChange={setIsUserEditDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Edit className="h-5 w-5 text-red-600" />
-              Edit User Information
+              Edit User Profile
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="user_full_name">Full Name</Label>
+              <Label htmlFor="edit_full_name">Full Name</Label>
               <Input
-                id="user_full_name"
+                id="edit_full_name"
                 value={userEditForm.full_name}
                 onChange={(e) => setUserEditForm(prev => ({ ...prev, full_name: e.target.value }))}
                 placeholder="Enter full name"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="user_role">Role</Label>
+              <Label htmlFor="edit_role">Role</Label>
               <select
-                id="user_role"
+                id="edit_role"
                 value={userEditForm.role}
                 onChange={(e) => setUserEditForm(prev => ({ ...prev, role: e.target.value as 'admin' | 'user' }))}
                 className="w-full p-2 border border-gray-300 rounded-md"
@@ -905,43 +874,28 @@ const AdminProfilePage = () => {
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="user_sales_initials">Sales Initials</Label>
+              <Label htmlFor="edit_sales_initials">Sales Initials</Label>
               <Input
-                id="user_sales_initials"
+                id="edit_sales_initials"
                 value={userEditForm.sales_initials}
                 onChange={(e) => setUserEditForm(prev => ({ ...prev, sales_initials: e.target.value }))}
                 placeholder="Enter sales initials"
                 maxLength={10}
               />
             </div>
-            <div className="flex space-x-3 pt-4">
-              <Button
-                onClick={() => selectedUser && handleEditUser(selectedUser.user_id)}
-                disabled={isUpdating}
-                className="flex-1 bg-red-600 hover:bg-red-700"
-              >
-                {isUpdating ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Saving...
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Save className="h-4 w-4" />
-                    Save Changes
-                  </div>
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setIsUserEditDialogOpen(false)}
-                disabled={isUpdating}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-            </div>
           </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsUserEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => selectedUser && handleEditUser(selectedUser.user_id)}
+              disabled={isUpdating}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isUpdating ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

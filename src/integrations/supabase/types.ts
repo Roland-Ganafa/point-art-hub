@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -19,57 +19,60 @@ export type Database = {
           balance: number | null
           created_at: string | null
           date: string
-          deposit: number
+          deposit: number | null
           description: string | null
           done_by: string | null
           expenditure: number
           id: string
           profit: number | null
           quantity: number
-          quotation: number
+          quotation: number | null
           rate: number
           sales: number | null
           service_name: string
           updated_at: string | null
+          updated_by: string | null
         }
         Insert: {
           balance?: number | null
           created_at?: string | null
           date?: string
-          deposit?: number
+          deposit?: number | null
           description?: string | null
           done_by?: string | null
           expenditure?: number
           id?: string
           profit?: number | null
           quantity?: number
-          quotation?: number
+          quotation?: number | null
           rate: number
           sales?: number | null
           service_name: string
           updated_at?: string | null
+          updated_by?: string | null
         }
         Update: {
           balance?: number | null
           created_at?: string | null
           date?: string
-          deposit?: number
+          deposit?: number | null
           description?: string | null
           done_by?: string | null
           expenditure?: number
           id?: string
           profit?: number | null
           quantity?: number
-          quotation?: number
+          quotation?: number | null
           rate?: number
           sales?: number | null
           service_name?: string
           updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "art_services_done_by_fkey"
-            columns: ["done_by"]
+            foreignKeyName: "art_services_updated_by_fkey"
+            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -78,110 +81,48 @@ export type Database = {
       }
       embroidery: {
         Row: {
-          balance: number | null
-          created_at: string | null
-          date: string
-          deposit: number
-          done_by: string | null
-          expenditure: number
-          id: string
-          job_description: string
-          profit: number | null
-          quantity: number
-          quotation: number
-          rate: number | null
-          sales: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          balance?: number | null
-          created_at?: string | null
-          date?: string
-          deposit?: number
-          done_by?: string | null
-          expenditure?: number
-          id?: string
-          job_description: string
-          profit?: number | null
-          quantity?: number
-          quotation: number
-          rate?: number | null
-          sales?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          balance?: number | null
-          created_at?: string | null
-          date?: string
-          deposit?: number
-          done_by?: string | null
-          expenditure?: number
-          id?: string
-          job_description?: string
-          profit?: number | null
-          quantity?: number
-          quotation?: number
-          rate?: number | null
-          sales?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "embroidery_done_by_fkey"
-            columns: ["done_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      gift_daily_sales: {
-        Row: {
-          bpx: number
-          code: string | null
-          created_at: string | null
+          customer_name: string | null
           date: string
           description: string | null
           id: string
-          item: string
+          item_name: string
+          phone_number: string | null
           quantity: number
-          sold_by: string | null
-          spx: number
-          unit: string
+          total_amount: number
+          unit_price: number
           updated_at: string | null
+          updated_by: string | null
         }
         Insert: {
-          bpx: number
-          code?: string | null
-          created_at?: string | null
+          customer_name?: string | null
           date?: string
           description?: string | null
           id?: string
-          item: string
-          quantity?: number
-          sold_by?: string | null
-          spx: number
-          unit?: string
+          item_name: string
+          phone_number?: string | null
+          quantity: number
+          total_amount: number
+          unit_price: number
           updated_at?: string | null
+          updated_by?: string | null
         }
         Update: {
-          bpx?: number
-          code?: string | null
-          created_at?: string | null
+          customer_name?: string | null
           date?: string
           description?: string | null
           id?: string
-          item?: string
+          item_name?: string
+          phone_number?: string | null
           quantity?: number
-          sold_by?: string | null
-          spx?: number
-          unit?: string
+          total_amount?: number
+          unit_price?: number
           updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "gift_daily_sales_sold_by_fkey"
-            columns: ["sold_by"]
+            foreignKeyName: "embroidery_updated_by_fkey"
+            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -190,60 +131,61 @@ export type Database = {
       }
       gift_store: {
         Row: {
-          category: Database["public"]["Enums"]["gift_category"]
+          buying_price: number
+          category: string
+          category_id: string | null
           created_at: string | null
-          custom_category: string | null
           date: string
+          description: string | null
           id: string
           item: string
-          low_stock_threshold: number
-          profit_per_unit: number | null
+          profit: number | null
           quantity: number
-          rate: number
-          sales: number | null
-          selling_price: number | null
-          sold_by: string | null
-          stock: number | null
-          updated_at: string | null
+          selling_price: number
+          status: string | null
+          updated_by: string | null
         }
         Insert: {
-          category?: Database["public"]["Enums"]["gift_category"]
+          buying_price: number
+          category: string
+          category_id?: string | null
           created_at?: string | null
-          custom_category?: string | null
           date?: string
+          description?: string | null
           id?: string
           item: string
-          low_stock_threshold?: number
-          profit_per_unit?: number | null
-          quantity?: number
-          rate: number
-          sales?: number | null
-          selling_price?: number | null
-          sold_by?: string | null
-          stock?: number | null
-          updated_at?: string | null
+          profit?: number | null
+          quantity: number
+          selling_price: number
+          status?: string | null
+          updated_by?: string | null
         }
         Update: {
-          category?: Database["public"]["Enums"]["gift_category"]
+          buying_price?: number
+          category?: string
+          category_id?: string | null
           created_at?: string | null
-          custom_category?: string | null
           date?: string
+          description?: string | null
           id?: string
           item?: string
-          low_stock_threshold?: number
-          profit_per_unit?: number | null
+          profit?: number | null
           quantity?: number
-          rate?: number
-          sales?: number | null
-          selling_price?: number | null
-          sold_by?: string | null
-          stock?: number | null
-          updated_at?: string | null
+          selling_price?: number
+          status?: string | null
+          updated_by?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "gift_store_sold_by_fkey"
-            columns: ["sold_by"]
+            foreignKeyName: "gift_store_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_store_updated_by_fkey"
+            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -253,86 +195,123 @@ export type Database = {
       machines: {
         Row: {
           created_at: string | null
+          customer_name: string | null
           date: string
-          done_by: string | null
-          expenditure: number
+          description: string | null
           id: string
-          machine_name: Database["public"]["Enums"]["machine_type"]
+          machine_serviceman: string | null
+          machine_type: string
+          phoneNumber: string | null
+          problem_description: string | null
           quantity: number
           rate: number
-          sales: number | null
-          service_description: string
+          total_amount: number | null
           updated_at: string | null
+          updated_by: string | null
         }
         Insert: {
           created_at?: string | null
+          customer_name?: string | null
           date?: string
-          done_by?: string | null
-          expenditure?: number
+          description?: string | null
           id?: string
-          machine_name: Database["public"]["Enums"]["machine_type"]
-          quantity?: number
+          machine_serviceman?: string | null
+          machine_type: string
+          phoneNumber?: string | null
+          problem_description?: string | null
+          quantity: number
           rate: number
-          sales?: number | null
-          service_description: string
+          total_amount?: number | null
           updated_at?: string | null
+          updated_by?: string | null
         }
         Update: {
           created_at?: string | null
+          customer_name?: string | null
           date?: string
-          done_by?: string | null
-          expenditure?: number
+          description?: string | null
           id?: string
-          machine_name?: Database["public"]["Enums"]["machine_type"]
+          machine_serviceman?: string | null
+          machine_type?: string
+          phoneNumber?: string | null
+          problem_description?: string | null
           quantity?: number
           rate?: number
-          sales?: number | null
-          service_description?: string
+          total_amount?: number | null
           updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "machines_done_by_fkey"
-            columns: ["done_by"]
+            foreignKeyName: "machines_updated_by_fkey"
+            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      profiles: {
+      product_categories: {
         Row: {
           created_at: string | null
-          full_name: string
+          description: string | null
           id: string
-          role: Database["public"]["Enums"]["user_role"] | null
-          sales_initials: string | null
+          module: string
+          name: string
           updated_at: string | null
-          user_id: string
         }
         Insert: {
           created_at?: string | null
-          full_name: string
+          description?: string | null
           id?: string
-          role?: Database["public"]["Enums"]["user_role"] | null
-          sales_initials?: string | null
+          module: string
+          name: string
           updated_at?: string | null
-          user_id: string
         }
         Update: {
           created_at?: string | null
-          full_name?: string
+          description?: string | null
           id?: string
-          role?: Database["public"]["Enums"]["user_role"] | null
-          sales_initials?: string | null
+          module?: string
+          name?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          role: string | null
+          sales_initials: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          sales_initials?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          sales_initials?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
       }
       stationery: {
         Row: {
-          category: string | null
+          category: string
+          category_id: string | null
           created_at: string | null
           date: string
           description: string | null
@@ -342,14 +321,16 @@ export type Database = {
           profit_per_unit: number | null
           quantity: number
           rate: number
-          sales: number | null
-          selling_price: number
-          sold_by: string | null
-          stock: number | null
+          selling_price: number | null
+          sensitivity: string
+          status: string | null
+          stock: number
           updated_at: string | null
+          updated_by: string | null
         }
         Insert: {
-          category?: string | null
+          category: string
+          category_id?: string | null
           created_at?: string | null
           date?: string
           description?: string | null
@@ -357,219 +338,73 @@ export type Database = {
           item: string
           low_stock_threshold?: number
           profit_per_unit?: number | null
-          quantity?: number
-          rate: number
-          sales?: number | null
-          selling_price: number
-          sold_by?: string | null
-          stock?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          category?: string | null
-          created_at?: string | null
-          date?: string
-          description?: string | null
-          id?: string
-          item?: string
-          low_stock_threshold?: number
-          profit_per_unit?: number | null
-          quantity?: number
-          rate?: number
-          sales?: number | null
-          selling_price?: number
-          sold_by?: string | null
-          stock?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stationery_sold_by_fkey"
-            columns: ["sold_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      stationery_sales: {
-        Row: {
-          created_at: string | null
-          date: string
-          id: string
-          item_id: string
-          profit: number
-          quantity: number
-          selling_price: number
-          sold_by: string | null
-          total_amount: number
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          date?: string
-          id?: string
-          item_id: string
-          profit: number
-          quantity: number
-          selling_price: number
-          sold_by?: string | null
-          total_amount: number
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          date?: string
-          id?: string
-          item_id?: string
-          profit?: number
-          quantity?: number
-          selling_price?: number
-          sold_by?: string | null
-          total_amount?: number
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stationery_sales_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "stationery"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stationery_sales_sold_by_fkey"
-            columns: ["sold_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      
-      stationery_daily_sales: {
-        Row: {
-          category: string
-          created_at: string | null
-          date: string
-          description: string | null
-          id: string
-          item: string
-          profit_per_unit: number
           quantity: number
           rate: number
-          selling_price: number
-          sold_by: string | null
-          total_value: number
-          updated_at: string | null
-        }
-        Insert: {
-          category: string
-          created_at?: string | null
-          date?: string
-          description?: string | null
-          id?: string
-          item: string
-          profit_per_unit: number
-          quantity: number
-          rate: number
-          selling_price: number
-          sold_by?: string | null
-          total_value: number
+          selling_price?: number | null
+          sensitivity?: string
+          status?: string | null
+          stock?: number
           updated_at?: string | null
+          updated_by?: string | null
         }
         Update: {
           category?: string
+          category_id?: string | null
           created_at?: string | null
           date?: string
           description?: string | null
           id?: string
           item?: string
-          profit_per_unit?: number
+          low_stock_threshold?: number
+          profit_per_unit?: number | null
           quantity?: number
           rate?: number
-          selling_price?: number
-          sold_by?: string | null
-          total_value?: number
+          selling_price?: number | null
+          sensitivity?: string
+          status?: string | null
+          stock?: number
           updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "stationery_daily_sales_sold_by_fkey"
-            columns: ["sold_by"]
+            foreignKeyName: "stationery_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stationery_updated_by_fkey"
+            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      
-      audit_log: {
-        Row: {
-          id: string
-          user_id: string | null
-          user_name: string | null
-          action: string
-          table_name: string | null
-          record_id: string | null
-          old_values: Record<string, unknown> | null
-          new_values: Record<string, unknown> | null
-          ip_address: string | null
-          user_agent: string | null
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          user_id?: string | null
-          user_name?: string | null
-          action: string
-          table_name?: string | null
-          record_id?: string | null
-          old_values?: Record<string, unknown> | null
-          new_values?: Record<string, unknown> | null
-          ip_address?: string | null
-          user_agent?: string | null
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          user_id?: string | null
-          user_name?: string | null
-          action?: string
-          table_name?: string | null
-          record_id?: string | null
-          old_values?: Record<string, unknown> | null
-          new_values?: Record<string, unknown> | null
-          ip_address?: string | null
-          user_agent?: string | null
-          created_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "audit_log_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      check_audit_log_table_exists: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
+      admin_create_user: {
+        Args: {
+          new_email: string
+          new_password: string
+          new_full_name: string
+          new_role: string
+          new_sales_initials: string
+        }
+        Returns: string
       }
-      reset_audit_log_schema_cache: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
+      is_admin: {
+        Args: record
+        Returns: boolean
       }
     }
     Enums: {
+      frequency_type: "daily" | "weekly" | "monthly"
       gift_category: "cleaning" | "kids_toys" | "birthday" | "custom"
       machine_type: "printer" | "copier" | "scanner" | "binder" | "laminator"
       user_role: "admin" | "user"
@@ -580,128 +415,108 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
-
 export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+  PublicTableNameOrOptions extends
+  | keyof (Database["public"]["Tables"] & Database["public"]["Views"])
+  | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+  ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+    Database[PublicTableNameOrOptions["schema"]]["Views"])
+  : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+    Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-    ? R
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
+  ? R
+  : never
+  : PublicTableNameOrOptions extends keyof (Database["public"]["Tables"] &
+    Database["public"]["Views"])
+  ? (Database["public"]["Tables"] &
+    Database["public"]["Views"])[PublicTableNameOrOptions] extends {
+      Row: infer R
+    }
+  ? R
+  : never
+  : never
 
 export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+  PublicTableNameOrOptions extends
+  | keyof Database["public"]["Tables"]
+  | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+  ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+    Insert: infer I
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
+  ? I
+  : never
+  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
+  ? Database["public"]["Tables"][PublicTableNameOrOptions] extends {
+    Insert: infer I
+  }
+  ? I
+  : never
+  : never
 
 export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+  PublicTableNameOrOptions extends
+  | keyof Database["public"]["Tables"]
+  | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+  ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+    Update: infer U
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
+  ? U
+  : never
+  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
+  ? Database["public"]["Tables"][PublicTableNameOrOptions] extends {
+    Update: infer U
+  }
+  ? U
+  : never
+  : never
 
 export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+  PublicEnumNameOrOptions extends
+  | keyof Database["public"]["Enums"]
+  | { schema: keyof Database },
+  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+  : never = never,
+> = PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : PublicEnumNameOrOptions extends keyof Database["public"]["Enums"]
+  ? Database["public"]["Enums"][PublicEnumNameOrOptions]
+  : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof Database["public"]["CompositeTypes"]
+  | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof Database
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+  ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+  : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof Database["public"]["CompositeTypes"]
+  ? Database["public"]["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never
 
 export const Constants = {
   public: {
     Enums: {
+      frequency_type: ["daily", "weekly", "monthly"],
       gift_category: ["cleaning", "kids_toys", "birthday", "custom"],
       machine_type: ["printer", "copier", "scanner", "binder", "laminator"],
+      user_role: ["admin", "user"],
     },
   },
 } as const

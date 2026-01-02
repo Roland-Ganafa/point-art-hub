@@ -14,12 +14,12 @@ if (typeof window !== 'undefined') {
   console.log("Supabase Client Configuration:");
   console.log("URL Available:", !!SUPABASE_URL);
   console.log("Key Available:", !!SUPABASE_PUBLISHABLE_KEY);
-  
+
   if (SUPABASE_URL) {
     console.log("URL Format Check:", SUPABASE_URL.startsWith("https://") ? "Valid" : "Invalid");
     console.log("URL Length:", SUPABASE_URL.length);
   }
-  
+
   if (SUPABASE_PUBLISHABLE_KEY) {
     console.log("Key Length:", SUPABASE_PUBLISHABLE_KEY.length);
   }
@@ -31,7 +31,7 @@ const handleMissingEnvVars = () => {
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     const errorMessage = 'Missing Supabase environment variables. Please check your .env file.';
     console.error(errorMessage);
-    
+
     if (typeof window !== 'undefined') {
       // Display an error message for users
       document.addEventListener('DOMContentLoaded', () => {
@@ -55,11 +55,11 @@ const handleMissingEnvVars = () => {
         }
       });
     }
-    
+
     // Throw an error to prevent creating an invalid client
     throw new Error(errorMessage);
   }
-  
+
   return { url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY };
 };
 
@@ -103,28 +103,38 @@ const customFetch = async (url: string, options: RequestInit = {}) => {
   // Increase timeout for better reliability
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-  
+
   try {
-    // Ensure proper Content-Type for JSON requests
-    const headers: HeadersInit = {
-      ...options.headers,
-      'apikey': key, // Include the API key
-      'Authorization': `Bearer ${key}`, // Include as Authorization header
-      'X-Client-Info': 'point-art-hub/1.0',
-    };
-    
+    // Safe header merging using Headers object
+    // Spreading options.headers ({...options.headers}) fails if it is a Headers object instance
+    const headers = new Headers(options.headers);
+
+    // Check if Authorization is present (debug)
+    // if (typeof window !== 'undefined' && !headers.has('Authorization')) {
+    //   console.warn('Missing Authorization header in customFetch!');
+    // }
+
+    // Add required custom headers
+    if (!headers.has('apikey')) {
+      headers.set('apikey', key);
+    }
+
+    // headers.set('Authorization', `Bearer ${key}`); // DO NOT DO THIS - it overwrites user session!
+
+    headers.set('X-Client-Info', 'point-art-hub/1.0');
+
     // If we're sending JSON data, make sure Content-Type is set correctly
-    if (options.body && typeof options.body === 'string' && !headers['Content-Type']) {
+    if (options.body && typeof options.body === 'string' && !headers.has('Content-Type')) {
       try {
         JSON.parse(options.body);
-        headers['Content-Type'] = 'application/json';
+        headers.set('Content-Type', 'application/json');
       } catch (e) {
         // Not JSON, don't set Content-Type
       }
     }
-    
-    const response = await fetch(url, { 
-      ...options, 
+
+    const response = await fetch(url, {
+      ...options,
       signal: controller.signal,
       headers
     });
@@ -180,14 +190,14 @@ if (typeof window !== 'undefined') {
     console.log('Connection lost. Operating in offline mode');
     wasOffline = true;
   });
-  
+
   window.addEventListener('online', () => {
     console.log('Connection restored. Refreshing authentication...');
     // Force refresh auth state when connection is restored
     if (wasOffline) {
       // Try to refresh multiple times with increasing delay if needed
       const refreshAttempts = [0, 1000, 3000];
-      
+
       refreshAttempts.forEach((delay, index) => {
         setTimeout(() => {
           console.log(`Refresh attempt ${index + 1}/${refreshAttempts.length}`);
@@ -196,7 +206,7 @@ if (typeof window !== 'undefined') {
             .catch(err => console.warn('Session refresh attempt failed:', err));
         }, delay);
       });
-      
+
       wasOffline = false;
     }
   });
@@ -221,7 +231,7 @@ if (typeof window !== 'undefined') {
 if (typeof window !== 'undefined') {
   if (supabase) {
     console.log("Supabase client created successfully");
-    
+
     // Test the connection to Supabase with timeout handling
     (async () => {
       try {
@@ -234,14 +244,14 @@ if (typeof window !== 'undefined') {
           localStorage.removeItem('supabase_connection_error');
         } else {
           console.error("Supabase connection test failed");
-          localStorage.setItem('supabase_connection_error', JSON.stringify({ 
+          localStorage.setItem('supabase_connection_error', JSON.stringify({
             timestamp: Date.now(),
             error: 'Connection test failed'
           }));
         }
       } catch (err) {
         console.error("Supabase connection test error:", err);
-        localStorage.setItem('supabase_connection_error', JSON.stringify({ 
+        localStorage.setItem('supabase_connection_error', JSON.stringify({
           timestamp: Date.now(),
           error: err instanceof Error ? err.message : 'Unknown error'
         }));

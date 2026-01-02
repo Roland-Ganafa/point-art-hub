@@ -34,7 +34,7 @@ const Layout = ({ children }: LayoutProps) => {
 
   // Handle redirect for non-authenticated users
   const shouldRedirect = !user && !loading;
-  
+
   React.useEffect(() => {
     if (shouldRedirect) {
       const timer = setTimeout(() => {
@@ -60,28 +60,28 @@ const Layout = ({ children }: LayoutProps) => {
           <h2 className="text-xl font-bold text-red-500 mb-4">Authentication Error</h2>
           <p className="text-gray-700 dark:text-gray-300 mb-4">{authError}</p>
           <div className="space-y-3">
-            <Button 
-              onClick={() => navigate('/bypass-auth')} 
+            <Button
+              onClick={() => navigate('/bypass-auth')}
               className="w-full bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 font-semibold"
             >
               Enter Development Mode
             </Button>
-            <Button 
-              onClick={() => navigate('/direct-login')} 
+            <Button
+              onClick={() => navigate('/direct-login')}
               className="w-full bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 transition-all duration-300 text-white font-medium shadow-md hover:shadow-lg"
             >
               Use Fast Login
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/auth')} 
+            <Button
+              variant="outline"
+              onClick={() => navigate('/auth')}
               className="w-full"
             >
               Go to Login
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => window.location.reload()} 
+            <Button
+              variant="outline"
+              onClick={() => window.location.reload()}
               className="w-full"
             >
               Reload Page
@@ -98,7 +98,7 @@ const Layout = ({ children }: LayoutProps) => {
       <div className="min-h-screen flex flex-col items-center justify-center">
         <div className="text-lg mb-4">Redirecting to login...</div>
         <div className="flex space-x-4">
-          <Button 
+          <Button
             onClick={() => navigate('/bypass-auth')}
             className="bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 font-semibold"
           >
@@ -106,7 +106,7 @@ const Layout = ({ children }: LayoutProps) => {
           </Button>
         </div>
         <div className="flex space-x-4 mt-4">
-          <Button 
+          <Button
             onClick={() => {
               if (redirectTimer) window.clearTimeout(redirectTimer);
               window.location.href = '/auth';
@@ -115,7 +115,7 @@ const Layout = ({ children }: LayoutProps) => {
           >
             Standard Login
           </Button>
-          <Button 
+          <Button
             onClick={() => {
               if (redirectTimer) window.clearTimeout(redirectTimer);
               window.location.href = '/direct-login';
@@ -153,7 +153,7 @@ const Layout = ({ children }: LayoutProps) => {
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <Logo />
         </div>
-        
+
         {/* User Info Section */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="text-sm text-gray-600 dark:text-gray-300">
@@ -179,11 +179,11 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
           </div>
         </div>
-        
+
         {/* Theme Toggle */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={toggleTheme}
             className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
           >
@@ -195,24 +195,24 @@ const Layout = ({ children }: LayoutProps) => {
             {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
           </Button>
         </div>
-        
+
         {/* Navigation Menu */}
         <nav className="flex-1 p-4">
           <div className="space-y-2">
             {/* Home Button */}
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => navigate('/')}
               className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               <Home className="w-4 h-4 mr-3" />
               Home
             </Button>
-            
+
             {/* Dashboard - Hide for regular users */}
             {(isAdmin || profile?.role === 'admin') && (
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={() => navigate('/')}
                 className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
@@ -220,11 +220,11 @@ const Layout = ({ children }: LayoutProps) => {
                 Dashboard
               </Button>
             )}
-            
+
             {/* Admin Panel - Only visible to admins */}
             {(isAdmin || profile?.role === 'admin') && (
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={() => navigate('/admin')}
                 className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                 title="Admin Panel - Manage users and system settings"
@@ -233,11 +233,11 @@ const Layout = ({ children }: LayoutProps) => {
                 Admin Panel
               </Button>
             )}
-            
+
             {/* Customers - Only visible to admins */}
             {(isAdmin || profile?.role === 'admin') && (
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={() => navigate('/customers')}
                 className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
@@ -245,11 +245,11 @@ const Layout = ({ children }: LayoutProps) => {
                 Customers
               </Button>
             )}
-            
+
             {/* Reports - Only visible to admins */}
             {(isAdmin || profile?.role === 'admin') && (
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={() => navigate('/reports')}
                 className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
@@ -257,11 +257,11 @@ const Layout = ({ children }: LayoutProps) => {
                 Reports
               </Button>
             )}
-            
+
             {/* Analytics - Only visible to admins */}
             {(isAdmin || profile?.role === 'admin') && (
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={() => navigate('/analytics')}
                 className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
@@ -269,11 +269,11 @@ const Layout = ({ children }: LayoutProps) => {
                 Analytics
               </Button>
             )}
-            
+
             {/* Invoices - Only visible to admins */}
             {(isAdmin || profile?.role === 'admin') && (
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={() => navigate('/invoices')}
                 className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
@@ -283,7 +283,7 @@ const Layout = ({ children }: LayoutProps) => {
             )}
           </div>
         </nav>
-        
+
         {/* Bottom Section with Notification */}
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           {/* Notification Bell */}
@@ -292,39 +292,39 @@ const Layout = ({ children }: LayoutProps) => {
           </div>
         </div>
       </aside>
-      
+
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Top Header */}
         <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 transition-colors duration-200">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Point Art Hub</h1>
-            
+
             {/* Top Right Navigation */}
             <div className="flex items-center gap-3">
               {/* Settings */}
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => navigate('/settings')}
                 className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-300 dark:border-gray-600"
               >
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
               </Button>
-              
+
               {/* Profile */}
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => navigate('/profile')}
                 className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-300 dark:border-gray-600"
               >
                 <User className="w-4 h-4 mr-2" />
                 Profile
               </Button>
-              
+
               {/* Sign Out Button */}
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={handleSignOut}
                 className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-300 dark:border-gray-600"
               >
@@ -333,7 +333,7 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
           </div>
         </header>
-        
+
         {/* Main Content */}
         <main className="flex-1 p-6 bg-gray-50 dark:bg-gray-800 transition-colors duration-200">
           {children}
