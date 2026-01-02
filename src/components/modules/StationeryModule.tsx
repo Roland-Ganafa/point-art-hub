@@ -73,7 +73,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
   const { toast } = useToast();
 
   // Filter items based on search
-  const filteredItems = items.filter(item => 
+  const filteredItems = items.filter(item =>
     item.item.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -111,11 +111,11 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
         .from("profiles")
         .select("id, sales_initials, full_name")
         .not("sales_initials", "is", null);
-        
+
       if (error) throw error;
       console.log("Sales profiles fetched:", data);
       setSalesProfiles(data as unknown as ProfileItem[] || []);
-      
+
       // If no profiles with initials found, check all profiles
       if (!data || data.length === 0) {
         const { data: allProfiles, error: allError } = await supabase
@@ -139,7 +139,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
         .order("item", { ascending: true });
 
       if (error) throw error;
-      
+
       // Process the data to ensure all required fields are present
       const processedData = (data as unknown as StationeryItem[] || []).map(item => ({
         ...item,
@@ -149,17 +149,17 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
         profit_per_unit: item.profit_per_unit || 0,
         low_stock_threshold: item.low_stock_threshold || 5,
       }));
-      
+
       setItems(processedData);
     } catch (error: any) {
       console.error("Error fetching items:", error);
-      
+
       // Provide more specific error messages
       let errorMessage = error.message;
       if (error.code === "42501") {
         errorMessage = "Database permission error. This is likely due to a missing database column. Please run the database migration to fix this issue.";
       }
-      
+
       toast({
         title: "Error fetching items",
         description: errorMessage,
@@ -179,7 +179,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
       });
       return;
     }
-    
+
     // Check if user is authenticated
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -190,7 +190,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
       });
       return;
     }
-    
+
     setEditingId(item.id);
     setFormData({
       category: item.category || CATEGORIES[0],
@@ -215,7 +215,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
       });
       return;
     }
-    
+
     // Check if user is authenticated
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -226,9 +226,9 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
       });
       return;
     }
-    
+
     if (!confirm("Are you sure you want to delete this item?")) return;
-    
+
     try {
       const { error } = await supabase
         .from("stationery")
@@ -245,14 +245,14 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
       fetchItems();
     } catch (error: any) {
       console.error("Error in handleDelete:", error);
-      
+
       let errorMessage = error.message;
       if (error.status === 401) {
         errorMessage = "Authentication failed. Please log in and try again.";
       } else if (error.status === 403) {
         errorMessage = "Access denied. You may not have permission to perform this action.";
       }
-      
+
       toast({
         title: "Error deleting item",
         description: errorMessage,
@@ -294,7 +294,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast({
         title: "Validation Error",
@@ -303,7 +303,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
       });
       return;
     }
-    
+
     try {
       const itemData: any = {
         ...formData,
@@ -322,172 +322,144 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
           .from("stationery")
           .select("*")
           .limit(1);
-      
-      if (!schemaError && schemaData && schemaData.length > 0) {
-        // Check if stock column exists in the schema
-        if ("stock" in schemaData[0]) {
-          itemData.stock = parseInt(formData.quantity) || 0; // Stock should be equal to initial quantity
+
+        if (!schemaError && schemaData && schemaData.length > 0) {
+          // Check if stock column exists in the schema
+          if ("stock" in schemaData[0]) {
+            itemData.stock = parseInt(formData.quantity) || 0; // Stock should be equal to initial quantity
+          }
         }
+      } catch (schemaCheckError) {
+        console.warn("Could not check schema, proceeding without stock field:", schemaCheckError);
       }
-    } catch (schemaCheckError) {
-      console.warn("Could not check schema, proceeding without stock field:", schemaCheckError);
-    }
 
-    // DEBUG: Log the data being sent
-    console.log("Inserting stationery item with data:", itemData);
-    console.log("Data keys:", Object.keys(itemData));
+      // DEBUG: Log the data being sent
+      console.log("Inserting stationery item with data:", itemData);
+      console.log("Data keys:", Object.keys(itemData));
 
-    // Check if user is authenticated before attempting to insert
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    console.log("Current session:", session?.user?.id);
-    console.log("Session error:", sessionError);
-    
-    if (!session) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to add items to the inventory. No active session found.",
-        variant: "destructive",
-      });
-      return;
-    }
+      // Check if user is authenticated before attempting to insert
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log("Current session:", session?.user?.id);
+      console.log("Session error:", sessionError);
 
-    // Additional debug: Check user role and authentication status
-    if (session?.user?.id) {
-      console.log("User is authenticated with ID:", session.user.id);
-      console.log("User email:", session.user.email);
-      
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role, full_name')
-        .eq('user_id', session.user.id)
-        .single();
-      
-      console.log("User profile:", profile);
-      console.log("Profile error:", profileError);
-      console.log("User is admin:", profile?.role === 'admin');
-      
-      // Check if user exists in profiles table
-      if (profileError) {
-        console.warn("Could not fetch user profile:", profileError);
-        // Try to create profile if it doesn't exist
-        const { error: createProfileError } = await supabase
+      if (!session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to add items to the inventory. No active session found.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Additional debug: Check user role and authentication status
+      if (session?.user?.id) {
+        console.log("User is authenticated with ID:", session.user.id);
+        console.log("User email:", session.user.email);
+
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .insert([
-            {
-              user_id: session.user.id,
-              full_name: session.user.email || 'Unknown User',
-              role: 'user'
-            }
-          ]);
-        
-        if (createProfileError) {
-          console.error("Failed to create profile:", createProfileError);
-        } else {
-          console.log("Created profile for user");
+          .select('role, full_name')
+          .eq('user_id', session.user.id)
+          .single();
+
+        console.log("User profile:", profile);
+        console.log("Profile error:", profileError);
+        console.log("User is admin:", profile?.role === 'admin');
+
+        // Check if user exists in profiles table
+        if (profileError) {
+          console.warn("Could not fetch user profile:", profileError);
+          // Try to create profile if it doesn't exist
+          const { error: createProfileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                user_id: session.user.id,
+                full_name: session.user.email || 'Unknown User',
+                role: 'user'
+              }
+            ]);
+
+          if (createProfileError) {
+            console.error("Failed to create profile:", createProfileError);
+          } else {
+            console.log("Created profile for user");
+          }
         }
       }
-    }
 
-    if (editingId) {
-      // Update existing item
-      console.log("Updating item with ID:", editingId);
-      const { error } = await supabase
-        .from("stationery")
-        .update(itemData)
-        .eq("id", editingId);
+      if (editingId) {
+        // Update existing item
+        console.log("Updating item with ID:", editingId);
+        const { error } = await supabase
+          .from("stationery")
+          .update(itemData)
+          .eq("id", editingId);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Item updated successfully",
-      });
-    } else {
-      // Create new item
-      console.log("Inserting new item:", itemData);
-      
-      // DEBUG: Try a minimal insert first to isolate the issue
-      const minimalData = {
-        item: itemData.item,
-        quantity: itemData.quantity,
-        rate: itemData.rate,
-        selling_price: itemData.selling_price
-      };
-      
-      console.log("Trying minimal insert:", minimalData);
-      
-      // First try minimal insert
-      let insertError = null;
-      try {
-        // Log the exact request being made
-        console.log("Making insert request...");
+        toast({
+          title: "Success",
+          description: "Item updated successfully",
+        });
+      } else {
+        // Create new item
+        console.log("Inserting new item:", itemData);
+
         const { data, error } = await supabase
           .from("stationery")
-          .insert([minimalData])
+          .insert([itemData])
           .select();
-          
-        console.log("Insert response data:", data);
-        console.log("Insert response error:", error);
-        
+
         if (error) {
-          insertError = error;
-        } else {
-          console.log("Minimal insert succeeded");
+          console.error("Insert failed with error:", error);
+          console.error("Error details:", JSON.stringify(error, null, 2));
+          throw error;
         }
-      } catch (err) {
-        console.error("Caught exception during insert:", err);
-        insertError = err;
+
+        toast({
+          title: "Success",
+          description: "Item added successfully",
+        });
       }
 
-      if (insertError) {
-        console.error("Insert failed with error:", insertError);
-        console.error("Error details:", JSON.stringify(insertError, null, 2));
-        throw insertError;
+      setIsDialogOpen(false);
+      setFormData({
+        category: CATEGORIES[0],
+        item: "",
+        description: "",
+        quantity: "",
+        rate: "",
+        selling_price: "",
+        profit_per_unit: "0",
+        low_stock_threshold: "5",
+        sold_by: "not_specified",
+      });
+      setEditingId(null);
+      fetchItems();
+    } catch (error: any) {
+      console.error("Error in handleSubmit:", error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
+
+      // Provide more specific error messages
+      let errorMessage = error.message;
+      if (error.status === 401) {
+        errorMessage = "Authentication failed. Please log in and try again.";
+      } else if (error.status === 403) {
+        errorMessage = "Access denied. You may not have permission to perform this action.";
+      } else if (error.code === "42501") {
+        errorMessage = "Database permission error (RLS policy violation). This is a known issue that requires database administrator intervention. Please contact your system administrator. Error details: " + error.message;
+      } else if (error.message.includes("new row violates row-level security policy")) {
+        errorMessage = "RLS policy violation. The database is preventing this operation. This requires database administrator intervention to fix the RLS policies.";
       }
 
       toast({
-        title: "Success",
-        description: "Item added successfully",
+        title: editingId ? "Error updating item" : "Error adding item",
+        description: errorMessage,
+        variant: "destructive",
       });
     }
-
-    setIsDialogOpen(false);
-    setFormData({
-      category: CATEGORIES[0],
-      item: "",
-      description: "",
-      quantity: "",
-      rate: "",
-      selling_price: "",
-      profit_per_unit: "0",
-      low_stock_threshold: "5",
-      sold_by: "not_specified",
-    });
-    setEditingId(null);
-    fetchItems();
-  } catch (error: any) {
-    console.error("Error in handleSubmit:", error);
-    console.error("Error details:", JSON.stringify(error, null, 2));
-    
-    // Provide more specific error messages
-    let errorMessage = error.message;
-    if (error.status === 401) {
-      errorMessage = "Authentication failed. Please log in and try again.";
-    } else if (error.status === 403) {
-      errorMessage = "Access denied. You may not have permission to perform this action.";
-    } else if (error.code === "42501") {
-      errorMessage = "Database permission error (RLS policy violation). This is a known issue that requires database administrator intervention. Please contact your system administrator. Error details: " + error.message;
-    } else if (error.message.includes("new row violates row-level security policy")) {
-      errorMessage = "RLS policy violation. The database is preventing this operation. This requires database administrator intervention to fix the RLS policies.";
-    }
-    
-    toast({
-      title: editingId ? "Error updating item" : "Error adding item",
-      description: errorMessage,
-      variant: "destructive",
-    });
-  }
-};
+  };
 
   const resetForm = () => {
     setFormData({
@@ -508,15 +480,15 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
     <div className="space-y-8 p-6">
       <Tabs defaultValue="inventory" className="space-y-8">
         <TabsList className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-1 shadow-lg">
-          <TabsTrigger 
-            value="inventory" 
+          <TabsTrigger
+            value="inventory"
             className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <Package2 className="h-4 w-4" />
             Inventory
           </TabsTrigger>
-          <TabsTrigger 
-            value="daily-sales" 
+          <TabsTrigger
+            value="daily-sales"
             className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <ShoppingCart className="h-4 w-4" />
@@ -543,20 +515,20 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              
+
               <ExportDialog
                 data={items}
                 type="stationery"
                 moduleTitle="Stationery Inventory"
                 disabled={items.length === 0}
               />
-              
+
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 setIsDialogOpen(open);
                 if (!open) resetForm();
               }}>
                 <DialogTrigger asChild>
-                  <Button 
+                  <Button
                     onClick={resetForm}
                     className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                   >
@@ -564,172 +536,172 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                     {isDialogOpen ? 'Close' : 'Add Item'}
                   </Button>
                 </DialogTrigger>
-                  <DialogContent className="max-w-md bg-white/95 backdrop-blur-sm border-0 shadow-2xl" aria-describedby="add-item-desc">
-                    <DialogHeader>
-                      <DialogTitle className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                        {editingId ? 'Edit Item' : 'Add New Item'}
-                      </DialogTitle>
-                      <p id="add-item-desc" className="text-sm text-muted-foreground mt-1">Fill in the item details and submit to save.</p>
-                    </DialogHeader>
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                <DialogContent className="max-w-md bg-white/95 backdrop-blur-sm border-0 shadow-2xl" aria-describedby="add-item-desc">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                      {editingId ? 'Edit Item' : 'Add New Item'}
+                    </DialogTitle>
+                    <p id="add-item-desc" className="text-sm text-muted-foreground mt-1">Fill in the item details and submit to save.</p>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="font-medium">Category</Label>
+                      <Select
+                        value={formData.category}
+                        onValueChange={(value) => setFormData({ ...formData, category: value })}
+                      >
+                        <SelectTrigger className="border-blue-200 focus:border-blue-400 focus:ring-blue-200">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CATEGORIES.map(category => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="font-medium">Item Name *</Label>
+                      <Input
+                        value={formData.item}
+                        onChange={(e) => setFormData({ ...formData, item: e.target.value })}
+                        required
+                        className={`transition-all duration-200 ${formErrors.item ? "border-red-500 focus:border-red-500" : "border-blue-200 focus:border-blue-400 focus:ring-blue-200"}`}
+                      />
+                      {formErrors.item && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{formErrors.item}</span>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="font-medium">Description</Label>
+                      <Input
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="font-medium">Category</Label>
-                        <Select
-                          value={formData.category}
-                          onValueChange={(value) => setFormData({...formData, category: value})}
-                        >
-                          <SelectTrigger className="border-blue-200 focus:border-blue-400 focus:ring-blue-200">
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {CATEGORIES.map(category => (
-                              <SelectItem key={category} value={category}>
-                                {category}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label className="font-medium">Item Name *</Label>
+                        <Label className="font-medium">Quantity *</Label>
                         <Input
-                          value={formData.item}
-                          onChange={(e) => setFormData({...formData, item: e.target.value})}
+                          type="number"
+                          min="0"
+                          value={formData.quantity}
+                          onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                           required
-                          className={`transition-all duration-200 ${formErrors.item ? "border-red-500 focus:border-red-500" : "border-blue-200 focus:border-blue-400 focus:ring-blue-200"}`}
-                        />
-                        {formErrors.item && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{formErrors.item}</span>}
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label className="font-medium">Description</Label>
-                        <Input
-                          value={formData.description}
-                          onChange={(e) => setFormData({...formData, description: e.target.value})}
                           className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
                         />
                       </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label className="font-medium">Quantity *</Label>
-                          <Input
-                            type="number"
-                            min="0"
-                            value={formData.quantity}
-                            onChange={(e) => setFormData({...formData, quantity: e.target.value})}
-                            required
-                            className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="font-medium">Rate (UGX) *</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={formData.rate}
-                            onChange={(e) => setFormData({...formData, rate: e.target.value})}
-                            required
-                            className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label className="font-medium">Selling Price (UGX) *</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={formData.selling_price}
-                            onChange={(e) => setFormData({...formData, selling_price: e.target.value})}
-                            required
-                            className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="font-medium flex items-center gap-2">
-                            <TrendingUp className="h-4 w-4 text-green-500" />
-                            Profit/Unit (UGX)
-                          </Label>
-                          <Input
-                            value={formData.profit_per_unit}
-                            disabled
-                            className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 font-medium"
-                          />
-                        </div>
-                      </div>
-
                       <div className="space-y-2">
-                        <Label>Low Stock Threshold</Label>
+                        <Label className="font-medium">Rate (UGX) *</Label>
                         <Input
                           type="number"
-                          min="1"
-                          value={formData.low_stock_threshold}
-                          onChange={(e) => setFormData({...formData, low_stock_threshold: e.target.value})}
+                          step="0.01"
+                          min="0"
+                          value={formData.rate}
+                          onChange={(e) => setFormData({ ...formData, rate: e.target.value })}
+                          required
+                          className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
                         />
                       </div>
+                    </div>
 
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Sold By (Initials)</Label>
-                        <Select
-                          value={formData.sold_by}
-                          onValueChange={(value) => setFormData({...formData, sold_by: value})}
-                        >
-                          <SelectTrigger>
-                            <SelectValue 
-                              placeholder={
-                                salesProfiles.length > 0 
-                                  ? "Select sales person" 
-                                  : "No sales persons available"
-                              } 
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="not_specified">Not Specified</SelectItem>
-                            {salesProfiles.length > 0 ? (
-                              salesProfiles.map(profile => (
-                                <SelectItem key={profile.id} value={profile.id}>
-                                  {profile.sales_initials} - {profile.full_name}
-                                </SelectItem>
-                              ))
-                            ) : (
-                              <SelectItem value="no_sales_persons" disabled>
-                                No sales persons with initials found
-                              </SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
-                        {salesProfiles.length === 0 && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            No users have sales initials assigned. Visit Admin Profile to assign initials.
-                          </p>
-                        )}
+                        <Label className="font-medium">Selling Price (UGX) *</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.selling_price}
+                          onChange={(e) => setFormData({ ...formData, selling_price: e.target.value })}
+                          required
+                          className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                        />
                       </div>
+                      <div className="space-y-2">
+                        <Label className="font-medium flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4 text-green-500" />
+                          Profit/Unit (UGX)
+                        </Label>
+                        <Input
+                          value={formData.profit_per_unit}
+                          disabled
+                          className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 font-medium"
+                        />
+                      </div>
+                    </div>
 
-                      <Button 
-                        type="submit" 
-                        className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl" 
-                        disabled={isLoading}
+                    <div className="space-y-2">
+                      <Label>Low Stock Threshold</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={formData.low_stock_threshold}
+                        onChange={(e) => setFormData({ ...formData, low_stock_threshold: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Sold By (Initials)</Label>
+                      <Select
+                        value={formData.sold_by}
+                        onValueChange={(value) => setFormData({ ...formData, sold_by: value })}
                       >
-                        {isLoading ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            Saving...
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            {editingId ? 'Update Item' : 'Add Item'}
-                          </div>
-                        )}
-                      </Button>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              </div>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              salesProfiles.length > 0
+                                ? "Select sales person"
+                                : "No sales persons available"
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="not_specified">Not Specified</SelectItem>
+                          {salesProfiles.length > 0 ? (
+                            salesProfiles.map(profile => (
+                              <SelectItem key={profile.id} value={profile.id}>
+                                {profile.sales_initials} - {profile.full_name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="no_sales_persons" disabled>
+                              No sales persons with initials found
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      {salesProfiles.length === 0 && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          No users have sales initials assigned. Visit Admin Profile to assign initials.
+                        </p>
+                      )}
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Saving...
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          {editingId ? 'Update Item' : 'Add Item'}
+                        </div>
+                      )}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
@@ -770,13 +742,12 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                         const actualStock = item.stock !== undefined ? item.stock : item.quantity;
                         const isLowStock = actualStock <= (item.low_stock_threshold || 5);
                         return (
-                          <TableRow 
-                            key={item.id} 
-                            className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 ${
-                              isLowStock 
-                                ? "bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 border-l-4 border-red-400" 
-                                : "hover:from-blue-50 hover:to-purple-50"
-                            }`}
+                          <TableRow
+                            key={item.id}
+                            className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 ${isLowStock
+                              ? "bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 border-l-4 border-red-400"
+                              : "hover:from-blue-50 hover:to-purple-50"
+                              }`}
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
                             <TableCell className="font-medium">
