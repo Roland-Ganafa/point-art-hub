@@ -493,7 +493,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
   // Enhanced admin check that considers both profile role and emergency access
   // Also hardcoding check for specific admin email to resolve sync issues
-  const isAdmin = profile?.role === 'admin' || user?.email === 'ganafaroland@gmail.com';
+  const isAdmin = profile?.role === 'admin' || user?.email === 'ganafaroland@gmail.com' || user?.email === 'denisntambi.dn@gmail.com';
 
   // Log admin status for debugging
   console.log('UserContext - isAdmin:', isAdmin);
