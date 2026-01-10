@@ -61,7 +61,7 @@ const GiftsDailySales = () => {
   const [items, setItems] = useState<GiftDailySale[]>([]);
   const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [salesProfiles, setSalesProfiles] = useState<Array<{id: string, sales_initials: string, full_name: string}>>([]);
+  const [salesProfiles, setSalesProfiles] = useState<Array<{ id: string, sales_initials: string, full_name: string }>>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().slice(0, 10),
@@ -77,11 +77,11 @@ const GiftsDailySales = () => {
 
   // Add offline functionality
   const { isOffline } = useOffline();
-  const { 
-    offlineGiftSales, 
-    recordOfflineGiftSale, 
+  const {
+    offlineGiftSales,
+    recordOfflineGiftSale,
     syncOfflineGiftSales,
-    isSyncing 
+    isSyncing
   } = useOfflineGiftSales();
 
   // Add calculated profit state
@@ -116,7 +116,7 @@ const GiftsDailySales = () => {
       } else {
         setItems(data as any || []);
       }
-      
+
       // Also refresh sales profiles
       await fetchSalesProfiles();
     } catch (error) {
@@ -133,10 +133,10 @@ const GiftsDailySales = () => {
         .from("profiles")
         .select("id, sales_initials, full_name")
         .not("sales_initials", "is", null);
-        
+
       if (error) throw error;
       setSalesProfiles(data as any || []);
-      
+
       // If no profiles with initials found, check all profiles
       if (!data || data.length === 0) {
         const { data: allProfiles, error: allError } = await supabase
@@ -182,41 +182,41 @@ const GiftsDailySales = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (!formData.category.trim()) {
       toast({ title: "Validation Error", description: "Category is required", variant: "destructive" });
       return;
     }
-    
+
     if (!formData.item.trim()) {
       toast({ title: "Validation Error", description: "Item name is required", variant: "destructive" });
       return;
     }
-    
+
     const quantity = parseInt(formData.quantity) || 0;
     const bpx = parseFloat(formData.bpx) || 0;
     const spx = parseFloat(formData.spx) || 0;
-    
+
     if (quantity <= 0) {
       toast({ title: "Validation Error", description: "Quantity must be a positive number", variant: "destructive" });
       return;
     }
-    
+
     if (bpx < 0) {
       toast({ title: "Validation Error", description: "Buying price cannot be negative", variant: "destructive" });
       return;
     }
-    
+
     if (spx < 0) {
       toast({ title: "Validation Error", description: "Selling price cannot be negative", variant: "destructive" });
       return;
     }
-    
+
     // Combine category and item name into a single item field for database
     // Format: "Category: Item Name"
     const combinedItem = `${formData.category.trim()}: ${formData.item.trim()}`;
-    
+
     const payload: any = {
       date: formData.date,
       item: combinedItem,
@@ -227,7 +227,7 @@ const GiftsDailySales = () => {
       spx: spx,
       sold_by: formData.soldBy === "not_specified" ? null : formData.soldBy
     };
-    
+
     try {
       // If offline, store sale locally
       if (isOffline) {
@@ -266,9 +266,9 @@ const GiftsDailySales = () => {
         setIsDialogOpen(false);
         return;
       }
-      
+
       let error;
-      
+
       if (editingId) {
         // Update existing record
         const result = await supabase
@@ -319,7 +319,7 @@ const GiftsDailySales = () => {
     // Split the combined item field back into category and item name
     const [category, ...itemNameParts] = item.item.split(": ");
     const itemName = itemNameParts.join(": ");
-    
+
     setFormData({
       date: item.date,
       category: category || "",
@@ -337,7 +337,7 @@ const GiftsDailySales = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this sale?")) return;
-    
+
     try {
       const { error } = await supabase
         .from("gift_daily_sales")
@@ -383,15 +383,15 @@ const GiftsDailySales = () => {
 
       <Tabs defaultValue="daily-sales" className="space-y-8">
         <TabsList className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-1 shadow-lg">
-          <TabsTrigger 
-            value="daily-sales" 
+          <TabsTrigger
+            value="daily-sales"
             className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <ShoppingCart className="h-4 w-4" />
             Daily Sales
           </TabsTrigger>
-          <TabsTrigger 
-            value="inventory" 
+          <TabsTrigger
+            value="inventory"
             className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <Gift className="h-4 w-4" />
@@ -428,7 +428,7 @@ const GiftsDailySales = () => {
                 }
               }}>
                 <DialogTrigger asChild>
-                  <Button 
+                  <Button
                     className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                     disabled={isSyncing}
                   >
@@ -462,7 +462,7 @@ const GiftsDailySales = () => {
                         className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label className="font-medium">Item Name *</Label>
                       <Input
@@ -473,7 +473,7 @@ const GiftsDailySales = () => {
                         className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label className="font-medium">Description (Optional)</Label>
                       <Input
@@ -508,7 +508,7 @@ const GiftsDailySales = () => {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="font-medium">Date *</Label>
@@ -522,8 +522,8 @@ const GiftsDailySales = () => {
                       </div>
                       <div className="space-y-2">
                         <Label className="font-medium">Unit *</Label>
-                        <Select 
-                          value={formData.unit} 
+                        <Select
+                          value={formData.unit}
                           onValueChange={(value) => setFormData({ ...formData, unit: value })}
                         >
                           <SelectTrigger className="border-green-200 focus:border-green-400 focus:ring-green-200">
@@ -538,7 +538,7 @@ const GiftsDailySales = () => {
                         </Select>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="font-medium">Buying Price (UGX) *</Label>
@@ -564,7 +564,7 @@ const GiftsDailySales = () => {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label>Sold By (Initials)</Label>
                       <Select
@@ -572,12 +572,12 @@ const GiftsDailySales = () => {
                         onValueChange={(value) => setFormData({ ...formData, soldBy: value })}
                       >
                         <SelectTrigger>
-                          <SelectValue 
+                          <SelectValue
                             placeholder={
-                              salesProfiles.length > 0 
-                                ? "Select sales person" 
+                              salesProfiles.length > 0
+                                ? "Select sales person"
                                 : "No sales persons available"
-                            } 
+                            }
                           />
                         </SelectTrigger>
                         <SelectContent>
@@ -601,10 +601,10 @@ const GiftsDailySales = () => {
                         </p>
                       )}
                     </div>
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl" 
+
+                    <Button
+                      type="submit"
+                      className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl"
                     >
                       <div className="flex items-center gap-2">
                         {editingId ? '✏️ Update Sale' : '✨ Record Sale'}
@@ -629,7 +629,7 @@ const GiftsDailySales = () => {
                 <div className="text-3xl font-bold text-green-600">UGX {totalSales.toLocaleString()}</div>
               </CardContent>
             </Card>
-            
+
             <Card className="border-0 shadow-xl bg-gradient-to-r from-blue-50 to-cyan-50 backdrop-blur-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium text-gray-600 flex items-center gap-2">
@@ -661,6 +661,7 @@ const GiftsDailySales = () => {
                 <Table>
                   <TableHeader className="bg-gradient-to-r from-gray-50 to-green-50">
                     <TableRow className="border-b border-green-100">
+                      <TableHead className="w-[50px] font-semibold text-gray-700">#</TableHead>
                       <TableHead className="font-semibold text-gray-700">Category</TableHead>
                       <TableHead className="font-semibold text-gray-700">Item</TableHead>
                       <TableHead className="font-semibold text-gray-700">Description</TableHead>
@@ -678,12 +679,13 @@ const GiftsDailySales = () => {
                       const saleDate = new Date(sale.date);
                       const [category, ...itemNameParts] = sale.item.split(": ");
                       const itemName = itemNameParts.join(": ");
-                      
+
                       return (
-                        <TableRow 
-                          key={sale.id} 
+                        <TableRow
+                          key={sale.id}
                           className="group hover:bg-gradient-to-r transition-all duration-300 bg-yellow-50 border-l-4 border-yellow-400"
                         >
+                          <TableCell className="font-medium text-gray-500">{index + 1}</TableCell>
                           <TableCell className="font-medium">{category || "-"}</TableCell>
                           <TableCell className="font-semibold text-gray-800">{itemName || sale.item}</TableCell>
                           <TableCell className="text-gray-600">{sale.code || "-"}</TableCell>
@@ -707,13 +709,16 @@ const GiftsDailySales = () => {
                         const saleDate = new Date(item.date);
                         const [category, ...itemNameParts] = item.item.split(": ");
                         const itemName = itemNameParts.join(": ");
-                        
+
                         return (
-                          <TableRow 
-                            key={item.id} 
+                          <TableRow
+                            key={item.id}
                             className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-green-50 hover:to-emerald-50`}
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
+                            <TableCell className="font-medium text-gray-500">
+                              {offlineGiftSales.length + index + 1}
+                            </TableCell>
                             <TableCell className="font-medium">{category || "-"}</TableCell>
                             <TableCell className="font-semibold text-gray-800">{itemName || item.item}</TableCell>
                             <TableCell className="text-gray-600">{item.code || "-"}</TableCell>
@@ -724,17 +729,17 @@ const GiftsDailySales = () => {
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center gap-2 justify-end">
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   className="h-8 w-8 hover:bg-green-100 hover:scale-110 transition-all duration-200"
                                   onClick={() => handleEdit(item)}
                                 >
                                   <Edit className="h-4 w-4 text-green-600" />
                                 </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   className="h-8 w-8 hover:bg-red-100 hover:scale-110 transition-all duration-200"
                                   onClick={() => handleDelete(item.id)}
                                 >
@@ -747,7 +752,7 @@ const GiftsDailySales = () => {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={7} className="h-32 text-center">
+                        <TableCell colSpan={8} className="h-32 text-center">
                           <div className="flex flex-col items-center gap-4">
                             {loading ? (
                               <div className="flex items-center gap-3">

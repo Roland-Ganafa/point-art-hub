@@ -91,33 +91,61 @@ const Dashboard = () => {
 
   // Define fetchDashboardStats function with better error handling
   const fetchDashboardStats = useCallback(async () => {
-    try {
-      // Get today's date range
-      const today = new Date();
-      const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
-      const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
+    // Don't fetch if auth is still loading
+    if (loading) return;
 
-      // Add timeout to Supabase queries
+    try {
+      // Add timeout to Supabase queries - Increased to 15 seconds for better reliability
       const fetchWithTimeout = async (promise: Promise<any>) => {
         return Promise.race([
           promise,
           new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Request timeout')), 5000)
+            setTimeout(() => reject(new Error('Request timeout')), 15000)
           )
         ]);
       };
 
       // Fetch sales data from different tables with timeout
-      const [stationeryData, giftData, embroideryData, machinesData, artData, salesData] = await Promise.all([
+      // using allSettled to allow partial loading
+      const results = await Promise.allSettled([
         fetchWithTimeout(supabase.from("stationery").select("*") as any),
         fetchWithTimeout(supabase.from("gift_store").select("*") as any),
         fetchWithTimeout(supabase.from("embroidery").select("*") as any),
         fetchWithTimeout(supabase.from("machines").select("*") as any),
         fetchWithTimeout(supabase.from("art_services").select("*") as any),
-        fetchWithTimeout(supabase.from("stationery_sales").select("*")
-          .gte("date", startOfDay)
-          .lte("date", endOfDay) as any)
+        // FETCH ALL TIME SALES - Removed date filters to show total history
+        fetchWithTimeout((supabase as any).from("stationery_sales").select("*"))
       ]);
+
+      const [
+        stationeryResult,
+        giftResult,
+        embroideryResult,
+        machinesResult,
+        artResult,
+        salesResult
+      ] = results;
+
+      // Log errors for debugging but continue with available data
+      const errors: string[] = [];
+      results.forEach((res, index) => {
+        if (res.status === 'rejected') {
+          const names = ['stationery', 'gift-store', 'embroidery', 'machines', 'art-services', 'sales'];
+          console.error(`Error fetching ${names[index]}:`, res.reason);
+          errors.push(`${names[index]}: ${res.reason.message || 'Unknown error'}`);
+        }
+      });
+
+      // Helper to safely get data
+      const getData = (result: PromiseSettledResult<any>) =>
+        result.status === 'fulfilled' && result.value.data ? result.value.data : [];
+
+      const stationeryData = getData(stationeryResult);
+      const giftData = getData(giftResult);
+      const embroideryData = getData(embroideryResult);
+      const machinesData = getData(machinesResult);
+      const artData = getData(artResult);
+      const salesData = getData(salesResult);
 
       // Calculate totals
       let totalSales = 0;
@@ -126,28 +154,28 @@ const Dashboard = () => {
       let servicesDone = 0;
 
       // From stationery sales
-      if (salesData.data) {
-        totalSales += salesData.data.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
-        totalProfit += salesData.data.reduce((sum, sale) => sum + (sale.profit || 0), 0);
-        itemsSold += salesData.data.reduce((sum, sale) => sum + (sale.quantity || 0), 0);
+      if (salesData.length > 0) {
+        totalSales += salesData.reduce((sum: number, sale: any) => sum + (sale.total_amount || 0), 0);
+        totalProfit += salesData.reduce((sum: number, sale: any) => sum + (sale.profit || 0), 0);
+        itemsSold += salesData.reduce((sum: number, sale: any) => sum + (sale.quantity || 0), 0);
       }
 
       // From services (embroidery, machines, art services)
-      if (embroideryData.data) {
-        servicesDone += embroideryData.data.length;
-        totalSales += embroideryData.data.reduce((sum, item) => sum + (item.sales || 0), 0);
-        totalProfit += embroideryData.data.reduce((sum, item) => sum + (item.profit || 0), 0);
+      if (embroideryData.length > 0) {
+        servicesDone += embroideryData.length;
+        totalSales += embroideryData.reduce((sum: number, item: any) => sum + (item.sales || 0), 0);
+        totalProfit += embroideryData.reduce((sum: number, item: any) => sum + (item.profit || 0), 0);
       }
 
-      if (machinesData.data) {
-        servicesDone += machinesData.data.length;
-        totalSales += machinesData.data.reduce((sum, item) => sum + (item.sales || 0), 0);
+      if (machinesData.length > 0) {
+        servicesDone += machinesData.length;
+        totalSales += machinesData.reduce((sum: number, item: any) => sum + (item.sales || 0), 0);
       }
 
-      if (artData.data) {
-        servicesDone += artData.data.length;
-        totalSales += artData.data.reduce((sum, item) => sum + (item.sales || 0), 0);
-        totalProfit += artData.data.reduce((sum, item) => sum + (item.profit || 0), 0);
+      if (artData.length > 0) {
+        servicesDone += artData.length;
+        totalSales += artData.reduce((sum: number, item: any) => sum + (item.sales || 0), 0);
+        totalProfit += artData.reduce((sum: number, item: any) => sum + (item.profit || 0), 0);
       }
 
       setDashboardStats({
@@ -156,26 +184,31 @@ const Dashboard = () => {
         itemsSold,
         servicesDone,
         totalEntries: {
-          stationery: stationeryData.data?.length || 0,
-          "gift-store": giftData.data?.length || 0,
-          embroidery: embroideryData.data?.length || 0,
-          machines: machinesData.data?.length || 0,
-          "art-services": artData.data?.length || 0,
+          stationery: stationeryData.length,
+          "gift-store": giftData.length,
+          embroidery: embroideryData.length,
+          machines: machinesData.length,
+          "art-services": artData.length,
         }
       });
 
+      // If ALL requests failed, then show the error page. 
+      // Otherwise, just clear generic errors and retry count.
+      if (errors.length === 6) {
+        throw new Error(`Failed to load any data. Details: ${errors.join(', ')}`);
+      }
+
       // Clear any previous dashboard error
       setDashboardError(null);
-      // Reset retry count on success
+      // Reset retry count on success (partial or full)
       setRetryCount(0);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching dashboard stats:", error);
 
-      // Implement retry logic
+      // Implement retry logic with exponential backoff
       if (retryCount < maxRetries) {
         setRetryCount(prev => prev + 1);
-        // Exponential backoff: 1s, 2s, 4s
         const backoffTime = Math.pow(2, retryCount) * 1000;
         console.log(`Retrying in ${backoffTime}ms (attempt ${retryCount + 1}/${maxRetries})`);
 
@@ -184,31 +217,34 @@ const Dashboard = () => {
         }, backoffTime);
       } else {
         setDashboardError(
-          "Unable to connect to the database. Please check your internet connection and refresh the page."
+          `Unable to load dashboard data. ${error.message || "Please check your internet connection."}`
         );
       }
     }
-  }, [retryCount, maxRetries, supabase]);
+  }, [retryCount, maxRetries, loading]);
 
   // Fetch dashboard statistics with improved error handling
   useEffect(() => {
     let interval: number;
 
-    // Initial fetch
-    fetchDashboardStats();
+    // Only fetch if auth is not loading
+    if (!loading) {
+      // Initial fetch
+      fetchDashboardStats();
 
-    // Refresh stats every 30 seconds
-    interval = window.setInterval(() => {
-      fetchDashboardStats().catch(error => {
-        console.error("Error refreshing dashboard stats:", error);
-      });
-    }, 30000);
+      // Refresh stats every 30 seconds
+      interval = window.setInterval(() => {
+        fetchDashboardStats().catch(error => {
+          console.error("Error refreshing dashboard stats:", error);
+        });
+      }, 30000);
+    }
 
     // Clear interval on unmount
     return () => {
       if (interval) window.clearInterval(interval);
     };
-  }, [fetchDashboardStats]);
+  }, [fetchDashboardStats, loading]);
 
   // Memoize modules array to prevent recreation on every render
   const modules = useMemo(() => [
@@ -569,7 +605,7 @@ const Dashboard = () => {
                     </div>
                     <div className="flex items-center text-sm text-green-600">
                       <TrendingUp className="h-4 w-4 mr-2" />
-                      <span className="font-medium">+12% from yesterday</span>
+                      <span className="font-medium">All-Time Statistics</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -587,7 +623,7 @@ const Dashboard = () => {
                     </div>
                     <div className="flex items-center text-sm text-blue-600">
                       <Activity className="h-4 w-4 mr-2" />
-                      <span className="font-medium">Profit margin: 68%</span>
+                      <span className="font-medium">Net Profit</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -605,7 +641,7 @@ const Dashboard = () => {
                     </div>
                     <div className="flex items-center text-sm text-orange-600">
                       <Package className="h-4 w-4 mr-2" />
-                      <span className="font-medium">Avg. 24 items/day</span>
+                      <span className="font-medium">Total Quantity</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -623,7 +659,7 @@ const Dashboard = () => {
                     </div>
                     <div className="flex items-center text-sm text-purple-600">
                       <Palette className="h-4 w-4 mr-2" />
-                      <span className="font-medium">+5 new this week</span>
+                      <span className="font-medium">Completed Services</span>
                     </div>
                   </CardContent>
                 </Card>

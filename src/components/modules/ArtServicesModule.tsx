@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Edit, Trash2, Search, Lock, Palette, TrendingUp, ShoppingCart, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +21,19 @@ const formatUGX = (amount: number | null | undefined): string => {
   return `UGX ${amount.toLocaleString()}`;
 };
 
-type ArtServiceItem = Database["public"]["Tables"]["art_services"]["Row"];
+interface ArtServiceItem {
+  id: string;
+  service_name: string;
+  description: string | null;
+  quantity: number;
+  rate: number;
+  expenditure: number;
+  done_by: string | null;
+  date: string;
+  created_at: string;
+  quotation?: number;
+  deposit?: number;
+}
 type ProfileItem = Pick<Database["public"]["Tables"]["profiles"]["Row"], "id" | "sales_initials" | "full_name">;
 
 interface ArtServicesModuleProps { openAddTrigger?: number }
@@ -30,6 +43,9 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'daily' | 'monthly'>('daily');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const lastProcessedTrigger = useRef<number>(0);
   const [salesProfiles, setSalesProfiles] = useState<ProfileItem[]>([]);
   const [formData, setFormData] = useState({
@@ -202,9 +218,67 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
       });
 
       fetchItems();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error deleting job",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredItems.length && filteredItems.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredItems.map(item => item.id)));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "Only administrators can perform bulk deletion",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedIds.size === 0) return;
+
+    if (!confirm(`Are you sure you want to delete ${selectedIds.size} items? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("art_services")
+        .delete()
+        .in("id", Array.from(selectedIds));
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `${selectedIds.size} items deleted successfully`,
+      });
+
+      setSelectedIds(new Set());
+      fetchItems();
+    } catch (error: any) {
+      toast({
+        title: "Error deleting items",
         description: error.message,
         variant: "destructive",
       });
@@ -350,6 +424,17 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+
+              {isAdmin && selectedIds.size > 0 && (
+                <Button
+                  variant="destructive"
+                  onClick={handleBulkDelete}
+                  className="animate-in fade-in zoom-in duration-200 shadow-lg"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Selected ({selectedIds.size})
+                </Button>
+              )}
 
               <ExportDialog
                 data={items}
@@ -548,6 +633,17 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                 <Table>
                   <TableHeader className="bg-gradient-to-r from-gray-50 to-blue-50">
                     <TableRow className="border-b border-blue-100">
+                      {isAdmin && (
+                        <TableHead className="w-[50px]">
+                          <Checkbox
+                            checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length}
+                            onCheckedChange={toggleSelectAll}
+                            aria-label="Select all"
+                            className="translate-y-[2px]"
+                          />
+                        </TableHead>
+                      )}
+                      <TableHead className="w-[50px] font-semibold text-gray-700">#</TableHead>
                       <TableHead className="font-semibold text-gray-700">Job Description</TableHead>
                       <TableHead className="font-semibold text-gray-700">Quantity</TableHead>
                       <TableHead className="font-semibold text-gray-700">Rate</TableHead>
@@ -569,6 +665,19 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                             className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-blue-50 hover:to-cyan-50`}
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
+                            {isAdmin && (
+                              <TableCell>
+                                <Checkbox
+                                  checked={selectedIds.has(item.id)}
+                                  onCheckedChange={() => toggleSelectOne(item.id)}
+                                  aria-label={`Select ${item.service_name}`}
+                                  className="translate-y-[2px]"
+                                />
+                              </TableCell>
+                            )}
+                            <TableCell className="font-medium text-gray-500">
+                              {index + 1}
+                            </TableCell>
                             <TableCell className="font-semibold text-gray-800 max-w-xs truncate">{item.service_name}</TableCell>
                             <TableCell className="font-medium">{item.quantity}</TableCell>
                             <TableCell className="font-medium text-blue-600">{formatUGX(item.rate)}</TableCell>
@@ -612,7 +721,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={8} className="h-32 text-center">
+                        <TableCell colSpan={isAdmin ? 9 : 8} className="h-32 text-center">
                           <div className="flex flex-col items-center gap-4">
                             {isLoading ? (
                               <div className="flex items-center gap-3">
@@ -633,7 +742,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                     {/* Totals Row */}
                     {filteredItems.length > 0 && (
                       <TableRow className="bg-blue-50/50 font-bold border-t-2 border-blue-200">
-                        <TableCell colSpan={3} className="text-right text-gray-700">TOTALS</TableCell>
+                        <TableCell colSpan={isAdmin ? 5 : 4} className="text-right text-gray-700">TOTALS</TableCell>
                         <TableCell className="text-cyan-700">
                           {formatUGX(filteredItems.reduce((sum, item) => sum + (item.rate * item.quantity), 0))}
                         </TableCell>
@@ -655,12 +764,141 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
 
         <TabsContent value="daily-sales" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden p-6">
-            <h3 className="text-xl font-bold mb-4">Daily Sales Report</h3>
-            <p className="text-muted-foreground">Daily sales tracking for art services will be implemented here.</p>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+              <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-blue-600" />
+                Sales Report - {viewMode === 'daily' ? selectedDate.toLocaleDateString() : selectedDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+              </h3>
+
+              <div className="flex items-center gap-4 bg-white/50 p-1.5 rounded-lg border border-blue-100">
+                <div className="flex items-center gap-2 bg-blue-50/50 rounded-md p-1">
+                  <Button
+                    variant={viewMode === 'daily' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('daily')}
+                    className={`h-7 px-3 text-xs ${viewMode === 'daily' ? 'bg-white text-blue-600 shadow-sm border border-blue-100 hover:bg-white' : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'}`}
+                  >
+                    Daily
+                  </Button>
+                  <Button
+                    variant={viewMode === 'monthly' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('monthly')}
+                    className={`h-7 px-3 text-xs ${viewMode === 'monthly' ? 'bg-white text-blue-600 shadow-sm border border-blue-100 hover:bg-white' : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'}`}
+                  >
+                    Monthly
+                  </Button>
+                </div>
+
+                <div className="h-4 w-px bg-blue-200 mx-1" />
+
+                <div className="flex items-center gap-2">
+                  <Input
+                    type={viewMode === 'daily' ? "date" : "month"}
+                    value={
+                      viewMode === 'daily'
+                        ? selectedDate.toISOString().split('T')[0]
+                        : selectedDate.toISOString().slice(0, 7)
+                    }
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        if (viewMode === 'monthly') {
+                          const [year, month] = e.target.value.split('-').map(Number);
+                          // Create date using local time constructor, set to Noon to avoid timezone shifts
+                          setSelectedDate(new Date(year, month - 1, 1, 12, 0, 0));
+                        } else {
+                          setSelectedDate(new Date(e.target.value));
+                        }
+                      }
+                    }}
+                    className="h-7 w-[130px] text-xs border-0 bg-transparent focus:ring-0 cursor-pointer text-gray-600 font-medium"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
+                  <TableRow>
+                    <TableHead className="w-[50px] font-semibold text-gray-700">#</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Service Name</TableHead>
+                    <TableHead className="text-right font-semibold text-gray-700">Total Sales (UGX)</TableHead>
+                    <TableHead className="text-right font-semibold text-gray-700">Total Profit (UGX)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(() => {
+                    const filteredDailyItems = items.filter(item => {
+                      if (viewMode === 'daily') {
+                        return item.date === selectedDate.toISOString().split('T')[0];
+                      } else {
+                        const itemDate = new Date(item.date);
+                        return itemDate.getMonth() === selectedDate.getMonth() &&
+                          itemDate.getFullYear() === selectedDate.getFullYear();
+                      }
+                    });
+
+                    // Group by service name
+                    const summary = Object.values(filteredDailyItems.reduce((acc, item) => {
+                      // Normalize service name to handle case variations if needed, or keeping it strict
+                      const name = item.service_name;
+                      if (!acc[name]) {
+                        acc[name] = {
+                          name,
+                          totalSales: 0,
+                          totalProfit: 0
+                        };
+                      }
+                      const sales = item.rate * item.quantity;
+                      acc[name].totalSales += sales;
+                      acc[name].totalProfit += sales - item.expenditure;
+                      return acc;
+                    }, {} as Record<string, { name: string, totalSales: number, totalProfit: number }>));
+
+                    // Sort by total sales desc
+                    summary.sort((a, b) => b.totalSales - a.totalSales);
+
+                    return (
+                      <>
+                        {summary.length > 0 ? (
+                          summary.map((row, index) => (
+                            <TableRow key={index} className="hover:bg-blue-50/50">
+                              <TableCell className="font-medium text-gray-500">{index + 1}</TableCell>
+                              <TableCell className="font-medium text-gray-700 capitalize">{row.name}</TableCell>
+                              <TableCell className="text-right font-medium text-cyan-600">{formatUGX(row.totalSales)}</TableCell>
+                              <TableCell className="text-right font-bold text-green-600">{formatUGX(row.totalProfit)}</TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                              No sales found for this period
+                            </TableCell>
+                          </TableRow>
+                        )}
+
+                        {filteredDailyItems.length > 0 && (
+                          <TableRow className="bg-blue-50/50 font-bold border-t-2 border-blue-200">
+                            <TableCell colSpan={2} className="text-right text-gray-700">TOTALS</TableCell>
+                            <TableCell className="text-right text-cyan-700">
+                              {formatUGX(filteredDailyItems.reduce((sum, item) => sum + (item.rate * item.quantity), 0))}
+                            </TableCell>
+                            <TableCell className="text-right text-green-700">
+                              {formatUGX(filteredDailyItems.reduce((sum, item) => sum + ((item.rate * item.quantity) - item.expenditure), 0))}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </>
+                    );
+                  })()}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+    </div >
   );
 };
 

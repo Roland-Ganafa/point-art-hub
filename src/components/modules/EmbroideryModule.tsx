@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Edit, Trash2, Search, Lock, Scissors, TrendingUp, ShoppingCart, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +21,18 @@ const formatUGX = (amount: number | null | undefined): string => {
   return `UGX ${amount.toLocaleString()}`;
 };
 
-type EmbroideryItem = Database["public"]["Tables"]["embroidery"]["Row"];
+interface EmbroideryItem {
+  id: string;
+  job_description: string;
+  quantity: number;
+  rate: number;
+  expenditure: number;
+  done_by: string | null;
+  date: string;
+  created_at: string;
+  quotation?: number;
+  deposit?: number;
+}
 type ProfileItem = Pick<Database["public"]["Tables"]["profiles"]["Row"], "id" | "sales_initials" | "full_name">;
 
 interface EmbroideryModuleProps { openAddTrigger?: number }
@@ -30,6 +42,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const lastProcessedTrigger = useRef<number>(0);
   const [salesProfiles, setSalesProfiles] = useState<ProfileItem[]>([]);
   const [formData, setFormData] = useState({
@@ -57,7 +70,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
   }, []);
 
   // Filter items based on search
-  const filteredItems = items.filter(item => 
+  const filteredItems = items.filter(item =>
     item.job_description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.done_by && item.done_by.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -81,10 +94,10 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
         .from("profiles")
         .select("id, sales_initials, full_name")
         .not("sales_initials", "is", null);
-        
+
       if (error) throw error;
       setSalesProfiles(data as ProfileItem[] || []);
-      
+
       // If no profiles with initials found, check all profiles
       if (!data || data.length === 0) {
         const { data: allProfiles, error: allError } = await supabase
@@ -157,7 +170,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
       });
       return;
     }
-    
+
     setEditingId(item.id);
     setFormData({
       job_description: item.job_description,
@@ -178,9 +191,9 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
       });
       return;
     }
-    
+
     if (!confirm("Are you sure you want to delete this embroidery job?")) return;
-    
+
     try {
       const { error } = await supabase
         .from("embroidery")
@@ -195,7 +208,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
       });
 
       fetchItems();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error deleting job",
         description: error.message,
@@ -204,9 +217,67 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
     }
   };
 
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredItems.length && filteredItems.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredItems.map(item => item.id)));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "Only administrators can perform bulk deletion",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedIds.size === 0) return;
+
+    if (!confirm(`Are you sure you want to delete ${selectedIds.size} items? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("embroidery")
+        .delete()
+        .in("id", Array.from(selectedIds));
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `${selectedIds.size} items deleted successfully`,
+      });
+
+      setSelectedIds(new Set());
+      fetchItems();
+    } catch (error: any) {
+      toast({
+        title: "Error deleting items",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast({
         title: "Validation Error",
@@ -218,16 +289,16 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
 
     try {
       setIsLoading(true);
-      
+
       // Parse values safely - handle NaN values
       const quantity = parseInt(formData.quantity) || 1;
       const rate = parseFloat(formData.rate) || 0;
       const expenditure = parseFloat(formData.expenditure) || 0;
       const deposit = 0; // Default deposit value
-      
+
       // Calculate derived values
       const quotation = quantity * rate;
-      
+
       // Create job data object - Include all required columns
       const jobData = {
         job_description: formData.job_description.trim(),
@@ -249,12 +320,12 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
           .update(jobData)
           .eq("id", editingId)
           .select();
-          
+
         if (error) {
           console.error("Supabase error during update:", error);
           throw error;
         }
-        
+
         toast({
           title: "Success",
           description: "Embroidery job updated successfully"
@@ -265,12 +336,12 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
           .from("embroidery")
           .insert([jobData])
           .select();
-          
+
         if (error) {
           console.error("Supabase error during insert:", error);
           throw error;
         }
-        
+
         toast({
           title: "Success",
           description: "Embroidery job added successfully"
@@ -297,15 +368,15 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
     <div className="space-y-8 p-6">
       <Tabs defaultValue="inventory" className="space-y-8">
         <TabsList className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-1 shadow-lg">
-          <TabsTrigger 
-            value="inventory" 
+          <TabsTrigger
+            value="inventory"
             className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <ShoppingCart className="h-4 w-4" />
             Inventory
           </TabsTrigger>
-          <TabsTrigger 
-            value="daily-sales" 
+          <TabsTrigger
+            value="daily-sales"
             className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <TrendingUp className="h-4 w-4" />
@@ -332,14 +403,25 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              
+
+              {isAdmin && selectedIds.size > 0 && (
+                <Button
+                  variant="destructive"
+                  onClick={handleBulkDelete}
+                  className="animate-in fade-in zoom-in duration-200 shadow-lg"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Selected ({selectedIds.size})
+                </Button>
+              )}
+
               <ExportDialog
                 data={items}
                 type="embroidery"
                 moduleTitle="Embroidery Services"
                 disabled={items.length === 0}
               />
-              
+
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 if (open === false) {
                   resetForm();
@@ -347,7 +429,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                 setIsDialogOpen(open);
               }}>
                 <DialogTrigger asChild>
-                  <Button 
+                  <Button
                     className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                     onClick={() => {
                       resetForm();
@@ -375,7 +457,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                       />
                       {formErrors.job_description && <span className="text-red-500 text-sm flex items-center gap-1"><Search className="h-3 w-3" />{formErrors.job_description}</span>}
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="font-medium">Quantity *</Label>
@@ -402,7 +484,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                         {formErrors.rate && <span className="text-red-500 text-sm flex items-center gap-1"><Search className="h-3 w-3" />{formErrors.rate}</span>}
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="font-medium">Quotation (UGX) *</Label>
@@ -410,7 +492,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                           type="number"
                           step="0.01"
                           min="0"
-                          value={formData.rate && formData.quantity ? 
+                          value={formData.rate && formData.quantity ?
                             (parseFloat(formData.rate) * parseInt(formData.quantity)).toFixed(2) : "0"}
                           disabled
                           className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 font-medium"
@@ -430,14 +512,14 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                         {formErrors.expenditure && <span className="text-red-500 text-sm flex items-center gap-1"><Search className="h-3 w-3" />{formErrors.expenditure}</span>}
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label className="font-medium flex items-center gap-2">
                         <TrendingUp className="h-4 w-4 text-green-500" />
                         Profit (UGX)
                       </Label>
                       <Input
-                        value={formData.rate && formData.quantity && formData.expenditure ? 
+                        value={formData.rate && formData.quantity && formData.expenditure ?
                           (parseFloat(formData.rate) * parseInt(formData.quantity) - parseFloat(formData.expenditure)).toFixed(2) : "0"}
                         disabled
                         className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 font-medium"
@@ -451,12 +533,12 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                         onValueChange={(value) => setFormData({ ...formData, done_by: value })}
                       >
                         <SelectTrigger>
-                          <SelectValue 
+                          <SelectValue
                             placeholder={
-                              salesProfiles.length > 0 
-                                ? "Select sales person" 
+                              salesProfiles.length > 0
+                                ? "Select sales person"
                                 : "No sales persons available"
-                            } 
+                            }
                           />
                         </SelectTrigger>
                         <SelectContent>
@@ -480,10 +562,10 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                         </p>
                       )}
                     </div>
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl" 
+
+                    <Button
+                      type="submit"
+                      className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl"
                       disabled={isLoading}
                     >
                       {isLoading ? (
@@ -521,6 +603,17 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                 <Table>
                   <TableHeader className="bg-gradient-to-r from-gray-50 to-purple-50">
                     <TableRow className="border-b border-purple-100">
+                      {isAdmin && (
+                        <TableHead className="w-[50px]">
+                          <Checkbox
+                            checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length}
+                            onCheckedChange={toggleSelectAll}
+                            aria-label="Select all"
+                            className="translate-y-[2px]"
+                          />
+                        </TableHead>
+                      )}
+                      <TableHead className="w-[50px] font-semibold text-gray-700">#</TableHead>
                       <TableHead className="font-semibold text-gray-700">Job Description</TableHead>
                       <TableHead className="font-semibold text-gray-700">Quantity</TableHead>
                       <TableHead className="font-semibold text-gray-700">Rate</TableHead>
@@ -537,11 +630,24 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                         const quotation = (item.rate || 0) * item.quantity;
                         const profit = quotation - item.expenditure;
                         return (
-                          <TableRow 
-                            key={item.id} 
+                          <TableRow
+                            key={item.id}
                             className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-purple-50 hover:to-pink-50`}
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
+                            {isAdmin && (
+                              <TableCell>
+                                <Checkbox
+                                  checked={selectedIds.has(item.id)}
+                                  onCheckedChange={() => toggleSelectOne(item.id)}
+                                  aria-label={`Select ${item.job_description}`}
+                                  className="translate-y-[2px]"
+                                />
+                              </TableCell>
+                            )}
+                            <TableCell className="font-medium text-gray-500">
+                              {index + 1}
+                            </TableCell>
                             <TableCell className="font-semibold text-gray-800 max-w-xs truncate">{item.job_description}</TableCell>
                             <TableCell className="font-medium">{item.quantity}</TableCell>
                             <TableCell className="font-medium text-blue-600">{formatUGX(item.rate)}</TableCell>
@@ -558,9 +664,9 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center gap-2 justify-end">
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   className="h-8 w-8 hover:bg-purple-100 hover:scale-110 transition-all duration-200"
                                   onClick={() => handleEdit(item)}
                                   disabled={!isAdmin}
@@ -568,9 +674,9 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                                 >
                                   {!isAdmin ? <Lock className="h-4 w-4 text-gray-400" /> : <Edit className="h-4 w-4 text-purple-600" />}
                                 </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   className="h-8 w-8 hover:bg-red-100 hover:scale-110 transition-all duration-200"
                                   onClick={() => handleDelete(item.id)}
                                   disabled={!isAdmin}
@@ -585,7 +691,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={8} className="h-32 text-center">
+                        <TableCell colSpan={isAdmin ? 9 : 8} className="h-32 text-center">
                           <div className="flex flex-col items-center gap-4">
                             {isLoading ? (
                               <div className="flex items-center gap-3">

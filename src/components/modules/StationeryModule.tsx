@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Edit, Trash2, Search, AlertTriangle, Lock, Package2, TrendingUp, ShoppingCart, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -58,6 +59,65 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
   const { isAdmin } = useUser();
   const { isOffline } = useOffline();
   const lastProcessedTrigger = useRef<number>(0);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Handle bulk selection
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredItems.length && filteredItems.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredItems.map(item => item.id)));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "Only administrators can delete items",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedIds.size === 0) return;
+
+    if (!confirm(`Are you sure you want to delete ${selectedIds.size} items?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from("stationery")
+        .delete()
+        .in("id", Array.from(selectedIds));
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `${selectedIds.size} items deleted successfully`,
+      });
+
+      setSelectedIds(new Set());
+      fetchItems();
+    } catch (error: any) {
+      console.error("Error in handleBulkDelete:", error);
+      toast({
+        title: "Error deleting items",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
   const [formData, setFormData] = useState({
     category: CATEGORIES[0],
     item: "",
@@ -523,6 +583,17 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                 disabled={items.length === 0}
               />
 
+              {isAdmin && selectedIds.size > 0 && (
+                <Button
+                  variant="destructive"
+                  onClick={handleBulkDelete}
+                  className="animate-in fade-in zoom-in duration-200 shadow-lg"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Selected ({selectedIds.size})
+                </Button>
+              )}
+
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 setIsDialogOpen(open);
                 if (!open) resetForm();
@@ -722,6 +793,17 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                 <Table>
                   <TableHeader className="bg-gradient-to-r from-gray-50 to-blue-50">
                     <TableRow className="border-b border-blue-100">
+                      {isAdmin && (
+                        <TableHead className="w-[50px]">
+                          <Checkbox
+                            checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length}
+                            onCheckedChange={toggleSelectAll}
+                            aria-label="Select all"
+                            className="translate-y-[2px]"
+                          />
+                        </TableHead>
+                      )}
+                      <TableHead className="w-[50px] font-semibold text-gray-700">#</TableHead>
                       <TableHead className="font-semibold text-gray-700">Category</TableHead>
                       <TableHead className="font-semibold text-gray-700">Item</TableHead>
                       <TableHead className="font-semibold text-gray-700">Description</TableHead>
@@ -750,6 +832,19 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                               }`}
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
+                            <TableCell>
+                              {isAdmin && (
+                                <Checkbox
+                                  checked={selectedIds.has(item.id)}
+                                  onCheckedChange={() => toggleSelectOne(item.id)}
+                                  aria-label={`Select ${item.item}`}
+                                  className="translate-y-[2px]"
+                                />
+                              )}
+                            </TableCell>
+                            <TableCell className="font-medium text-gray-500">
+                              {index + 1}
+                            </TableCell>
                             <TableCell className="font-medium">
                               <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-400 to-purple-500"></div>

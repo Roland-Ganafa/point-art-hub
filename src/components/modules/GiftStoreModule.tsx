@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Edit, Trash2, Search, AlertTriangle, Lock, Gift, TrendingUp, ShoppingCart, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -43,6 +44,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const lastProcessedTrigger = useRef<number>(0);
   const [formData, setFormData] = useState({
     item: "",
@@ -238,6 +240,64 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
     }
   };
 
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredItems.length && filteredItems.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredItems.map(item => item.id)));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "Only administrators can perform bulk deletion",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedIds.size === 0) return;
+
+    if (!confirm(`Are you sure you want to delete ${selectedIds.size} items? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("gift_store")
+        .delete()
+        .in("id", Array.from(selectedIds));
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `${selectedIds.size} items deleted successfully`,
+      });
+
+      setSelectedIds(new Set());
+      fetchItems();
+    } catch (error: any) {
+      toast({
+        title: "Error deleting items",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -274,7 +334,6 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
         // Set default sales value
         sales: 0,
       };
-
       console.log("Prepared base item data:", itemData);
 
       // Validate category
@@ -482,6 +541,17 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                 />
               </div>
 
+              {isAdmin && selectedIds.size > 0 && (
+                <Button
+                  variant="destructive"
+                  onClick={handleBulkDelete}
+                  className="animate-in fade-in zoom-in duration-200 shadow-lg"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Selected ({selectedIds.size})
+                </Button>
+              )}
+
               <ExportDialog
                 data={items}
                 type="gift_store"
@@ -669,6 +739,17 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                 <Table>
                   <TableHeader className="bg-gradient-to-r from-gray-50 to-green-50">
                     <TableRow className="border-b border-green-100">
+                      {isAdmin && (
+                        <TableHead className="w-[50px]">
+                          <Checkbox
+                            checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length}
+                            onCheckedChange={toggleSelectAll}
+                            aria-label="Select all"
+                            className="translate-y-[2px]"
+                          />
+                        </TableHead>
+                      )}
+                      <TableHead className="w-[50px] font-semibold text-gray-700">#</TableHead>
                       <TableHead className="font-semibold text-gray-700">Category</TableHead>
                       <TableHead className="font-semibold text-gray-700">Item</TableHead>
                       <TableHead className="font-semibold text-gray-700">Description</TableHead>
@@ -696,11 +777,24 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                           <TableRow
                             key={item.id}
                             className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 ${isLowStock
-                                ? "bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 border-l-4 border-red-400"
-                                : "hover:from-green-50 hover:to-emerald-50"
+                              ? "bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 border-l-4 border-red-400"
+                              : "hover:from-green-50 hover:to-emerald-50"
                               }`}
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
+                            {isAdmin && (
+                              <TableCell>
+                                <Checkbox
+                                  checked={selectedIds.has(item.id)}
+                                  onCheckedChange={() => toggleSelectOne(item.id)}
+                                  aria-label={`Select ${item.item}`}
+                                  className="translate-y-[2px]"
+                                />
+                              </TableCell>
+                            )}
+                            <TableCell className="font-medium text-gray-500">
+                              {index + 1}
+                            </TableCell>
                             <TableCell className="font-medium">
                               <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-400 to-emerald-500"></div>
@@ -764,7 +858,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={11} className="h-32 text-center">
+                        <TableCell colSpan={isAdmin ? 13 : 12} className="h-32 text-center">
                           <div className="flex flex-col items-center gap-4">
                             {isLoading ? (
                               <div className="flex items-center gap-3">

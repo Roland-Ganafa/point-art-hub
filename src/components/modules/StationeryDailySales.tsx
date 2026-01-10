@@ -61,11 +61,11 @@ const StationeryDailySales = () => {
 
   // Add offline functionality
   const { isOffline } = useOffline();
-  const { 
-    offlineStationerySales, 
-    recordOfflineStationerySale, 
+  const {
+    offlineStationerySales,
+    recordOfflineStationerySale,
     syncOfflineStationerySales,
-    isSyncing 
+    isSyncing
   } = useOfflineStationerySales();
 
   // Add calculated profit state
@@ -100,10 +100,10 @@ const StationeryDailySales = () => {
       } else {
         setItems(data as unknown as StationeryDailySale[] || []);
       }
-      
+
       // Also refresh sales profiles
       await fetchSalesProfiles();
-      
+
       // Fetch stationery items for dropdown
       await fetchStationeryItems();
     } catch (error) {
@@ -121,7 +121,7 @@ const StationeryDailySales = () => {
         .select("*")
         .order("category", { ascending: true })
         .order("item", { ascending: true });
-        
+
       if (error) throw error;
       setStationeryItems(data as unknown as StationeryItem[] || []);
     } catch (error) {
@@ -135,10 +135,10 @@ const StationeryDailySales = () => {
         .from("profiles")
         .select("id, sales_initials, full_name")
         .not("sales_initials", "is", null);
-        
+
       if (error) throw error;
       setSalesProfiles(data as ProfileItem[] || []);
-      
+
       // If no profiles with initials found, check all profiles
       if (!data || data.length === 0) {
         const { data: allProfiles, error: allError } = await supabase
@@ -165,52 +165,52 @@ const StationeryDailySales = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (!formData.itemId) {
       toast({ title: "Validation Error", description: "Please select an item", variant: "destructive" });
       return;
     }
-    
+
     const quantity = parseInt(formData.quantity) || 0;
     const rate = parseFloat(formData.rate) || 0;
     const sellingPrice = parseFloat(formData.selling_price) || 0;
-    
+
     if (quantity <= 0) {
       toast({ title: "Validation Error", description: "Quantity must be a positive number", variant: "destructive" });
       return;
     }
-    
+
     if (rate < 0) {
       toast({ title: "Validation Error", description: "Rate cannot be negative", variant: "destructive" });
       return;
     }
-    
+
     if (sellingPrice < 0) {
       toast({ title: "Validation Error", description: "Selling price cannot be negative", variant: "destructive" });
       return;
     }
-    
+
     // Check if there's enough stock
     const selectedItem = stationeryItems.find(item => item.id === formData.itemId);
     if (!selectedItem) {
-      toast({ 
-        title: "Item Not Found", 
-        description: "The selected item does not exist in the inventory", 
-        variant: "destructive" 
+      toast({
+        title: "Item Not Found",
+        description: "The selected item does not exist in the inventory",
+        variant: "destructive"
       });
       return;
     }
-    
+
     if (quantity > selectedItem.stock) {
-      toast({ 
-        title: "Insufficient Stock", 
-        description: `Only ${selectedItem.stock} units available for ${selectedItem.item}`, 
-        variant: "destructive" 
+      toast({
+        title: "Insufficient Stock",
+        description: `Only ${selectedItem.stock} units available for ${selectedItem.item}`,
+        variant: "destructive"
       });
       return;
     }
-    
+
     const payload: any = {
       item_id: formData.itemId,
       quantity: quantity,
@@ -220,10 +220,10 @@ const StationeryDailySales = () => {
       sold_by: formData.soldBy === "not_specified" ? null : formData.soldBy
       // Removed date field since it has a default value of now()
     };
-    
+
     // Log the payload for debugging
     console.log("Sale payload:", payload);
-    
+
     try {
       // If offline, store sale locally
       if (isOffline) {
@@ -264,9 +264,9 @@ const StationeryDailySales = () => {
         setIsDialogOpen(false);
         return;
       }
-      
+
       let error;
-      
+
       if (editingId) {
         // Update existing record
         const result = await supabase
@@ -306,16 +306,16 @@ const StationeryDailySales = () => {
       fetchData();
     } catch (error: any) {
       console.error("Error in handleSubmit:", error);
-      
+
       // Provide more specific error messages
       let errorMessage = error.message || error.details || "An unexpected error occurred";
-      
+
       // Handle foreign key constraint violations specifically
       if (error.code === '23503') {
         errorMessage = "Unable to record sale due to user profile issues. Please contact an administrator.";
         console.error("Foreign key constraint violation:", error.details);
       }
-      
+
       toast({
         title: editingId ? "Error updating sale" : "Error recording sale",
         description: errorMessage,
@@ -327,7 +327,7 @@ const StationeryDailySales = () => {
   const handleEdit = (item: StationeryDailySale) => {
     // Find the corresponding stationery item
     const stationeryItem = stationeryItems.find(si => si.id === item.item_id);
-    
+
     setFormData({
       date: item.date,
       category: stationeryItem?.category || "",
@@ -345,7 +345,7 @@ const StationeryDailySales = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this sale?")) return;
-    
+
     try {
       const { error } = await supabase
         .from("stationery_sales") // Changed from "stationery_daily_sales" to "stationery_sales"
@@ -429,7 +429,7 @@ const StationeryDailySales = () => {
             }
           }}>
             <DialogTrigger asChild>
-              <Button 
+              <Button
                 className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                 disabled={isSyncing}
               >
@@ -459,8 +459,8 @@ const StationeryDailySales = () => {
                     value={formData.itemId}
                     onValueChange={(value) => {
                       const selectedItem = stationeryItems.find(item => item.id === value);
-                      setFormData({ 
-                        ...formData, 
+                      setFormData({
+                        ...formData,
                         itemId: value,
                         category: selectedItem?.category || "",
                         item: selectedItem?.item || "",
@@ -481,7 +481,7 @@ const StationeryDailySales = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label className="font-medium">Description</Label>
                   <Input
@@ -490,7 +490,7 @@ const StationeryDailySales = () => {
                     className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="font-medium">Quantity *</Label>
@@ -513,7 +513,7 @@ const StationeryDailySales = () => {
                     />
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="font-medium">Rate (UGX) *</Label>
@@ -540,7 +540,7 @@ const StationeryDailySales = () => {
                     />
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label className="font-medium flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-green-500" />
@@ -552,7 +552,7 @@ const StationeryDailySales = () => {
                     className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 font-medium"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label>Sold By</Label>
                   <Select
@@ -572,9 +572,9 @@ const StationeryDailySales = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <Button 
-                  type="submit" 
+
+                <Button
+                  type="submit"
                   className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
                   {editingId ? '✏️ Update Sale' : '✨ Record Sale'}
@@ -613,6 +613,7 @@ const StationeryDailySales = () => {
             <Table>
               <TableHeader className="bg-gradient-to-r from-gray-50 to-blue-50">
                 <TableRow className="border-b border-blue-100">
+                  <TableHead className="w-[50px] font-semibold text-gray-700">#</TableHead>
                   <TableHead className="font-semibold text-gray-700">Category</TableHead>
                   <TableHead className="font-semibold text-gray-700">Item</TableHead>
                   <TableHead className="font-semibold text-gray-700">Description</TableHead>
@@ -626,11 +627,12 @@ const StationeryDailySales = () => {
                 {items.length > 0 ? (
                   items.map((item, index) => {
                     return (
-                      <TableRow 
-                        key={item.id} 
+                      <TableRow
+                        key={item.id}
                         className="group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-blue-50 hover:to-purple-50"
                         style={{ animationDelay: `${index * 50}ms` }}
                       >
+                        <TableCell className="font-medium text-gray-500">{index + 1}</TableCell>
                         <TableCell className="font-medium text-gray-600">{getItemCategory(item.item_id)}</TableCell>
                         <TableCell className="font-semibold text-gray-800 max-w-xs truncate">{getItemName(item.item_id)}</TableCell>
                         <TableCell className="text-gray-600">{item.description || "-"}</TableCell>
@@ -641,17 +643,17 @@ const StationeryDailySales = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center gap-2 justify-end">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               className="h-8 w-8 hover:bg-blue-100 hover:scale-110 transition-all duration-200"
                               onClick={() => handleEdit(item)}
                             >
                               <Edit className="h-4 w-4 text-blue-600" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               className="h-8 w-8 hover:bg-red-100 hover:scale-110 transition-all duration-200"
                               onClick={() => handleDelete(item.id)}
                             >
