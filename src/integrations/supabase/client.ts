@@ -211,20 +211,8 @@ if (typeof window !== 'undefined') {
     }
   });
 
-  // Also periodically check and refresh session
-  setInterval(() => {
-    if (navigator.onLine) {
-      supabase.auth.getSession()
-        .then(({ data }) => {
-          if (data.session) {
-            // Session exists, periodically refresh it
-            supabase.auth.refreshSession()
-              .catch(err => console.warn('Periodic session refresh failed:', err));
-          }
-        })
-        .catch(err => console.warn('Session check failed:', err));
-    }
-  }, 5 * 60 * 1000); // Check every 5 minutes
+  // Periodic session check removed to avoid conflicts with Supabase auto-refresh
+  // Supabase client handles token refreshing automatically via autoRefreshToken: true
 }
 
 // Debug - check if client is created properly
