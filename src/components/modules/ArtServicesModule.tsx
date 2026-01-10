@@ -644,7 +644,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                         </TableHead>
                       )}
                       <TableHead className="w-[50px] font-semibold text-gray-700">#</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Job Description</TableHead>
+                      <TableHead className="font-semibold text-gray-700 text-left">Job Description</TableHead>
                       <TableHead className="font-semibold text-gray-700">Quantity</TableHead>
                       <TableHead className="font-semibold text-gray-700">Rate</TableHead>
                       <TableHead className="font-semibold text-gray-700">Quotation</TableHead>
@@ -678,7 +678,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                             <TableCell className="font-medium text-gray-500">
                               {index + 1}
                             </TableCell>
-                            <TableCell className="font-semibold text-gray-800 max-w-xs truncate">{item.service_name}</TableCell>
+                            <TableCell className="font-semibold text-gray-800 max-w-xs truncate text-left">{item.service_name}</TableCell>
                             <TableCell className="font-medium">{item.quantity}</TableCell>
                             <TableCell className="font-medium text-blue-600">{formatUGX(item.rate)}</TableCell>
                             <TableCell className="font-medium text-cyan-600">{formatUGX(quotation)}</TableCell>

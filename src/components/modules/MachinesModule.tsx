@@ -934,7 +934,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                 <TableHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
                   <TableRow>
                     <TableHead className="w-[50px] font-semibold text-gray-700">#</TableHead>
-                    <TableHead className="font-semibold text-gray-700">Machine Category</TableHead>
+                    <TableHead className="font-semibold text-gray-700 text-left">Machine Category</TableHead>
                     <TableHead className="text-right font-semibold text-gray-700">Total Sales (UGX)</TableHead>
                     <TableHead className="text-right font-semibold text-gray-700">Total Profit (UGX)</TableHead>
                   </TableRow>

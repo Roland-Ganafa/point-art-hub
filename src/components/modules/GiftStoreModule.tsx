@@ -752,7 +752,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                       <TableHead className="w-[50px] font-semibold text-gray-700">#</TableHead>
                       <TableHead className="font-semibold text-gray-700">Category</TableHead>
                       <TableHead className="font-semibold text-gray-700">Item</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Description</TableHead>
+                      <TableHead className="font-semibold text-gray-700 text-left">Description</TableHead>
                       <TableHead className="font-semibold text-gray-700">Qty</TableHead>
                       <TableHead className="font-semibold text-gray-700">Rate (UGX)</TableHead>
                       <TableHead className="font-semibold text-gray-700">Total Value (UGX)</TableHead>
@@ -802,7 +802,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                               </div>
                             </TableCell>
                             <TableCell className="font-semibold text-gray-800">{item.item}</TableCell>
-                            <TableCell className="text-gray-600">{item.description || item.custom_category || "-"}</TableCell>
+                            <TableCell className="text-gray-500 max-w-xs truncate text-left">{item.description || '-'}</TableCell>
                             <TableCell className="font-medium">{item.quantity}</TableCell>
                             <TableCell className="font-medium text-blue-600">{formatUGX(item.rate)}</TableCell>
                             <TableCell className="font-medium text-green-600">{formatUGX(item.quantity * item.rate)}</TableCell>
