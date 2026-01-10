@@ -59,7 +59,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
   }, []);
 
   // Filter items based on search
-  const filteredItems = items.filter(item => 
+  const filteredItems = items.filter(item =>
     item.service_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (item.done_by && item.done_by.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -84,10 +84,10 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
         .from("profiles")
         .select("id, sales_initials, full_name")
         .not("sales_initials", "is", null);
-        
+
       if (error) throw error;
       setSalesProfiles(data as ProfileItem[] || []);
-      
+
       // If no profiles with initials found, check all profiles
       if (!data || data.length === 0) {
         const { data: allProfiles, error: allError } = await supabase
@@ -163,7 +163,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
       });
       return;
     }
-    
+
     setEditingId(item.id);
     setFormData({
       service_name: item.service_name,
@@ -185,9 +185,9 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
       });
       return;
     }
-    
+
     if (!confirm("Are you sure you want to delete this art service job?")) return;
-    
+
     try {
       const { error } = await supabase
         .from("art_services")
@@ -213,7 +213,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast({
         title: "Validation Error",
@@ -225,13 +225,13 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
 
     try {
       setIsLoading(true);
-      
+
       // Parse values safely - handle NaN values
       const quantity = parseInt(formData.quantity) || 1;
       const rate = parseFloat(formData.rate) || 0;
       const expenditure = parseFloat(formData.expenditure) || 0;
       const deposit = 0; // Default deposit value
-      
+
       // Create service data object - DO NOT include GENERATED columns
       const serviceData = {
         service_name: formData.service_name.trim(),
@@ -253,12 +253,12 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
           .update(serviceData)
           .eq("id", editingId)
           .select();
-          
+
         if (error) {
           console.error("Supabase error during update:", error);
           throw error;
         }
-        
+
         toast({
           title: "Success",
           description: "Art service job updated successfully"
@@ -269,12 +269,12 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
           .from("art_services")
           .insert([serviceData])
           .select();
-          
+
         if (error) {
           console.error("Supabase error during insert:", error);
           throw error;
         }
-        
+
         toast({
           title: "Success",
           description: "Art service job added successfully"
@@ -301,15 +301,15 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
     <div className="space-y-8 p-6">
       <Tabs defaultValue="inventory" className="space-y-8">
         <TabsList className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl p-1 shadow-lg">
-          <TabsTrigger 
-            value="inventory" 
+          <TabsTrigger
+            value="inventory"
             className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <ShoppingCart className="h-4 w-4" />
             Inventory
           </TabsTrigger>
-          <TabsTrigger 
-            value="daily-sales" 
+          <TabsTrigger
+            value="daily-sales"
             className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <TrendingUp className="h-4 w-4" />
@@ -327,6 +327,20 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
               <p className="text-muted-foreground">Manage your art service jobs with detailed tracking</p>
             </div>
             <div className="flex items-center gap-4">
+              {/* Today's Sales Summary */}
+              <div className="bg-white px-4 py-2 rounded-lg border border-blue-100 shadow-sm flex flex-col items-end min-w-[140px]">
+                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Today's Sales</span>
+                <span className="text-lg font-bold text-green-600">
+                  {formatUGX(items
+                    .filter(item => {
+                      const today = new Date().toISOString().split('T')[0];
+                      return item.date === today;
+                    })
+                    .reduce((sum, item) => sum + (item.rate * item.quantity), 0)
+                  )}
+                </span>
+              </div>
+
               <div className="relative w-full max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -336,14 +350,14 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              
+
               <ExportDialog
                 data={items}
                 type="art_services"
                 moduleTitle="Art Services"
                 disabled={items.length === 0}
               />
-              
+
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 if (open === false) {
                   resetForm();
@@ -351,7 +365,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                 setIsDialogOpen(open);
               }}>
                 <DialogTrigger asChild>
-                  <Button 
+                  <Button
                     className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                     onClick={() => {
                       resetForm();
@@ -379,7 +393,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                       />
                       {formErrors.service_name && <span className="text-red-500 text-sm flex items-center gap-1"><Search className="h-3 w-3" />{formErrors.service_name}</span>}
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label className="font-medium">Description</Label>
                       <Textarea
@@ -388,7 +402,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                         className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
                       />
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="font-medium">Quantity *</Label>
@@ -415,7 +429,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                         {formErrors.rate && <span className="text-red-500 text-sm flex items-center gap-1"><Search className="h-3 w-3" />{formErrors.rate}</span>}
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="font-medium">Quotation (UGX) *</Label>
@@ -423,7 +437,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                           type="number"
                           step="0.01"
                           min="0"
-                          value={formData.rate && formData.quantity ? 
+                          value={formData.rate && formData.quantity ?
                             (parseFloat(formData.rate) * parseInt(formData.quantity)).toFixed(2) : "0"}
                           disabled
                           className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 font-medium"
@@ -443,20 +457,20 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                         {formErrors.expenditure && <span className="text-red-500 text-sm flex items-center gap-1"><Search className="h-3 w-3" />{formErrors.expenditure}</span>}
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label className="font-medium flex items-center gap-2">
                         <TrendingUp className="h-4 w-4 text-green-500" />
                         Profit (UGX)
                       </Label>
                       <Input
-                        value={formData.rate && formData.quantity && formData.expenditure ? 
+                        value={formData.rate && formData.quantity && formData.expenditure ?
                           (parseFloat(formData.rate) * parseInt(formData.quantity) - parseFloat(formData.expenditure)).toFixed(2) : "0"}
                         disabled
                         className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 font-medium"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label>Done By (Initials)</Label>
                       <Select
@@ -464,12 +478,12 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                         onValueChange={(value) => setFormData({ ...formData, done_by: value })}
                       >
                         <SelectTrigger>
-                          <SelectValue 
+                          <SelectValue
                             placeholder={
-                              salesProfiles.length > 0 
-                                ? "Select sales person" 
+                              salesProfiles.length > 0
+                                ? "Select sales person"
                                 : "No sales persons available"
-                            } 
+                            }
                           />
                         </SelectTrigger>
                         <SelectContent>
@@ -493,10 +507,10 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                         </p>
                       )}
                     </div>
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 transition-all duration-200 shadow-lg hover:shadow-xl" 
+
+                    <Button
+                      type="submit"
+                      className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 transition-all duration-200 shadow-lg hover:shadow-xl"
                       disabled={isLoading}
                     >
                       {isLoading ? (
@@ -550,12 +564,12 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                         const quotation = item.rate * item.quantity;
                         const profit = quotation - item.expenditure;
                         return (
-                          <TableRow 
-                            key={item.id} 
+                          <TableRow
+                            key={item.id}
                             className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-blue-50 hover:to-cyan-50`}
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
-                            <TableCell className="font-semibold text-gray-8800 max-w-xs truncate">{item.service_name}</TableCell>
+                            <TableCell className="font-semibold text-gray-800 max-w-xs truncate">{item.service_name}</TableCell>
                             <TableCell className="font-medium">{item.quantity}</TableCell>
                             <TableCell className="font-medium text-blue-600">{formatUGX(item.rate)}</TableCell>
                             <TableCell className="font-medium text-cyan-600">{formatUGX(quotation)}</TableCell>
@@ -571,9 +585,9 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center gap-2 justify-end">
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   className="h-8 w-8 hover:bg-blue-100 hover:scale-110 transition-all duration-200"
                                   onClick={() => handleEdit(item)}
                                   disabled={!isAdmin}
@@ -581,9 +595,9 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                                 >
                                   {!isAdmin ? <Lock className="h-4 w-4 text-gray-400" /> : <Edit className="h-4 w-4 text-blue-600" />}
                                 </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   className="h-8 w-8 hover:bg-red-100 hover:scale-110 transition-all duration-200"
                                   onClick={() => handleDelete(item.id)}
                                   disabled={!isAdmin}
@@ -614,6 +628,22 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                             )}
                           </div>
                         </TableCell>
+                      </TableRow>
+                    )}
+                    {/* Totals Row */}
+                    {filteredItems.length > 0 && (
+                      <TableRow className="bg-blue-50/50 font-bold border-t-2 border-blue-200">
+                        <TableCell colSpan={3} className="text-right text-gray-700">TOTALS</TableCell>
+                        <TableCell className="text-cyan-700">
+                          {formatUGX(filteredItems.reduce((sum, item) => sum + (item.rate * item.quantity), 0))}
+                        </TableCell>
+                        <TableCell className="text-red-700">
+                          {formatUGX(filteredItems.reduce((sum, item) => sum + item.expenditure, 0))}
+                        </TableCell>
+                        <TableCell className="text-green-700">
+                          {formatUGX(filteredItems.reduce((sum, item) => sum + ((item.rate * item.quantity) - item.expenditure), 0))}
+                        </TableCell>
+                        <TableCell colSpan={2}></TableCell>
                       </TableRow>
                     )}
                   </TableBody>
