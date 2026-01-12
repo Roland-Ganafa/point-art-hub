@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Package, Gift, Scissors, Printer, Palette, TrendingUp, TrendingDown, Activity, BarChart3, Loader2, ShieldAlert, RefreshCw } from "lucide-react";
+import { PlusCircle, Package, Gift, Scissors, Printer, Palette, TrendingUp, TrendingDown, Activity, BarChart3, ShieldAlert, RefreshCw } from "lucide-react";
+import CustomLoader from "@/components/ui/CustomLoader";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
@@ -20,7 +21,7 @@ import DashboardGreeting from "./DashboardGreeting";
 const ModuleLoading = () => (
   <div className="flex items-center justify-center h-64">
     <div className="flex flex-col items-center gap-2">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <CustomLoader size="lg" />
       <p className="text-muted-foreground">Loading module...</p>
     </div>
   </div>

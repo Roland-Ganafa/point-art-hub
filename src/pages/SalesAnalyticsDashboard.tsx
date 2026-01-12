@@ -1,31 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { 
-  LineChart, 
-  Line, 
-  AreaChart, 
-  Area, 
-  BarChart, 
-  Bar, 
-  PieChart, 
-  Pie, 
+import CustomLoader from '@/components/ui/CustomLoader';
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
   Cell,
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   Legend
 } from 'recharts';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  BarChart3, 
+import {
+  TrendingUp,
+  TrendingDown,
+  BarChart3,
   PieChart as PieChartIcon,
   DollarSign,
   Users,
@@ -124,7 +125,7 @@ const SalesAnalyticsDashboard = () => {
       // Calculate date ranges
       const endDate = new Date();
       const startDate = new Date();
-      
+
       switch (dateRange) {
         case '7days':
           startDate.setDate(endDate.getDate() - 7);
@@ -159,7 +160,7 @@ const SalesAnalyticsDashboard = () => {
       // Generate daily sales data for chart
       const dailySalesMap = new Map<string, SalesData>();
       const days = parseInt(dateRange.replace('days', '')) || 30;
-      
+
       for (let i = days - 1; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
@@ -238,12 +239,12 @@ const SalesAnalyticsDashboard = () => {
       // Calculate trends
       const recentSales = salesByPeriod.slice(-7);
       const previousSales = salesByPeriod.slice(-14, -7);
-      
+
       const recentAvg = recentSales.reduce((sum, day) => sum + day.sales, 0) / 7;
       const previousAvg = previousSales.reduce((sum, day) => sum + day.sales, 0) / 7;
-      
-      const salesTrend = recentAvg > previousAvg * 1.05 ? 'up' : 
-                        recentAvg < previousAvg * 0.95 ? 'down' : 'stable';
+
+      const salesTrend = recentAvg > previousAvg * 1.05 ? 'up' :
+        recentAvg < previousAvg * 0.95 ? 'down' : 'stable';
 
       setMetrics({
         totalSales: salesTotal,
@@ -309,7 +310,7 @@ const SalesAnalyticsDashboard = () => {
               <span>Last updated: {lastUpdated.toLocaleTimeString()}</span>
             </div>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex items-center gap-3">
               <Label htmlFor="dateRange" className="text-sm font-medium">Period:</Label>
@@ -326,10 +327,10 @@ const SalesAnalyticsDashboard = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={generateAnalytics}
                 disabled={isLoading}
                 className="bg-white/80"
@@ -337,7 +338,7 @@ const SalesAnalyticsDashboard = () => {
                 <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                 Refresh
               </Button>
-              
+
               <ExportDialog
                 data={[metrics]}
                 type="sales"
@@ -443,117 +444,56 @@ const SalesAnalyticsDashboard = () => {
               </div>
             </div>
           </div>
-          
+
           <CardContent className="p-8">
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
-              {/* Performance Metrics */}
-              <div className="space-y-8">
-                <h4 className="text-xl font-bold text-gray-800 flex items-center gap-3 pb-2 border-b border-gray-100">
-                  <TrendingUp className="h-6 w-6 text-green-500" />
-                  Performance Metrics
-                </h4>
-                
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100 hover:shadow-md transition-shadow duration-300">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-green-500 rounded-xl shadow-lg">
-                        <TrendingUp className="h-5 w-5 text-white" />
+            <div className="space-y-8">
+              <h4 className="text-xl font-bold text-gray-800 flex items-center gap-3 pb-2 border-b border-gray-100">
+                <Package className="h-6 w-6 text-orange-500" />
+                Category Performance
+              </h4>
+
+              <div className="space-y-4">
+                {metrics.categoryPerformance.map((category, index) => {
+                  const percentage = metrics.totalSales > 0 ? (category.sales / metrics.totalSales) * 100 : 0;
+
+                  return (
+                    <div key={category.category} className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-300 cursor-pointer hover:shadow-md border border-gray-100">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-sm">
+                            <Package className="h-4 w-4" />
+                          </div>
+                          <span className="text-sm font-semibold text-gray-700">{category.category}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-bold text-gray-800">{formatUGX(category.sales)}</span>
+                          <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm text-green-700 font-semibold uppercase tracking-wide">Revenue Growth</p>
-                        <p className="text-green-800 font-bold text-lg">{metrics.growthRate > 0 ? '+' : ''}{metrics.growthRate.toFixed(1)}% this period</p>
+                      <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-1000 bg-gradient-to-r from-blue-500 to-purple-600 shadow-sm"
+                          style={{ width: `${percentage}%` }}
+                        ></div>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl lg:text-3xl font-bold text-green-700">{formatUGX(metrics.totalSales)}</p>
-                      <p className="text-sm text-green-600 font-medium">Total sales</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-100 hover:shadow-md transition-shadow duration-300">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-blue-500 rounded-xl shadow-lg">
-                        <Activity className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-blue-700 font-semibold uppercase tracking-wide">Profit Margin</p>
-                        <p className="text-blue-800 font-bold text-lg">{metrics.profitMargin.toFixed(1)}% average</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl lg:text-3xl font-bold text-blue-700">{formatUGX(metrics.totalProfit)}</p>
-                      <p className="text-sm text-blue-600 font-medium">Total profit</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl border border-purple-100 hover:shadow-md transition-shadow duration-300">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-purple-500 rounded-xl shadow-lg">
-                        <Target className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-purple-700 font-semibold uppercase tracking-wide">Transaction Efficiency</p>
-                        <p className="text-purple-800 font-bold text-lg">{formatUGX(metrics.averageOrderValue)} avg order</p>
+                      <div className="mt-2 text-xs text-gray-600">
+                        {category.margin.toFixed(1)}% margin • {category.items} items
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-2xl lg:text-3xl font-bold text-purple-700">{metrics.totalTransactions}</p>
-                      <p className="text-sm text-purple-600 font-medium">Total transactions</p>
-                    </div>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
-              
-              {/* Category Performance */}
-              <div className="space-y-8">
-                <h4 className="text-xl font-bold text-gray-800 flex items-center gap-3 pb-2 border-b border-gray-100">
-                  <Package className="h-6 w-6 text-orange-500" />
-                  Category Performance
-                </h4>
-                
-                <div className="space-y-4">
-                  {metrics.categoryPerformance.map((category, index) => {
-                    const percentage = metrics.totalSales > 0 ? (category.sales / metrics.totalSales) * 100 : 0;
-                    
-                    return (
-                      <div key={category.category} className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-300 cursor-pointer hover:shadow-md border border-gray-100">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-sm">
-                              <Package className="h-4 w-4" />
-                            </div>
-                            <span className="text-sm font-semibold text-gray-700">{category.category}</span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm font-bold text-gray-800">{formatUGX(category.sales)}</span>
-                            <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
-                          </div>
-                        </div>
-                        <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
-                          <div 
-                            className="h-full rounded-full transition-all duration-1000 bg-gradient-to-r from-blue-500 to-purple-600 shadow-sm"
-                            style={{ width: `${percentage}%` }}
-                          ></div>
-                        </div>
-                        <div className="mt-2 text-xs text-gray-600">
-                          {category.margin.toFixed(1)}% margin • {category.items} items
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                
-                <div className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="text-center flex-1">
-                      <p className="text-sm text-gray-600 font-medium mb-1">Total Items Sold</p>
-                      <p className="text-3xl font-bold text-gray-800">{metrics.totalItems}</p>
-                    </div>
-                    <div className="w-px h-12 bg-gray-300 mx-6"></div>
-                    <div className="text-center flex-1">
-                      <p className="text-sm text-gray-600 font-medium mb-1">Average Order Value</p>
-                      <p className="text-3xl font-bold text-gray-800">{formatUGX(metrics.averageOrderValue)}</p>
-                    </div>
+
+              <div className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div className="text-center flex-1">
+                    <p className="text-sm text-gray-600 font-medium mb-1">Total Items Sold</p>
+                    <p className="text-3xl font-bold text-gray-800">{metrics.totalItems}</p>
+                  </div>
+                  <div className="w-px h-12 bg-gray-300 mx-6"></div>
+                  <div className="text-center flex-1">
+                    <p className="text-sm text-gray-600 font-medium mb-1">Average Order Value</p>
+                    <p className="text-3xl font-bold text-gray-800">{formatUGX(metrics.averageOrderValue)}</p>
                   </div>
                 </div>
               </div>
@@ -584,29 +524,29 @@ const SalesAnalyticsDashboard = () => {
                   <ResponsiveContainer width="100%" height={300}>
                     <AreaChart data={metrics.salesByPeriod}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="date" 
+                      <XAxis
+                        dataKey="date"
                         tickFormatter={(value) => new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                       />
                       <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
-                      <Tooltip 
+                      <Tooltip
                         formatter={(value, name) => [formatUGX(Number(value)), name === 'sales' ? 'Sales' : 'Profit']}
                         labelFormatter={(value) => new Date(value).toLocaleDateString()}
                       />
-                      <Area 
-                        type="monotone" 
-                        dataKey="sales" 
-                        stackId="1" 
-                        stroke="#8884d8" 
-                        fill="#8884d8" 
+                      <Area
+                        type="monotone"
+                        dataKey="sales"
+                        stackId="1"
+                        stroke="#8884d8"
+                        fill="#8884d8"
                         fillOpacity={0.6}
                       />
-                      <Area 
-                        type="monotone" 
-                        dataKey="profit" 
-                        stackId="2" 
-                        stroke="#82ca9d" 
-                        fill="#82ca9d" 
+                      <Area
+                        type="monotone"
+                        dataKey="profit"
+                        stackId="2"
+                        stroke="#82ca9d"
+                        fill="#82ca9d"
                         fillOpacity={0.6}
                       />
                     </AreaChart>
@@ -626,32 +566,32 @@ const SalesAnalyticsDashboard = () => {
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={metrics.salesByPeriod}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="date" 
+                      <XAxis
+                        dataKey="date"
                         tickFormatter={(value) => new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                       />
                       <YAxis yAxisId="left" />
                       <YAxis yAxisId="right" orientation="right" />
-                      <Tooltip 
+                      <Tooltip
                         formatter={(value, name) => [
                           name === 'items_sold' ? `${value} items` : `${value} orders`,
                           name === 'items_sold' ? 'Items Sold' : 'Transactions'
                         ]}
                         labelFormatter={(value) => new Date(value).toLocaleDateString()}
                       />
-                      <Line 
+                      <Line
                         yAxisId="left"
-                        type="monotone" 
-                        dataKey="items_sold" 
-                        stroke="#ffc658" 
+                        type="monotone"
+                        dataKey="items_sold"
+                        stroke="#ffc658"
                         strokeWidth={2}
                         dot={{ fill: '#ffc658' }}
                       />
-                      <Line 
+                      <Line
                         yAxisId="right"
-                        type="monotone" 
-                        dataKey="transactions" 
-                        stroke="#ff7300" 
+                        type="monotone"
+                        dataKey="transactions"
+                        stroke="#ff7300"
                         strokeWidth={2}
                         dot={{ fill: '#ff7300' }}
                       />
@@ -768,7 +708,7 @@ const SalesAnalyticsDashboard = () => {
                     </Badge>
                   </div>
                 </div>
-                
+
                 <div className="flex justify-between items-center">
                   <span>Average Order Value</span>
                   <div className="flex items-center gap-2">
@@ -778,7 +718,7 @@ const SalesAnalyticsDashboard = () => {
                     </Badge>
                   </div>
                 </div>
-                
+
                 <div className="flex justify-between items-center">
                   <span>Growth Rate</span>
                   <div className="flex items-center gap-2">
@@ -793,7 +733,7 @@ const SalesAnalyticsDashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+    </div >
   );
 };
 

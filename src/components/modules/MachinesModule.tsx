@@ -13,6 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import ExportDialog from "@/components/ExportDialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import CustomLoader from "@/components/ui/CustomLoader";
 
 const formatUGX = (amount: number | null | undefined): string => {
   if (amount === null || amount === undefined) return "UGX 0";
@@ -700,7 +702,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                     >
                       {isLoading ? (
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <CustomLoader size="sm" className="mr-2" />
                           Saving...
                         </div>
                       ) : (
@@ -831,9 +833,9 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                         <TableCell colSpan={12} className="h-32 text-center">
                           <div className="flex flex-col items-center gap-4">
                             {isLoading ? (
-                              <div className="flex items-center gap-3">
-                                <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                                <span className="text-lg text-gray-600">Loading machine services...</span>
+                              <div className="flex flex-col items-center gap-3">
+                                <CustomLoader size="lg" />
+                                <span className="text-lg text-gray-600 font-medium">Loading machine services...</span>
                               </div>
                             ) : (
                               <div className="flex flex-col items-center gap-3">

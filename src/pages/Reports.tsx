@@ -7,11 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { 
-  BarChart3, 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
+import {
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
   Download,
   Calendar,
   Filter,
@@ -25,7 +25,10 @@ import {
   Package
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import ExportDialog from "@/components/ExportDialog";
+import CustomLoader from "@/components/ui/CustomLoader";
 import { useUser } from '@/contexts/UserContext';
 
 const formatUGX = (amount: number | null | undefined): string => {
@@ -81,11 +84,11 @@ const Reports = () => {
       artServices: 0,
     },
   });
-  
+
   const [dateRange, setDateRange] = useState('7days');
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  
+
   const { toast } = useToast();
   const { isAdmin } = useUser();
 
@@ -96,11 +99,11 @@ const Reports = () => {
   const generateReport = async () => {
     try {
       setIsLoading(true);
-      
+
       // Calculate date range
       const endDate = new Date();
       const startDate = new Date();
-      
+
       switch (dateRange) {
         case '7days':
           startDate.setDate(endDate.getDate() - 7);
@@ -164,7 +167,7 @@ const Reports = () => {
 
       servicesDone = allServices.length;
       totalSales += allServices.reduce((sum, service) => sum + (service.sales || 0), 0);
-      
+
       // Calculate profit for different service types
       if (embroideryData.data) {
         totalProfit += embroideryData.data.reduce((sum, service) => sum + (service.profit || 0), 0);
@@ -179,7 +182,7 @@ const Reports = () => {
           return sum + Math.max(0, profit);
         }, 0);
       }
-      
+
       totalExpenses += allServices.reduce((sum, service) => sum + (service.expenditure || 0), 0);
 
       // Calculate top selling items (mock data for now)
@@ -283,7 +286,7 @@ const Reports = () => {
         ])
       ];
 
-      const csvString = csvData.map(row => row.join(',')).join('\\n');
+      const csvString = csvData.map(row => row.join(',')).join('\n');
       const blob = new Blob([csvString], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -330,7 +333,7 @@ const Reports = () => {
               <span>Last updated: {lastUpdated.toLocaleTimeString()}</span>
             </div>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex items-center gap-3">
               <Label htmlFor="dateRange" className="text-sm font-medium">Period:</Label>
@@ -347,10 +350,10 @@ const Reports = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={generateReport}
                 disabled={isLoading}
                 className="bg-white/80"
@@ -358,19 +361,19 @@ const Reports = () => {
                 <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                 Refresh
               </Button>
-              
+
               {isAdmin && (
                 <>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => exportReport('csv')}
                     className="bg-white/80"
                   >
                     <Download className="h-4 w-4 mr-2" />
                     CSV
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => exportReport('pdf')}
                     className="bg-white/80"
                   >
@@ -384,61 +387,67 @@ const Reports = () => {
         </div>
 
         {/* Key Metrics Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-green-500 to-green-600 text-white hover:scale-105 transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100 text-sm font-medium">Total Sales</p>
-                  <p className="text-2xl font-bold">{formatUGX(reportData.totalSales)}</p>
-                  <p className="text-green-200 text-xs mt-1">{getDateRangeLabel()}</p>
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <CustomLoader size="lg" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-green-500 to-green-600 text-white hover:scale-105 transition-all duration-300">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-green-100 text-sm font-medium">Total Sales</p>
+                    <p className="text-2xl font-bold">{formatUGX(reportData.totalSales)}</p>
+                    <p className="text-green-200 text-xs mt-1">{getDateRangeLabel()}</p>
+                  </div>
+                  <DollarSign className="h-8 w-8 text-green-200" />
                 </div>
-                <DollarSign className="h-8 w-8 text-green-200" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:scale-105 transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm font-medium">Total Profit</p>
-                  <p className="text-2xl font-bold">{formatUGX(reportData.totalProfit)}</p>
-                  <p className="text-blue-200 text-xs mt-1">
-                    {reportData.totalSales > 0 ? `${((reportData.totalProfit / reportData.totalSales) * 100).toFixed(1)}% margin` : '0% margin'}
-                  </p>
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:scale-105 transition-all duration-300">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-blue-100 text-sm font-medium">Total Profit</p>
+                    <p className="text-2xl font-bold">{formatUGX(reportData.totalProfit)}</p>
+                    <p className="text-blue-200 text-xs mt-1">
+                      {reportData.totalSales > 0 ? `${((reportData.totalProfit / reportData.totalSales) * 100).toFixed(1)}% margin` : '0% margin'}
+                    </p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-blue-200" />
                 </div>
-                <TrendingUp className="h-8 w-8 text-blue-200" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white hover:scale-105 transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-sm font-medium">Items Sold</p>
-                  <p className="text-2xl font-bold">{reportData.itemsSold}</p>
-                  <p className="text-purple-200 text-xs mt-1">Physical products</p>
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white hover:scale-105 transition-all duration-300">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-purple-100 text-sm font-medium">Items Sold</p>
+                    <p className="text-2xl font-bold">{reportData.itemsSold}</p>
+                    <p className="text-purple-200 text-xs mt-1">Physical products</p>
+                  </div>
+                  <Package className="h-8 w-8 text-purple-200" />
                 </div>
-                <Package className="h-8 w-8 text-purple-200" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-orange-500 to-orange-600 text-white hover:scale-105 transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-orange-100 text-sm font-medium">Services Done</p>
-                  <p className="text-2xl font-bold">{reportData.servicesDone}</p>
-                  <p className="text-orange-200 text-xs mt-1">Completed services</p>
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-orange-500 to-orange-600 text-white hover:scale-105 transition-all duration-300">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-orange-100 text-sm font-medium">Services Done</p>
+                    <p className="text-2xl font-bold">{reportData.servicesDone}</p>
+                    <p className="text-orange-200 text-xs mt-1">Completed services</p>
+                  </div>
+                  <Target className="h-8 w-8 text-orange-200" />
                 </div>
-                <Target className="h-8 w-8 text-orange-200" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Detailed Analytics */}
         <Tabs defaultValue="overview" className="space-y-6">
@@ -460,15 +469,15 @@ const Reports = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {reportData.salesByCategory.map((category, index) => (
+                  <div className="space-y-3">
+                    {reportData.salesByCategory.map((category) => (
                       <div key={category.category} className="space-y-2">
-                        <div className="flex justify-between items-center">
+                        <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">{category.category}</span>
-                          <span className="text-sm text-gray-500">{formatUGX(category.sales)}</span>
+                          <span className="text-sm text-gray-600">{formatUGX(category.sales)}</span>
                         </div>
-                        <Progress 
-                          value={(category.sales / reportData.totalSales) * 100} 
+                        <Progress
+                          value={reportData.totalSales > 0 ? (category.sales / reportData.totalSales) * 100 : 0}
                           className="h-2"
                         />
                       </div>
@@ -620,9 +629,9 @@ const Reports = () => {
               </Card>
             </div>
           </TabsContent>
-        </Tabs>
-      </div>
-    </div>
+        </Tabs >
+      </div >
+    </div >
   );
 };
 

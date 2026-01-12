@@ -40,6 +40,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import CustomLoader from '@/components/ui/CustomLoader';
 
 interface UserProfile {
   id: string;
@@ -166,9 +167,9 @@ const AdminProfilePage = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center gap-3">
-          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-lg text-gray-600">Loading profile...</span>
+        <div className="flex flex-col items-center gap-3">
+          <CustomLoader size="lg" />
+          <span className="text-lg text-gray-600 font-medium">Loading profile...</span>
         </div>
       </div>
     );
@@ -178,9 +179,9 @@ const AdminProfilePage = () => {
   if (!redirectChecked && !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center gap-3">
-          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-lg text-gray-600">Verifying admin access...</span>
+        <div className="flex flex-col items-center gap-3">
+          <CustomLoader size="lg" />
+          <span className="text-lg text-gray-600 font-medium">Verifying admin access...</span>
         </div>
       </div>
     );
@@ -565,7 +566,7 @@ const AdminProfilePage = () => {
                 {isUsersLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="flex items-center gap-3">
-                      <div className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                      <CustomLoader size="sm" className="mr-2 text-red-500" />
                       <span className="text-gray-600">Loading users...</span>
                     </div>
                   </div>

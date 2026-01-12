@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import CustomLoader from "@/components/ui/CustomLoader";
 import { Plus, Edit, Trash2, Search, Lock, Palette, TrendingUp, ShoppingCart, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -600,7 +601,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                     >
                       {isLoading ? (
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <CustomLoader size="sm" className="mr-2" />
                           Saving...
                         </div>
                       ) : (
@@ -724,9 +725,9 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                         <TableCell colSpan={isAdmin ? 9 : 8} className="h-32 text-center">
                           <div className="flex flex-col items-center gap-4">
                             {isLoading ? (
-                              <div className="flex items-center gap-3">
-                                <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                                <span className="text-lg text-gray-600">Loading art service jobs...</span>
+                              <div className="flex flex-col items-center gap-3">
+                                <CustomLoader size="lg" />
+                                <span className="text-lg text-gray-600 font-medium">Loading art services...</span>
                               </div>
                             ) : (
                               <div className="flex flex-col items-center gap-3">

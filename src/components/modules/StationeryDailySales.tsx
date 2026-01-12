@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import CustomLoader from "@/components/ui/CustomLoader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit, Trash2, TrendingUp, ShoppingCart, Package2, Star, WifiOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,7 +45,7 @@ const StationeryDailySales = () => {
   const { profile } = useUser();
   const [items, setItems] = useState<StationeryDailySale[]>([]);
   const [stationeryItems, setStationeryItems] = useState<StationeryItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Renamed 'loading' to 'isLoading'
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [salesProfiles, setSalesProfiles] = useState<ProfileItem[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -82,7 +84,7 @@ const StationeryDailySales = () => {
 
   const fetchData = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true); // Use setIsLoading
       const today = new Date();
       const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
       const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
@@ -110,7 +112,7 @@ const StationeryDailySales = () => {
       console.error("Error in fetchData:", error);
       toast({ title: "Error fetching daily sales", description: "An unexpected error occurred", variant: "destructive" });
     } finally {
-      setLoading(false);
+      setIsLoading(false); // Use setIsLoading
     }
   };
 
@@ -225,6 +227,7 @@ const StationeryDailySales = () => {
     console.log("Sale payload:", payload);
 
     try {
+      setIsLoading(true); // Use setIsLoading for saving
       // If offline, store sale locally
       if (isOffline) {
         const offlineSale = {
@@ -321,6 +324,8 @@ const StationeryDailySales = () => {
         description: errorMessage,
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false); // Use setIsLoading
     }
   };
 
@@ -347,8 +352,9 @@ const StationeryDailySales = () => {
     if (!confirm("Are you sure you want to delete this sale?")) return;
 
     try {
+      setIsLoading(true); // Use setIsLoading for deleting
       const { error } = await supabase
-        .from("stationery_sales") // Changed from "stationery_daily_sales" to "stationery_sales"
+        .from("stationery_daily_sales")
         .delete()
         .eq("id", id as any);
 
@@ -359,12 +365,14 @@ const StationeryDailySales = () => {
         description: "Sale deleted successfully",
       });
       fetchData();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error deleting sale",
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false); // Use setIsLoading
     }
   };
 
@@ -431,11 +439,16 @@ const StationeryDailySales = () => {
             <DialogTrigger asChild>
               <Button
                 className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
-                disabled={isSyncing}
+                disabled={isLoading || isSyncing} // Disable if saving or syncing
               >
-                {isSyncing ? (
+                {isLoading ? ( // Use isLoading for saving
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <CustomLoader size="sm" className="mr-2" />
+                    Saving...
+                  </div>
+                ) : isSyncing ? ( // Keep isSyncing for offline sync
+                  <div className="flex items-center gap-2">
+                    <CustomLoader size="sm" className="mr-2" />
                     Syncing...
                   </div>
                 ) : (
@@ -576,8 +589,16 @@ const StationeryDailySales = () => {
                 <Button
                   type="submit"
                   className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                  disabled={isLoading} // Disable submit button while saving
                 >
-                  {editingId ? '✏️ Update Sale' : '✨ Record Sale'}
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <CustomLoader size="sm" className="mr-2" />
+                      Saving...
+                    </div>
+                  ) : (
+                    editingId ? '✏️ Update Sale' : '✨ Record Sale'
+                  )}
                 </Button>
               </form>
             </DialogContent>
@@ -648,6 +669,7 @@ const StationeryDailySales = () => {
                               size="icon"
                               className="h-8 w-8 hover:bg-blue-100 hover:scale-110 transition-all duration-200"
                               onClick={() => handleEdit(item)}
+                              disabled={isLoading} // Disable edit button while loading/saving
                             >
                               <Edit className="h-4 w-4 text-blue-600" />
                             </Button>
@@ -656,6 +678,7 @@ const StationeryDailySales = () => {
                               size="icon"
                               className="h-8 w-8 hover:bg-red-100 hover:scale-110 transition-all duration-200"
                               onClick={() => handleDelete(item.id)}
+                              disabled={isLoading} // Disable delete button while loading/saving
                             >
                               <Trash2 className="h-4 w-4 text-red-600" />
                             </Button>
@@ -668,10 +691,10 @@ const StationeryDailySales = () => {
                   <TableRow>
                     <TableCell colSpan={8} className="h-32 text-center">
                       <div className="flex flex-col items-center gap-4">
-                        {loading ? (
-                          <div className="flex items-center gap-3">
-                            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                            <span className="text-lg text-gray-600">Loading daily sales...</span>
+                        {isLoading ? ( // Use isLoading
+                          <div className="flex flex-col items-center gap-3">
+                            <CustomLoader size="lg" />
+                            <span className="text-lg text-gray-600 font-medium">Loading sales records...</span>
                           </div>
                         ) : (
                           <div className="flex flex-col items-center gap-3">

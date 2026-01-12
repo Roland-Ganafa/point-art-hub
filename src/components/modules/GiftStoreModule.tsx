@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import GiftsDailySales from "./GiftsDailySales";
 import ExportDialog from "@/components/ExportDialog";
+import CustomLoader from "@/components/ui/CustomLoader";
 
 const formatUGX = (amount: number | null | undefined): string => {
   if (amount === null || amount === undefined) return "UGX 0";
@@ -354,7 +355,6 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
         console.log("Added sold_by from profile:", profile.id);
       } else {
         console.warn("No profile ID available for sold_by field - this might cause issues if the field is required");
-        // Let's check if sold_by is actually required in the database
         // For now, we'll set it to null and see if that works
         itemData.sold_by = null;
       }
@@ -706,7 +706,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                     >
                       {isLoading ? (
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <CustomLoader size="sm" className="mr-2" />
                           Saving...
                         </div>
                       ) : (
@@ -861,9 +861,9 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                         <TableCell colSpan={isAdmin ? 13 : 12} className="h-32 text-center">
                           <div className="flex flex-col items-center gap-4">
                             {isLoading ? (
-                              <div className="flex items-center gap-3">
-                                <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
-                                <span className="text-lg text-gray-600">Loading awesome items...</span>
+                              <div className="flex flex-col items-center gap-3">
+                                <CustomLoader size="lg" />
+                                <span className="text-lg text-gray-600 font-medium">Loading gift items...</span>
                               </div>
                             ) : (
                               <div className="flex flex-col items-center gap-3">

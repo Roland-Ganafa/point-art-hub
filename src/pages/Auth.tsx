@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useUser } from "@/contexts/UserContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import CustomLoader from "@/components/ui/CustomLoader";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/Logo";
@@ -13,7 +16,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   const [signupEmail, setSignupEmail] = useState("");
@@ -27,7 +30,7 @@ const Auth = () => {
     const currentPath = window.location.pathname;
 
     if (currentPath === '/auth' || currentPath === '/direct-login' || currentPath === '/bypass-auth') {
-      setInitialLoad(false);
+      setIsLoading(false);
       return;
     }
 
@@ -40,17 +43,17 @@ const Auth = () => {
       } catch (error) {
         console.error("Auth check error:", error);
       } finally {
-        setInitialLoad(false);
+        setIsLoading(false);
       }
     };
 
     checkUser();
   }, [navigate]);
 
-  if (initialLoad) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-gray-900"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <CustomLoader size="lg" />
       </div>
     );
   }
@@ -265,7 +268,7 @@ const Auth = () => {
                 >
                   {loading ? (
                     <div className="flex items-center justify-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      <CustomLoader size="sm" className="mr-2" />
                       <span>{isSignUp ? "Creating..." : "Signing in..."}</span>
                     </div>
                   ) : (

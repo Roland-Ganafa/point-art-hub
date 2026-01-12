@@ -5,14 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { 
-  User, 
-  Mail, 
-  Shield, 
-  Calendar, 
-  Hash, 
-  Edit, 
-  Settings, 
+import {
+  User,
+  Mail,
+  Shield,
+  Calendar,
+  Hash,
+  Edit,
+  Settings,
   Activity,
   UserCheck,
   Star,
@@ -23,6 +23,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import CustomLoader from "@/components/ui/CustomLoader";
 
 const ProfilePage = () => {
   const { user, profile, loading, isAdmin, refreshProfile } = useUser();
@@ -38,9 +39,9 @@ const ProfilePage = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center gap-3">
-          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-lg text-gray-600">Loading profile...</span>
+        <div className="flex flex-col items-center gap-3">
+          <CustomLoader size="lg" />
+          <span className="text-lg text-gray-600 font-medium">Loading profile...</span>
         </div>
       </div>
     );
@@ -66,7 +67,7 @@ const ProfilePage = () => {
 
   const handleEditProfile = async () => {
     if (!user) return;
-    
+
     setIsUpdating(true);
     try {
       const { error } = await supabase
@@ -128,15 +129,15 @@ const ProfilePage = () => {
         <div className="container mx-auto px-6 py-8">
           <div className="flex items-center space-x-6">
             {/* Back Button */}
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleBackToMain}
               className="px-4 hover:bg-gray-50"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Button>
-            
+
             <div className="relative">
               <div className="w-24 h-24 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full shadow-lg flex items-center justify-center">
                 <span className="text-2xl font-semibold">{getInitials(profile?.full_name)}</span>
@@ -145,7 +146,7 @@ const ProfilePage = () => {
                 {profile?.role === 'admin' ? <Shield className="h-3 w-3" /> : <User className="h-3 w-3" />}
               </div>
             </div>
-            
+
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-gray-900 mb-1">
                 {profile?.full_name || 'User Profile'}
@@ -167,12 +168,12 @@ const ProfilePage = () => {
                 </Badge>
               </div>
             </div>
-            
+
             <div className="flex space-x-3">
               <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="px-6"
                     onClick={() => {
                       setEditForm({
@@ -219,15 +220,15 @@ const ProfilePage = () => {
                         className="flex-1 bg-blue-600 hover:bg-blue-700"
                       >
                         {isUpdating ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <>
+                            <CustomLoader size="sm" className="mr-2" />
                             Saving...
-                          </div>
+                          </>
                         ) : (
-                          <div className="flex items-center gap-2">
-                            <Save className="h-4 w-4" />
+                          <>
+                            <Save className="h-4 w-4 mr-2" />
                             Save Changes
-                          </div>
+                          </>
                         )}
                       </Button>
                       <Button
@@ -361,7 +362,7 @@ const ProfilePage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button 
+                <Button
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                   onClick={() => {
                     setEditForm({

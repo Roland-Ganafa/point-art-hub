@@ -2,18 +2,19 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Edit, Trash2, Search, Lock, Scissors, TrendingUp, ShoppingCart, Star } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Lock, Scissors, TrendingUp, ShoppingCart, Star, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import ExportDialog from "@/components/ExportDialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import CustomLoader from "@/components/ui/CustomLoader";
 import { Database } from "@/integrations/supabase/types";
 
 const formatUGX = (amount: number | null | undefined): string => {
@@ -45,6 +46,8 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const lastProcessedTrigger = useRef<number>(0);
   const [salesProfiles, setSalesProfiles] = useState<ProfileItem[]>([]);
+  const [viewMode, setViewMode] = useState<"daily" | "monthly">("daily");
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [formData, setFormData] = useState({
     job_description: "",
     quantity: "1",
@@ -74,6 +77,24 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
     item.job_description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.done_by && item.done_by.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // Calculate totals
+  const totalQuotation = filteredItems.reduce((sum, item) => sum + ((item.rate || 0) * item.quantity), 0);
+  const totalExpenditure = filteredItems.reduce((sum, item) => sum + (item.expenditure || 0), 0);
+  const totalProfit = totalQuotation - totalExpenditure;
+
+  // Filter items based on selectedDate and viewMode for Daily Sales tab
+  const filteredDailyItems = items.filter(item => {
+    if (viewMode === 'daily') {
+      return item.date === selectedDate.toISOString().split('T')[0];
+    } else {
+      return item.date.slice(0, 7) === selectedDate.toISOString().slice(0, 7);
+    }
+  });
+
+  const dailyTotalSales = filteredDailyItems.reduce((sum, item) => sum + ((item.rate || 0) * item.quantity), 0);
+  const dailyTotalExpenditure = filteredDailyItems.reduce((sum, item) => sum + (item.expenditure || 0), 0);
+  const dailyTotalProfit = dailyTotalSales - dailyTotalExpenditure;
 
   // Open the add dialog when triggered from Dashboard
   useEffect(() => {
@@ -570,7 +591,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                     >
                       {isLoading ? (
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <CustomLoader size="sm" className="mr-2" />
                           Saving...
                         </div>
                       ) : (
@@ -694,9 +715,9 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                         <TableCell colSpan={isAdmin ? 9 : 8} className="h-32 text-center">
                           <div className="flex flex-col items-center gap-4">
                             {isLoading ? (
-                              <div className="flex items-center gap-3">
-                                <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-                                <span className="text-lg text-gray-600">Loading embroidery jobs...</span>
+                              <div className="flex flex-col items-center gap-3">
+                                <CustomLoader size="lg" />
+                                <span className="text-lg text-gray-600 font-medium">Loading embroidery jobs...</span>
                               </div>
                             ) : (
                               <div className="flex flex-col items-center gap-3">
@@ -710,6 +731,20 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                       </TableRow>
                     )}
                   </TableBody>
+                  <TableFooter className="bg-purple-50/50">
+                    <TableRow>
+                      <TableCell colSpan={isAdmin ? 5 : 4} className="text-right font-bold text-gray-700">Totals</TableCell>
+                      <TableCell className="font-bold text-purple-600">{formatUGX(totalQuotation)}</TableCell>
+                      <TableCell className="font-bold text-red-600">{formatUGX(totalExpenditure)}</TableCell>
+                      <TableCell className={`font-bold ${totalProfit >= 0 ? "text-green-600" : "text-red-600"}`}>
+                        <div className="flex items-center gap-1">
+                          <TrendingUp className={`h-4 w-4 ${totalProfit >= 0 ? "text-green-500" : "text-red-500"}`} />
+                          {formatUGX(totalProfit)}
+                        </div>
+                      </TableCell>
+                      <TableCell colSpan={2} />
+                    </TableRow>
+                  </TableFooter>
                 </Table>
               </div>
             </CardContent>
@@ -718,12 +753,113 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
 
         <TabsContent value="daily-sales" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden p-6">
-            <h3 className="text-xl font-bold mb-4">Daily Sales Report</h3>
-            <p className="text-muted-foreground">Daily sales tracking for embroidery services will be implemented here.</p>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+              <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-purple-600" />
+                Sales Report - {viewMode === 'daily' ? selectedDate.toLocaleDateString() : selectedDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+              </h3>
+
+              <div className="flex items-center gap-4 bg-white/50 p-1.5 rounded-lg border border-purple-100">
+                <div className="flex items-center gap-2 bg-purple-50/50 rounded-md p-1">
+                  <Button
+                    variant={viewMode === 'daily' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('daily')}
+                    className={`h-7 px-3 text-xs ${viewMode === 'daily' ? 'bg-white text-purple-600 shadow-sm border border-purple-100 hover:bg-white' : 'text-gray-500 hover:text-purple-600 hover:bg-purple-50'}`}
+                  >
+                    Daily
+                  </Button>
+                  <Button
+                    variant={viewMode === 'monthly' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('monthly')}
+                    className={`h-7 px-3 text-xs ${viewMode === 'monthly' ? 'bg-white text-purple-600 shadow-sm border border-purple-100 hover:bg-white' : 'text-gray-500 hover:text-purple-600 hover:bg-purple-50'}`}
+                  >
+                    Monthly
+                  </Button>
+                </div>
+
+                <div className="h-4 w-px bg-purple-200 mx-1" />
+
+                <div className="flex items-center gap-2">
+                  <Input
+                    type={viewMode === 'daily' ? "date" : "month"}
+                    value={
+                      viewMode === 'daily'
+                        ? selectedDate.toISOString().split('T')[0]
+                        : selectedDate.toISOString().slice(0, 7)
+                    }
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        if (viewMode === 'monthly') {
+                          const [year, month] = e.target.value.split('-').map(Number);
+                          setSelectedDate(new Date(year, month - 1, 1, 12, 0, 0));
+                        } else {
+                          setSelectedDate(new Date(e.target.value));
+                        }
+                      }
+                    }}
+                    className="h-7 w-[130px] text-xs border-0 bg-transparent focus:ring-0 cursor-pointer text-gray-600 font-medium"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader className="bg-gradient-to-r from-gray-50 to-purple-50">
+                      <TableRow className="border-b border-purple-100">
+                        <TableHead className="w-[50px] font-semibold text-gray-700 text-left">#</TableHead>
+                        <TableHead className="font-semibold text-gray-700 text-left">Job Description</TableHead>
+                        <TableHead className="font-semibold text-gray-700 text-right">Total Sales (UGX)</TableHead>
+                        <TableHead className="font-semibold text-gray-700 text-right">Total Profit (UGX)</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredDailyItems.length > 0 ? (
+                        filteredDailyItems.map((item, index) => {
+                          const quotation = (item.rate || 0) * item.quantity;
+                          const profit = quotation - item.expenditure;
+                          return (
+                            <TableRow key={item.id} className="hover:bg-purple-50/50 transition-colors">
+                              <TableCell className="font-medium text-gray-500 text-left">{index + 1}</TableCell>
+                              <TableCell className="font-medium text-gray-800 text-left">{item.job_description}</TableCell>
+                              <TableCell className="text-right text-purple-600 font-medium">{formatUGX(quotation)}</TableCell>
+                              <TableCell className={`text-right font-bold ${profit >= 0 ? "text-green-600" : "text-red-600"}`}>
+                                {formatUGX(profit)}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="h-32 text-center text-muted-foreground">
+                            No sales recorded for this period.
+                          </TableCell>
+                        </TableRow>
+                      )}
+
+                      {/* Grand Totals */}
+                      <TableRow className="bg-gradient-to-r from-purple-100 to-pink-100 font-bold border-t-2 border-purple-300">
+                        <TableCell colSpan={2} className="text-gray-800">GRAND TOTAL</TableCell>
+                        <TableCell className="text-right text-purple-800">
+                          {formatUGX(dailyTotalSales)}
+                        </TableCell>
+                        <TableCell className="text-right text-green-800">
+                          {formatUGX(dailyTotalProfit)}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+    </div >
   );
 };
 
