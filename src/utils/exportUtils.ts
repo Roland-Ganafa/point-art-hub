@@ -1,6 +1,8 @@
 import { format } from 'date-fns';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
-// Utility functions for data export (CSV/Excel)
+// Utility functions for data export (CSV/Excel/PDF)
 
 interface ExportOptions {
   filename?: string;
@@ -10,6 +12,7 @@ interface ExportOptions {
   };
   includeTimestamp?: boolean;
   customHeaders?: Record<string, string>;
+  format?: 'csv' | 'pdf';
 }
 
 interface ExportData {
@@ -24,10 +27,10 @@ export const convertToCSV = (data: ExportData[], headers?: Record<string, string
 
   // Get all unique keys from data
   const allKeys = Array.from(new Set(data.flatMap(Object.keys)));
-  
+
   // Use custom headers if provided, otherwise use original keys
-  const displayHeaders = headers ? 
-    allKeys.map(key => headers[key] || key) : 
+  const displayHeaders = headers ?
+    allKeys.map(key => headers[key] || key) :
     allKeys;
 
   // Create CSV header row
@@ -52,11 +55,41 @@ export const convertToCSV = (data: ExportData[], headers?: Record<string, string
   return [csvHeaders, ...csvRows].join('\n');
 };
 
+// Generate PDF from data
+export const generatePDF = (data: ExportData[], headers: Record<string, string>, title: string, filename: string): void => {
+  const doc = new jsPDF();
+
+  const tableColumn = Object.values(headers);
+  const tableKeys = Object.keys(headers);
+
+  const tableRows = data.map(item => {
+    return tableKeys.map(key => {
+      const value = item[key];
+      return value === null || value === undefined ? '' : String(value);
+    });
+  });
+
+  doc.text(title, 14, 15);
+  doc.setFontSize(10);
+  doc.text(`Generated on: ${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}`, 14, 22);
+
+  autoTable(doc, {
+    head: [tableColumn],
+    body: tableRows,
+    startY: 25,
+    theme: 'grid',
+    styles: { fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: [66, 66, 66] },
+  });
+
+  doc.save(filename);
+};
+
 // Download CSV file
 export const downloadCSV = (csvContent: string, filename: string): void => {
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
-  
+
   if (link.download !== undefined) {
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
@@ -69,314 +102,230 @@ export const downloadCSV = (csvContent: string, filename: string): void => {
   }
 };
 
-// Export stationery data
-export const exportStationeryData = async (
-  data: any[], 
-  options: ExportOptions = {}
-): Promise<void> => {
+// Prepare stationery data
+export const prepareStationeryData = (data: any[]) => {
   const headers = {
-    id: 'ID',
     item_name: 'Item Name',
     category: 'Category',
-    price: 'Price (UGX)',
-    cost: 'Cost (UGX)',
-    stock_quantity: 'Stock Quantity',
-    min_stock_level: 'Minimum Stock Level',
+    quantity: 'Qty',
+    price: 'Price',
+    cost: 'Cost',
     supplier: 'Supplier',
     description: 'Description',
-    created_at: 'Date Added',
-    updated_at: 'Last Updated'
+    created_at: 'Date Added'
   };
 
   const processedData = data.map(item => ({
-    ...item,
-    price: item.price ? `UGX ${item.price.toLocaleString()}` : 'UGX 0',
-    cost: item.cost ? `UGX ${item.cost.toLocaleString()}` : 'UGX 0',
-    created_at: item.created_at ? format(new Date(item.created_at), 'yyyy-MM-dd HH:mm:ss') : '',
-    updated_at: item.updated_at ? format(new Date(item.updated_at), 'yyyy-MM-dd HH:mm:ss') : ''
+    item_name: item.item_name || item.item,
+    category: item.category,
+    quantity: item.stock || item.quantity || 0,
+    price: item.price || item.selling_price || 0,
+    cost: item.cost || item.rate || 0,
+    supplier: item.supplier || '-',
+    description: item.description || '-',
+    created_at: item.created_at ? format(new Date(item.created_at), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')
   }));
 
-  const csvContent = convertToCSV(processedData, { ...headers, ...options.customHeaders });
-  const timestamp = options.includeTimestamp ? `-${format(new Date(), 'yyyy-MM-dd-HH-mm-ss')}` : '';
-  const filename = options.filename || `stationery-inventory${timestamp}.csv`;
-  
-  downloadCSV(csvContent, filename);
+  return { headers, processedData };
 };
 
-// Export gift store data
-export const exportGiftStoreData = async (
-  data: any[], 
-  options: ExportOptions = {}
-): Promise<void> => {
+// Prepare gift store data
+export const prepareGiftStoreData = (data: any[]) => {
   const headers = {
-    id: 'ID',
-    item_name: 'Item Name',
+    item_name: 'Item Name', // Changed so it matches key in processedData if needed, but keeping labels
     category: 'Category',
-    price: 'Price (UGX)',
-    cost: 'Cost (UGX)',
-    stock_quantity: 'Stock Quantity',
-    supplier: 'Supplier',
-    description: 'Description',
-    created_at: 'Date Added',
-    updated_at: 'Last Updated'
-  };
-
-  const processedData = data.map(item => ({
-    ...item,
-    price: item.price ? `UGX ${item.price.toLocaleString()}` : 'UGX 0',
-    cost: item.cost ? `UGX ${item.cost.toLocaleString()}` : 'UGX 0',
-    created_at: item.created_at ? format(new Date(item.created_at), 'yyyy-MM-dd HH:mm:ss') : '',
-    updated_at: item.updated_at ? format(new Date(item.updated_at), 'yyyy-MM-dd HH:mm:ss') : ''
-  }));
-
-  const csvContent = convertToCSV(processedData, { ...headers, ...options.customHeaders });
-  const timestamp = options.includeTimestamp ? `-${format(new Date(), 'yyyy-MM-dd-HH-mm-ss')}` : '';
-  const filename = options.filename || `gift-store-inventory${timestamp}.csv`;
-  
-  downloadCSV(csvContent, filename);
-};
-
-// Export embroidery data
-export const exportEmbroideryData = async (
-  data: any[], 
-  options: ExportOptions = {}
-): Promise<void> => {
-  const headers = {
-    id: 'ID',
-    client_name: 'Client Name',
-    contact_info: 'Contact Info',
-    service_type: 'Service Type',
-    description: 'Description',
-    cost: 'Cost (UGX)',
-    sales: 'Sales (UGX)',
-    profit: 'Profit (UGX)',
-    expenditure: 'Expenditure (UGX)',
-    status: 'Status',
-    date_received: 'Date Received',
-    date_completed: 'Date Completed',
+    quantity: 'Qty',
+    price: 'Price',
+    cost: 'Cost',
     created_at: 'Date Added'
   };
 
   const processedData = data.map(item => ({
-    ...item,
-    cost: item.cost ? `UGX ${item.cost.toLocaleString()}` : 'UGX 0',
-    sales: item.sales ? `UGX ${item.sales.toLocaleString()}` : 'UGX 0',
-    profit: item.profit ? `UGX ${item.profit.toLocaleString()}` : 'UGX 0',
-    expenditure: item.expenditure ? `UGX ${item.expenditure.toLocaleString()}` : 'UGX 0',
-    date_received: item.date_received ? format(new Date(item.date_received), 'yyyy-MM-dd') : '',
-    date_completed: item.date_completed ? format(new Date(item.date_completed), 'yyyy-MM-dd') : '',
-    created_at: item.created_at ? format(new Date(item.created_at), 'yyyy-MM-dd HH:mm:ss') : ''
+    item_name: item.item_name || item.item,
+    category: item.category,
+    quantity: item.stock || item.quantity || 0,
+    price: item.price || item.spx || 0,
+    cost: item.cost || item.bpx || 0,
+    created_at: item.created_at ? format(new Date(item.created_at), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')
   }));
 
-  const csvContent = convertToCSV(processedData, { ...headers, ...options.customHeaders });
-  const timestamp = options.includeTimestamp ? `-${format(new Date(), 'yyyy-MM-dd-HH-mm-ss')}` : '';
-  const filename = options.filename || `embroidery-services${timestamp}.csv`;
-  
-  downloadCSV(csvContent, filename);
+  return { headers, processedData };
 };
 
-// Export machines data
-export const exportMachinesData = async (
-  data: any[], 
-  options: ExportOptions = {}
-): Promise<void> => {
+// Prepare embroidery data
+export const prepareEmbroideryData = (data: any[]) => {
   const headers = {
-    id: 'ID',
-    client_name: 'Client Name',
-    contact_info: 'Contact Info',
-    service_type: 'Service Type',
+    client_name: 'Client',
+    service_type: 'Service',
     description: 'Description',
-    cost: 'Cost (UGX)',
-    sales: 'Sales (UGX)',
-    expenditure: 'Expenditure (UGX)',
-    profit: 'Profit (UGX)',
+    cost: 'Cost',
+    sales: 'Sales',
+    profit: 'Profit',
     status: 'Status',
-    date_received: 'Date Received',
-    date_completed: 'Date Completed',
-    created_at: 'Date Added'
+    date_received: 'Received',
+    date_completed: 'Completed'
   };
 
   const processedData = data.map(item => ({
-    ...item,
-    cost: item.cost ? `UGX ${item.cost.toLocaleString()}` : 'UGX 0',
-    sales: item.sales ? `UGX ${item.sales.toLocaleString()}` : 'UGX 0',
-    expenditure: item.expenditure ? `UGX ${item.expenditure.toLocaleString()}` : 'UGX 0',
-    profit: ((item.sales || 0) - (item.expenditure || 0)) > 0 ? 
-      `UGX ${((item.sales || 0) - (item.expenditure || 0)).toLocaleString()}` : 'UGX 0',
-    date_received: item.date_received ? format(new Date(item.date_received), 'yyyy-MM-dd') : '',
-    date_completed: item.date_completed ? format(new Date(item.date_completed), 'yyyy-MM-dd') : '',
-    created_at: item.created_at ? format(new Date(item.created_at), 'yyyy-MM-dd HH:mm:ss') : ''
-  }));
-
-  const csvContent = convertToCSV(processedData, { ...headers, ...options.customHeaders });
-  const timestamp = options.includeTimestamp ? `-${format(new Date(), 'yyyy-MM-dd-HH-mm-ss')}` : '';
-  const filename = options.filename || `machine-services${timestamp}.csv`;
-  
-  downloadCSV(csvContent, filename);
-};
-
-// Export art services data
-export const exportArtServicesData = async (
-  data: any[], 
-  options: ExportOptions = {}
-): Promise<void> => {
-  const headers = {
-    id: 'ID',
-    client_name: 'Client Name',
-    contact_info: 'Contact Info',
-    service_type: 'Service Type',
-    description: 'Description',
-    cost: 'Cost (UGX)',
-    sales: 'Sales (UGX)',
-    profit: 'Profit (UGX)',
-    expenditure: 'Expenditure (UGX)',
-    deposit: 'Deposit (UGX)',
-    status: 'Status',
-    date_received: 'Date Received',
-    date_completed: 'Date Completed',
-    created_at: 'Date Added'
-  };
-
-  const processedData = data.map(item => ({
-    ...item,
-    cost: item.cost ? `UGX ${item.cost.toLocaleString()}` : 'UGX 0',
-    sales: item.sales ? `UGX ${item.sales.toLocaleString()}` : 'UGX 0',
-    profit: item.profit ? `UGX ${item.profit.toLocaleString()}` : 'UGX 0',
-    expenditure: item.expenditure ? `UGX ${item.expenditure.toLocaleString()}` : 'UGX 0',
-    deposit: item.deposit ? `UGX ${item.deposit.toLocaleString()}` : 'UGX 0',
-    date_received: item.date_received ? format(new Date(item.date_received), 'yyyy-MM-dd') : '',
-    date_completed: item.date_completed ? format(new Date(item.date_completed), 'yyyy-MM-dd') : '',
-    created_at: item.created_at ? format(new Date(item.created_at), 'yyyy-MM-dd HH:mm:ss') : ''
-  }));
-
-  const csvContent = convertToCSV(processedData, { ...headers, ...options.customHeaders });
-  const timestamp = options.includeTimestamp ? `-${format(new Date(), 'yyyy-MM-dd-HH-mm-ss')}` : '';
-  const filename = options.filename || `art-services${timestamp}.csv`;
-  
-  downloadCSV(csvContent, filename);
-};
-
-// Export sales data
-export const exportSalesData = async (
-  data: any[], 
-  options: ExportOptions = {}
-): Promise<void> => {
-  const headers = {
-    id: 'ID',
-    item_name: 'Item Name',
-    quantity: 'Quantity Sold',
-    unit_price: 'Unit Price (UGX)',
-    total_amount: 'Total Amount (UGX)',
-    profit: 'Profit (UGX)',
-    customer_name: 'Customer Name',
-    payment_method: 'Payment Method',
-    sales_person: 'Sales Person',
-    sale_date: 'Sale Date',
-    created_at: 'Date Recorded'
-  };
-
-  const processedData = data.map(item => ({
-    ...item,
-    unit_price: item.unit_price ? `UGX ${item.unit_price.toLocaleString()}` : 'UGX 0',
-    total_amount: item.total_amount ? `UGX ${item.total_amount.toLocaleString()}` : 'UGX 0',
-    profit: item.profit ? `UGX ${item.profit.toLocaleString()}` : 'UGX 0',
-    sale_date: item.sale_date ? format(new Date(item.sale_date), 'yyyy-MM-dd') : '',
-    created_at: item.created_at ? format(new Date(item.created_at), 'yyyy-MM-dd HH:mm:ss') : ''
-  }));
-
-  const csvContent = convertToCSV(processedData, { ...headers, ...options.customHeaders });
-  const timestamp = options.includeTimestamp ? `-${format(new Date(), 'yyyy-MM-dd-HH-mm-ss')}` : '';
-  const filename = options.filename || `sales-data${timestamp}.csv`;
-  
-  downloadCSV(csvContent, filename);
-};
-
-// Export customers data
-export const exportCustomersData = async (
-  data: any[], 
-  options: ExportOptions = {}
-): Promise<void> => {
-  const headers = {
-    id: 'ID',
-    full_name: 'Full Name',
-    email: 'Email',
-    phone: 'Phone',
-    address: 'Address',
-    company: 'Company',
-    customer_type: 'Customer Type',
-    total_purchases: 'Total Purchases (UGX)',
-    outstanding_balance: 'Outstanding Balance (UGX)',
-    credit_limit: 'Credit Limit (UGX)',
-    preferred_contact: 'Preferred Contact',
-    marketing_consent: 'Marketing Consent',
-    last_purchase_date: 'Last Purchase Date',
-    created_at: 'Date Added'
-  };
-
-  const processedData = data.map(item => ({
-    ...item,
-    total_purchases: item.total_purchases ? `UGX ${item.total_purchases.toLocaleString()}` : 'UGX 0',
-    outstanding_balance: item.outstanding_balance ? `UGX ${item.outstanding_balance.toLocaleString()}` : 'UGX 0',
-    credit_limit: item.credit_limit ? `UGX ${item.credit_limit.toLocaleString()}` : 'UGX 0',
-    marketing_consent: item.marketing_consent ? 'Yes' : 'No',
-    last_purchase_date: item.last_purchase_date ? format(new Date(item.last_purchase_date), 'yyyy-MM-dd') : 'Never',
-    created_at: item.created_at ? format(new Date(item.created_at), 'yyyy-MM-dd HH:mm:ss') : ''
-  }));
-
-  const csvContent = convertToCSV(processedData, { ...headers, ...options.customHeaders });
-  const timestamp = options.includeTimestamp ? `-${format(new Date(), 'yyyy-MM-dd-HH-mm-ss')}` : '';
-  const filename = options.filename || `customers-data${timestamp}.csv`;
-  
-  downloadCSV(csvContent, filename);
-};
-
-// Export invoices data
-export const exportInvoicesData = async (
-  data: any[], 
-  options: ExportOptions = {}
-): Promise<void> => {
-  const headers = {
-    id: 'ID',
-    invoice_number: 'Invoice Number',
-    customer_name: 'Customer Name',
-    customer_company: 'Customer Company',
-    issue_date: 'Issue Date',
-    due_date: 'Due Date',
-    status: 'Status',
-    subtotal: 'Subtotal (UGX)',
-    tax_amount: 'Tax Amount (UGX)',
-    discount: 'Discount (UGX)',
-    total: 'Total (UGX)',
-    items_count: 'Number of Items',
-    created_at: 'Date Created'
-  };
-
-  const processedData = data.map(item => ({
-    id: item.id,
-    invoice_number: item.invoice_number,
-    customer_name: item.customer?.full_name || '',
-    customer_company: item.customer?.company || '',
-    issue_date: item.issue_date ? format(new Date(item.issue_date), 'yyyy-MM-dd') : '',
-    due_date: item.due_date ? format(new Date(item.due_date), 'yyyy-MM-dd') : '',
+    client_name: item.client_name,
+    service_type: item.service_type,
+    description: item.description,
+    cost: item.cost || 0,
+    sales: item.sales || 0,
+    profit: item.profit || 0,
     status: item.status,
-    subtotal: item.subtotal ? `UGX ${item.subtotal.toLocaleString()}` : 'UGX 0',
-    tax_amount: item.tax_amount ? `UGX ${item.tax_amount.toLocaleString()}` : 'UGX 0',
-    discount: item.discount ? `UGX ${item.discount.toLocaleString()}` : 'UGX 0',
-    total: item.total ? `UGX ${item.total.toLocaleString()}` : 'UGX 0',
-    items_count: item.items?.length || 0,
-    created_at: item.created_at ? format(new Date(item.created_at), 'yyyy-MM-dd HH:mm:ss') : ''
+    date_received: item.date_received ? format(new Date(item.date_received), 'yyyy-MM-dd') : '-',
+    date_completed: item.date_completed ? format(new Date(item.date_completed), 'yyyy-MM-dd') : '-'
   }));
 
-  const csvContent = convertToCSV(processedData, { ...headers, ...options.customHeaders });
-  const timestamp = options.includeTimestamp ? `-${format(new Date(), 'yyyy-MM-dd-HH-mm-ss')}` : '';
-  const filename = options.filename || `invoices-data${timestamp}.csv`;
-  
-  downloadCSV(csvContent, filename);
+  return { headers, processedData };
+};
+
+// Prepare machines data
+export const prepareMachinesData = (data: any[]) => {
+  const headers = {
+    machine_name: 'Machine',
+    service_description: 'Service',
+    quantity: 'Qty',
+    rate: 'Rate',
+    sales: 'Sales',
+    expenditure: 'Exp',
+    profit: 'Profit',
+    date: 'Date',
+    done_by: 'Done By'
+  };
+
+  const processedData = data.map(item => ({
+    machine_name: item.machine_name,
+    service_description: item.service_description,
+    quantity: item.quantity,
+    rate: item.rate,
+    sales: (item.quantity * item.rate) || 0,
+    expenditure: item.expenditure || 0,
+    profit: ((item.quantity * item.rate) - (item.expenditure || 0)) || 0,
+    date: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : '-',
+    done_by: item.done_by || '-'
+  }));
+
+  return { headers, processedData };
+};
+
+// Prepare art services data
+export const prepareArtServicesData = (data: any[]) => {
+  const headers = {
+    item: 'Item',
+    description: 'Description',
+    quantity: 'Qty',
+    rate: 'rate',
+    amount: 'Amount',
+    profit: 'Profit',
+    date: 'Date'
+  };
+
+  const processedData = data.map(item => ({
+    item: item.item,
+    description: item.description,
+    quantity: item.quantity,
+    rate: item.rate,
+    amount: item.amount,
+    profit: item.profit,
+    date: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : '-'
+  }));
+
+  return { headers, processedData };
+};
+
+// Prepare sales data
+export const prepareSalesData = (data: any[]) => {
+  const headers = {
+    item: 'Item',
+    category: 'Category',
+    quantity: 'Qty',
+    rate: 'rate',
+    selling_price: 'Price',
+    total: 'Total',
+    profit: 'Profit',
+    date: 'Date',
+    sold_by: 'Added By'
+  };
+
+  const processedData = data.map(item => {
+    // Determine item name, handling possible joined string format "Category: Item"
+    let itemName = item.item;
+    let categoryName = item.category || '-';
+
+    // For gift store sales which might be stored as "Category: Item"
+    if (item.current_stock === undefined && item.item && item.item.includes(': ')) {
+      const parts = item.item.split(': ');
+      if (parts.length > 1) {
+        categoryName = parts[0];
+        itemName = parts.slice(1).join(': ');
+      }
+    }
+
+    return {
+      item: itemName,
+      category: categoryName,
+      quantity: item.quantity,
+      rate: item.rate || item.bpx || 0,
+      selling_price: item.selling_price || item.spx || 0,
+      total: (item.selling_price || item.spx || 0) * item.quantity,
+      profit: ((item.selling_price || item.spx || 0) - (item.rate || item.bpx || 0)) * item.quantity,
+      date: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : '-',
+      sold_by: item.sold_by || '-'
+    };
+  });
+
+  return { headers, processedData };
+};
+
+// Prepare customers data
+export const prepareCustomersData = (data: any[]) => {
+  const headers = {
+    full_name: 'Name',
+    phone: 'Phone',
+    email: 'Email',
+    total_spent: 'Total Spent',
+    last_visit: 'Last Visit'
+  };
+
+  const processedData = data.map(item => ({
+    full_name: item.full_name,
+    phone: item.phone || '-',
+    email: item.email || '-',
+    total_spent: item.total_spent || 0,
+    last_visit: item.last_visit ? format(new Date(item.last_visit), 'yyyy-MM-dd') : '-'
+  }));
+
+  return { headers, processedData };
+};
+
+// Prepare invoices data
+export const prepareInvoicesData = (data: any[]) => {
+  const headers = {
+    invoice_number: 'Inv #',
+    customer_name: 'Customer',
+    date_issued: 'Issued',
+    due_date: 'Due',
+    total_amount: 'Total',
+    status: 'Status'
+  };
+
+  const processedData = data.map(item => ({
+    invoice_number: item.invoice_number,
+    customer_name: item.customer?.full_name || item.customer_name || 'Walk-in',
+    date_issued: item.date_issued ? format(new Date(item.date_issued), 'yyyy-MM-dd') : '-',
+    due_date: item.due_date ? format(new Date(item.due_date), 'yyyy-MM-dd') : '-',
+    total_amount: item.total_amount || 0,
+    status: item.status
+  }));
+
+  return { headers, processedData };
 };
 
 // Filter data by date range
 export const filterDataByDateRange = (
-  data: any[], 
+  data: any[],
   dateField: string = 'created_at',
   startDate?: Date,
   endDate?: Date
@@ -387,15 +336,15 @@ export const filterDataByDateRange = (
 
   return data.filter(item => {
     const itemDate = new Date(item[dateField]);
-    
+
     if (startDate && itemDate < startDate) {
       return false;
     }
-    
+
     if (endDate && itemDate > endDate) {
       return false;
     }
-    
+
     return true;
   });
 };
@@ -409,39 +358,70 @@ export const exportData = async (
   // Filter data by date range if specified
   let filteredData = data;
   if (options.dateRange) {
-    const dateField = type === 'sales' ? 'sale_date' : 'created_at';
+    const dateField = type === 'sales' || type === 'machines' || type === 'art_services' || type === 'invoices' ? 'date' : 'created_at';
+    // Special handling for different date field names across modules
+    let actualDateField = dateField;
+    if (type === 'invoices') actualDateField = 'date_issued';
+    if (type === 'sales' && !data[0]?.date && data[0]?.sale_date) actualDateField = 'sale_date';
+
     filteredData = filterDataByDateRange(
-      data, 
-      dateField, 
-      options.dateRange.start, 
+      data,
+      actualDateField,
+      options.dateRange.start,
       options.dateRange.end
     );
   }
 
+  let prepared: { headers: Record<string, string>, processedData: any[] };
+
   switch (type) {
     case 'stationery':
-      return exportStationeryData(filteredData, options);
+      prepared = prepareStationeryData(filteredData);
+      break;
     case 'gift_store':
-      return exportGiftStoreData(filteredData, options);
+      prepared = prepareGiftStoreData(filteredData);
+      break;
     case 'embroidery':
-      return exportEmbroideryData(filteredData, options);
+      prepared = prepareEmbroideryData(filteredData);
+      break;
     case 'machines':
-      return exportMachinesData(filteredData, options);
+      prepared = prepareMachinesData(filteredData);
+      break;
     case 'art_services':
-      return exportArtServicesData(filteredData, options);
+      prepared = prepareArtServicesData(filteredData);
+      break;
     case 'sales':
-      return exportSalesData(filteredData, options);
+      prepared = prepareSalesData(filteredData);
+      break;
     case 'customers':
-      return exportCustomersData(filteredData, options);
+      prepared = prepareCustomersData(filteredData);
+      break;
     case 'invoices':
-      return exportInvoicesData(filteredData, options);
+      prepared = prepareInvoicesData(filteredData);
+      break;
     case 'custom':
-      const csvContent = convertToCSV(filteredData, options.customHeaders);
-      const timestamp = options.includeTimestamp ? `-${format(new Date(), 'yyyy-MM-dd-HH-mm-ss')}` : '';
-      const filename = options.filename || `custom-export${timestamp}.csv`;
-      downloadCSV(csvContent, filename);
+      prepared = {
+        headers: options.customHeaders || {},
+        processedData: filteredData
+      };
       break;
     default:
       throw new Error(`Unsupported export type: ${type}`);
+  }
+
+  const timestamp = options.includeTimestamp ? `-${format(new Date(), 'yyyy-MM-dd-HH-mm-ss')}` : '';
+  const baseFilename = options.filename || `${type.replace('_', '-')}-export${timestamp}`;
+
+  if (options.format === 'pdf') {
+    generatePDF(
+      prepared.processedData,
+      prepared.headers,
+      `${type.replace('_', ' ').toUpperCase()} Report`,
+      `${baseFilename}.pdf`
+    );
+  } else {
+    // Default to CSV
+    const csvContent = convertToCSV(prepared.processedData, prepared.headers);
+    downloadCSV(csvContent, `${baseFilename}.csv`);
   }
 };

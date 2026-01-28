@@ -33,6 +33,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
   const [endDate, setEndDate] = useState('');
   const [includeTimestamp, setIncludeTimestamp] = useState(true);
   const [customFilename, setCustomFilename] = useState('');
+  const [exportFormat, setExportFormat] = useState<'csv' | 'pdf'>('csv');
 
   const { toast } = useToast();
   const { isAdmin } = useUser();
@@ -62,6 +63,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
       const exportOptions: any = {
         includeTimestamp,
         filename: customFilename || undefined,
+        format: exportFormat
       };
 
       // Add date range if specified
@@ -84,17 +86,17 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
 
       await exportData(data, type, exportOptions);
 
-      const recordCount = exportOptions.dateRange ? 
+      const recordCount = exportOptions.dateRange ?
         data.filter(item => {
           const dateField = type === 'sales' ? 'sale_date' : 'created_at';
           const itemDate = new Date(item[dateField]);
           return (!exportOptions.dateRange.start || itemDate >= exportOptions.dateRange.start) &&
-                 (!exportOptions.dateRange.end || itemDate <= exportOptions.dateRange.end);
+            (!exportOptions.dateRange.end || itemDate <= exportOptions.dateRange.end);
         }).length : data.length;
 
       toast({
         title: 'Export Successful',
-        description: `Successfully exported ${recordCount} ${moduleTitle.toLowerCase()} records to CSV`,
+        description: `Successfully exported ${recordCount} ${moduleTitle.toLowerCase()} records to ${exportFormat.toUpperCase()}`,
       });
 
       setIsOpen(false);
@@ -115,6 +117,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
     setEndDate('');
     setCustomFilename('');
     setIncludeTimestamp(true);
+    setExportFormat('csv');
   };
 
   const getDateFieldLabel = () => {
@@ -128,8 +131,8 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
   };
 
   const defaultTrigger = (
-    <Button 
-      variant="outline" 
+    <Button
+      variant="outline"
       disabled={disabled || !isAdmin}
       className="bg-white/80 hover:bg-green-50 border-green-200"
     >
@@ -150,7 +153,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
             Export {moduleTitle}
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           {!isAdmin && (
             <Alert>
@@ -176,7 +179,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
                   <Calendar className="h-4 w-4" />
                   <Label className="text-sm font-medium">Date Range Filter</Label>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label htmlFor="start-date" className="text-xs text-gray-600">
@@ -207,20 +210,49 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
                 {(startDate || endDate) && (
                   <div className="text-xs text-gray-500 bg-blue-50 p-2 rounded">
                     <Filter className="h-3 w-3 inline mr-1" />
-                    {startDate && endDate ? 
+                    {startDate && endDate ?
                       `Filtering records from ${format(new Date(startDate), 'MMM dd, yyyy')} to ${format(new Date(endDate), 'MMM dd, yyyy')}` :
                       startDate ?
-                      `Filtering records from ${format(new Date(startDate), 'MMM dd, yyyy')} onwards` :
-                      `Filtering records up to ${format(new Date(endDate), 'MMM dd, yyyy')}`
+                        `Filtering records from ${format(new Date(startDate), 'MMM dd, yyyy')} onwards` :
+                        `Filtering records up to ${format(new Date(endDate), 'MMM dd, yyyy')}`
                     }
                   </div>
                 )}
               </div>
 
-              {/* Export Options */}
               <div className="space-y-4">
                 <Label className="text-sm font-medium">Export Options</Label>
-                
+
+                <div className="space-y-3">
+                  <Label className="text-xs text-gray-600">Format</Label>
+                  <div className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="csv"
+                        name="format"
+                        value="csv"
+                        checked={exportFormat === 'csv'}
+                        onChange={() => setExportFormat('csv')}
+                        className="accent-green-600 h-4 w-4"
+                      />
+                      <Label htmlFor="csv" className="cursor-pointer">CSV (Excel)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="pdf"
+                        name="format"
+                        value="pdf"
+                        checked={exportFormat === 'pdf'}
+                        onChange={() => setExportFormat('pdf')}
+                        className="accent-red-600 h-4 w-4"
+                      />
+                      <Label htmlFor="pdf" className="cursor-pointer">PDF Document</Label>
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <Label htmlFor="filename" className="text-xs text-gray-600">
                     Custom Filename (optional)
@@ -258,7 +290,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Export Format:</span>
-                    <span className="font-medium">CSV</span>
+                    <span className="font-medium">{exportFormat.toUpperCase()}</span>
                   </div>
                   {(startDate || endDate) && (
                     <div className="flex justify-between">
@@ -292,7 +324,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
                   ) : (
                     <>
                       <Download className="h-4 w-4 mr-2" />
-                      Export CSV
+                      Export {exportFormat.toUpperCase()}
                     </>
                   )}
                 </Button>
