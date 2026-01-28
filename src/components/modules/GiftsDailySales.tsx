@@ -566,7 +566,7 @@ const GiftsDailySales = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Sold By (Initials)</Label>
+                      <Label>Added By (Initials)</Label>
                       <Select
                         value={formData.soldBy}
                         onValueChange={(value) => setFormData({ ...formData, soldBy: value })}
@@ -667,7 +667,7 @@ const GiftsDailySales = () => {
                       <TableHead className="font-semibold text-gray-700">Description</TableHead>
                       <TableHead className="font-semibold text-gray-700">Rate</TableHead>
                       <TableHead className="font-semibold text-gray-700">Quantity</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Sold by</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Added By</TableHead>
                       <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
                     </TableRow>
                   </TableHeader>

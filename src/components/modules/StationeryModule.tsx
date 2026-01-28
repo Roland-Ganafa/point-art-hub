@@ -735,7 +735,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-foreground">Sold By (Initials)</Label>
+                      <Label className="text-foreground">Added By (Initials)</Label>
                       <Select
                         value={formData.sold_by}
                         onValueChange={(value) => setFormData({ ...formData, sold_by: value })}
