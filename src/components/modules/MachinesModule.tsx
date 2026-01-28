@@ -124,29 +124,27 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
       setFormData(prev => ({
         ...prev,
         rate: newRate.toString(),
-        expenditure: (newRate * 0.2).toFixed(2) // 20% of rate
+        expenditure: (newRate * qty * 0.1).toFixed(2) // 10% of sales value
       }));
     }
   }, [formData.quantity, formData.machine_name, formData.color_type, formData.laminate_type]);
 
-  // Auto-calculate expenditure when rate changes manually (or automatically)
+  // Auto-calculate expenditure when rate or quantity changes manually (or automatically)
   useEffect(() => {
-    if (formData.rate) {
+    if (formData.rate && formData.quantity) {
       const rateVal = parseFloat(formData.rate);
-      if (!isNaN(rateVal) && rateVal > 0) {
-        // Only update if it's significantly different to avoid loops or fighting input
-        // But since this is a calculated field, maybe we just set it?
-        // User asked "system is supposed to put automatically after the user puts in the rate"
-        // So if user types rate, expenditure should update.
-        // We need to be careful not to overwrite if they try to edit expenditure? 
-        // User demand implies enforced rule: "expenditure is 20% for all".
-        const newExp = (rateVal * 0.2).toFixed(2);
+      const qtyVal = parseInt(formData.quantity);
+      if (!isNaN(rateVal) && rateVal > 0 && !isNaN(qtyVal) && qtyVal > 0) {
+        // Expenditure is 10% of Sales Value (Rate * Quantity)
+        const newExp = (rateVal * qtyVal * 0.1).toFixed(2);
+
+        // Only update if explicit change to avoid loop, though with fixed calc it should be stable
         if (formData.expenditure !== newExp) {
           setFormData(prev => ({ ...prev, expenditure: newExp }));
         }
       }
     }
-  }, [formData.rate]);
+  }, [formData.rate, formData.quantity]);
 
   // Filter items based on search
   const filteredItems = items.filter(item =>
