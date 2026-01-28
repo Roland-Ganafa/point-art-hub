@@ -64,6 +64,18 @@ interface ReportData {
     machines: number;
     artServices: number;
   };
+  artServicesSummary: {
+    totalSales: number;
+    totalProfit: number;
+    totalServices: number;
+    profitMargin: number;
+  };
+  machinesSummary: {
+    totalSales: number;
+    totalProfit: number;
+    totalServices: number;
+    profitMargin: number;
+  };
 }
 
 const Reports = () => {
@@ -82,6 +94,18 @@ const Reports = () => {
       embroidery: 0,
       machines: 0,
       artServices: 0,
+    },
+    artServicesSummary: {
+      totalSales: 0,
+      totalProfit: 0,
+      totalServices: 0,
+      profitMargin: 0,
+    },
+    machinesSummary: {
+      totalSales: 0,
+      totalProfit: 0,
+      totalServices: 0,
+      profitMargin: 0,
     },
   });
 
@@ -224,6 +248,21 @@ const Reports = () => {
         artServices: totalSales > 0 ? ((totalProfit * 0.05) / (totalSales * 0.08)) * 100 : 0,
       };
 
+      // Calculate Art Services Summary
+      const artServicesSales = (artServicesData.data || []).reduce((sum, service) => sum + (service.sales || 0), 0);
+      const artServicesProfit = (artServicesData.data || []).reduce((sum, service) => sum + (service.profit || 0), 0);
+      const artServicesCount = (artServicesData.data || []).length;
+      const artServicesProfitMargin = artServicesSales > 0 ? (artServicesProfit / artServicesSales) * 100 : 0;
+
+      // Calculate Machines Summary
+      const machinesSales = (machinesData.data || []).reduce((sum, service) => sum + (service.sales || 0), 0);
+      const machinesProfit = (machinesData.data || []).reduce((sum, service) => {
+        const profit = (service.sales || 0) - (service.expenditure || 0);
+        return sum + Math.max(0, profit);
+      }, 0);
+      const machinesCount = (machinesData.data || []).length;
+      const machinesProfitMargin = machinesSales > 0 ? (machinesProfit / machinesSales) * 100 : 0;
+
       setReportData({
         totalSales,
         totalProfit,
@@ -234,6 +273,18 @@ const Reports = () => {
         salesByCategory,
         dailySales,
         profitMargins,
+        artServicesSummary: {
+          totalSales: artServicesSales,
+          totalProfit: artServicesProfit,
+          totalServices: artServicesCount,
+          profitMargin: artServicesProfitMargin,
+        },
+        machinesSummary: {
+          totalSales: machinesSales,
+          totalProfit: machinesProfit,
+          totalServices: machinesCount,
+          profitMargin: machinesProfitMargin,
+        },
       });
 
       setLastUpdated(new Date());
@@ -451,8 +502,9 @@ const Reports = () => {
 
         {/* Detailed Analytics */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="services">Services Summary</TabsTrigger>
             <TabsTrigger value="sales">Sales Analysis</TabsTrigger>
             <TabsTrigger value="profits">Profit Analysis</TabsTrigger>
             <TabsTrigger value="performance">Performance</TabsTrigger>
@@ -512,6 +564,80 @@ const Reports = () => {
                         </div>
                       </div>
                     ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="services" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Art Services Summary */}
+              <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    Art Services Summary
+                  </CardTitle>
+                  <CardDescription>
+                    Performance metrics for art services
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
+                      <p className="text-sm text-blue-600 font-medium">Total Sales</p>
+                      <p className="text-2xl font-bold text-blue-900">{formatUGX(reportData.artServicesSummary.totalSales)}</p>
+                    </div>
+                    <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
+                      <p className="text-sm text-green-600 font-medium">Total Profit</p>
+                      <p className="text-2xl font-bold text-green-900">{formatUGX(reportData.artServicesSummary.totalProfit)}</p>
+                    </div>
+                    <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
+                      <p className="text-sm text-purple-600 font-medium">Services Done</p>
+                      <p className="text-2xl font-bold text-purple-900">{reportData.artServicesSummary.totalServices}</p>
+                    </div>
+                    <div className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg">
+                      <p className="text-sm text-orange-600 font-medium">Profit Margin</p>
+                      <p className={`text-2xl font-bold ${getProfitMarginColor(reportData.artServicesSummary.profitMargin)}`}>
+                        {reportData.artServicesSummary.profitMargin.toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Machines Summary */}
+              <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-indigo-600" />
+                    Machines Summary
+                  </CardTitle>
+                  <CardDescription>
+                    Performance metrics for machine services
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg">
+                      <p className="text-sm text-indigo-600 font-medium">Total Sales</p>
+                      <p className="text-2xl font-bold text-indigo-900">{formatUGX(reportData.machinesSummary.totalSales)}</p>
+                    </div>
+                    <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg">
+                      <p className="text-sm text-emerald-600 font-medium">Total Profit</p>
+                      <p className="text-2xl font-bold text-emerald-900">{formatUGX(reportData.machinesSummary.totalProfit)}</p>
+                    </div>
+                    <div className="p-4 bg-gradient-to-br from-violet-50 to-violet-100 rounded-lg">
+                      <p className="text-sm text-violet-600 font-medium">Services Done</p>
+                      <p className="text-2xl font-bold text-violet-900">{reportData.machinesSummary.totalServices}</p>
+                    </div>
+                    <div className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg">
+                      <p className="text-sm text-amber-600 font-medium">Profit Margin</p>
+                      <p className={`text-2xl font-bold ${getProfitMarginColor(reportData.machinesSummary.profitMargin)}`}>
+                        {reportData.machinesSummary.profitMargin.toFixed(1)}%
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

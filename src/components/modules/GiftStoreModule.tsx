@@ -876,6 +876,28 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                         </TableCell>
                       </TableRow>
                     )}
+                    {/* Totals Row */}
+                    {filteredItems.length > 0 && (
+                      <TableRow className="bg-gradient-to-r from-green-50 to-emerald-50 border-t-2 border-green-600 font-bold">
+                        {isAdmin && <TableCell></TableCell>}
+                        <TableCell colSpan={5} className="text-right text-lg font-bold text-gray-800">
+                          TOTALS:
+                        </TableCell>
+                        <TableCell className="font-bold text-lg text-green-700">
+                          {formatUGX(filteredItems.reduce((sum, item) => sum + (item.quantity * item.rate), 0))}
+                        </TableCell>
+                        <TableCell></TableCell>
+                        <TableCell className="font-bold text-lg text-green-700">
+                          {formatUGX(
+                            filteredItems.reduce((sum, item) => {
+                              const profit = item.selling_price && item.rate ? item.selling_price - item.rate : 0;
+                              return sum + profit;
+                            }, 0) / filteredItems.length
+                          )}
+                        </TableCell>
+                        <TableCell colSpan={3}></TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </div>

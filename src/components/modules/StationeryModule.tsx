@@ -540,17 +540,17 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
   return (
     <div className="space-y-8 p-6">
       <Tabs defaultValue="inventory" className="space-y-8">
-        <TabsList className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-1 shadow-lg">
+        <TabsList className="bg-muted border border-border rounded-xl p-1 shadow-lg">
           <TabsTrigger
             value="inventory"
-            className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
+            className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <Package2 className="h-4 w-4" />
             Inventory
           </TabsTrigger>
           <TabsTrigger
             value="daily-sales"
-            className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
+            className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <ShoppingCart className="h-4 w-4" />
             Daily Sales
@@ -560,18 +560,35 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
         <TabsContent value="inventory" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
           <div className="flex justify-between items-center mb-8">
             <div className="space-y-2">
-              <h3 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-3">
+              <h3 className="text-3xl font-bold text-foreground flex items-center gap-3">
                 <Package2 className="h-8 w-8 text-blue-600" />
                 Stationery Management
               </h3>
               <p className="text-muted-foreground">Manage your stationery inventory with smart tracking</p>
             </div>
             <div className="flex items-center gap-4">
+              {/* Total Stock Value Card */}
+              <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-green-600 rounded-lg">
+                      <TrendingUp className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-green-700">Total Stock Value</p>
+                      <p className="text-2xl font-bold text-green-900">
+                        {formatUGX(items.reduce((sum, item) => sum + ((item.stock || 0) * item.rate), 0))}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               <div className="relative w-full max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search items..."
-                  className="pl-9 border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                  className="pl-9 border-input focus:border-primary focus:ring-primary transition-all duration-200 bg-background"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -602,27 +619,27 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                 <DialogTrigger asChild>
                   <Button
                     onClick={resetForm}
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     {isDialogOpen ? 'Close' : 'Add Item'}
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md bg-white/95 backdrop-blur-sm border-0 shadow-2xl" aria-describedby="add-item-desc">
+                <DialogContent className="max-w-md bg-background border-border shadow-2xl" aria-describedby="add-item-desc">
                   <DialogHeader>
-                    <DialogTitle className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    <DialogTitle className="text-xl font-bold text-foreground">
                       {editingId ? 'Edit Item' : 'Add New Item'}
                     </DialogTitle>
                     <p id="add-item-desc" className="text-sm text-muted-foreground mt-1">Fill in the item details and submit to save.</p>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                      <Label className="font-medium">Category</Label>
+                      <Label className="font-medium text-foreground">Category</Label>
                       <Select
                         value={formData.category}
                         onValueChange={(value) => setFormData({ ...formData, category: value })}
                       >
-                        <SelectTrigger className="border-blue-200 focus:border-blue-400 focus:ring-blue-200">
+                        <SelectTrigger className="border-input focus:border-primary focus:ring-primary bg-background">
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
@@ -641,7 +658,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                         value={formData.item}
                         onChange={(e) => setFormData({ ...formData, item: e.target.value })}
                         required
-                        className={`transition-all duration-200 ${formErrors.item ? "border-red-500 focus:border-red-500" : "border-blue-200 focus:border-blue-400 focus:ring-blue-200"}`}
+                        className={`transition-all duration-200 bg-background ${formErrors.item ? "border-destructive focus:border-destructive" : "border-input focus:border-primary focus:ring-primary"}`}
                       />
                       {formErrors.item && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{formErrors.item}</span>}
                     </div>
@@ -651,7 +668,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                       <Input
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                        className="border-input focus:border-primary focus:ring-primary transition-all duration-200 bg-background"
                       />
                     </div>
 
@@ -664,7 +681,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                           value={formData.quantity}
                           onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                           required
-                          className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                          className="border-input focus:border-primary focus:ring-primary transition-all duration-200 bg-background"
                         />
                       </div>
                       <div className="space-y-2">
@@ -676,7 +693,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                           value={formData.rate}
                           onChange={(e) => setFormData({ ...formData, rate: e.target.value })}
                           required
-                          className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                          className="border-input focus:border-primary focus:ring-primary transition-all duration-200 bg-background"
                         />
                       </div>
                     </div>
@@ -691,7 +708,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                           value={formData.selling_price}
                           onChange={(e) => setFormData({ ...formData, selling_price: e.target.value })}
                           required
-                          className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                          className="border-input focus:border-primary focus:ring-primary transition-all duration-200 bg-background"
                         />
                       </div>
                       <div className="space-y-2">
@@ -702,13 +719,13 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                         <Input
                           value={formData.profit_per_unit}
                           disabled
-                          className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 font-medium"
+                          className="bg-muted border-input font-medium text-muted-foreground"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Low Stock Threshold</Label>
+                      <Label className="text-foreground">Low Stock Threshold</Label>
                       <Input
                         type="number"
                         min="1"
@@ -718,12 +735,12 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Sold By (Initials)</Label>
+                      <Label className="text-foreground">Sold By (Initials)</Label>
                       <Select
                         value={formData.sold_by}
                         onValueChange={(value) => setFormData({ ...formData, sold_by: value })}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-background border-input">
                           <SelectValue
                             placeholder={
                               salesProfiles.length > 0
@@ -756,7 +773,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
 
                     <Button
                       type="submit"
-                      className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200 shadow-lg hover:shadow-xl"
                       disabled={isLoading}
                     >
                       {isLoading ? (
@@ -776,10 +793,10 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
             </div>
           </div>
 
-          <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 border-b border-blue-100">
-              <CardTitle className="text-2xl font-bold flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white">
+          <Card className="border-border shadow-2xl bg-card overflow-hidden">
+            <CardHeader className="bg-muted/50 border-b border-border">
+              <CardTitle className="text-2xl font-bold flex items-center gap-3 text-foreground">
+                <div className="p-2 bg-primary rounded-lg text-primary-foreground">
                   <Package2 className="h-6 w-6" />
                 </div>
                 Stationery Inventory
@@ -792,8 +809,8 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader className="bg-gradient-to-r from-gray-50 to-blue-50">
-                    <TableRow className="border-b border-blue-100">
+                  <TableHeader className="bg-muted/50">
+                    <TableRow className="border-b border-border hover:bg-muted/50">
                       {isAdmin && (
                         <TableHead className="w-[50px]">
                           <Checkbox
@@ -925,6 +942,23 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                             )}
                           </div>
                         </TableCell>
+                      </TableRow>
+                    )}
+                    {/* Totals Row */}
+                    {filteredItems.length > 0 && (
+                      <TableRow className="bg-gradient-to-r from-blue-50 to-purple-50 border-t-2 border-primary font-bold">
+                        {isAdmin && <TableCell></TableCell>}
+                        <TableCell colSpan={5} className="text-right text-lg font-bold text-gray-800">
+                          TOTALS:
+                        </TableCell>
+                        <TableCell className="font-bold text-lg text-green-700">
+                          {formatUGX(filteredItems.reduce((sum, item) => sum + (item.quantity * item.rate), 0))}
+                        </TableCell>
+                        <TableCell></TableCell>
+                        <TableCell className="font-bold text-lg text-green-700">
+                          {formatUGX(filteredItems.reduce((sum, item) => sum + (item.profit_per_unit || 0), 0) / filteredItems.length)}
+                        </TableCell>
+                        <TableCell colSpan={3}></TableCell>
                       </TableRow>
                     )}
                   </TableBody>

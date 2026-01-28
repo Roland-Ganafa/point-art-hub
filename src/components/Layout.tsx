@@ -148,17 +148,17 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <div className="min-h-screen bg-background flex transition-colors duration-200">
       {/* Sidebar Navigation */}
-      <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-colors duration-200">
+      <aside className="w-64 bg-card border-r border-border flex flex-col transition-colors duration-200">
         {/* Logo Section */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-b border-border">
           <Logo />
         </div>
 
         {/* User Info Section */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="text-sm text-gray-600 dark:text-gray-300">
+        <div className="p-4 border-b border-border">
+          <div className="text-sm text-muted-foreground">
             <div className="mb-2">
-              <span className="block font-medium text-gray-900 dark:text-white">
+              <span className="block font-medium text-foreground">
                 {profile?.full_name || user.email}
                 {(isAdmin || profile?.role === 'admin') && (
                   <span className="ml-1 text-yellow-600 dark:text-yellow-400 font-semibold">(Admin)</span>
@@ -181,11 +181,11 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
 
         {/* Theme Toggle */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-b border-border">
           <Button
             variant="ghost"
             onClick={toggleTheme}
-            className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground"
           >
             {theme === 'light' ? (
               <Moon className="w-4 h-4 mr-3" />
@@ -203,7 +203,7 @@ const Layout = ({ children }: LayoutProps) => {
             <Button
               variant="ghost"
               onClick={() => navigate('/')}
-              className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground"
             >
               <Home className="w-4 h-4 mr-3" />
               Home
@@ -214,7 +214,7 @@ const Layout = ({ children }: LayoutProps) => {
               <Button
                 variant="ghost"
                 onClick={() => navigate('/')}
-                className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <BarChart3 className="w-4 h-4 mr-3" />
                 Dashboard
@@ -226,7 +226,7 @@ const Layout = ({ children }: LayoutProps) => {
               <Button
                 variant="ghost"
                 onClick={() => navigate('/admin')}
-                className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground"
                 title="Admin Panel - Manage users and system settings"
               >
                 <Shield className="w-4 h-4 mr-3" />
@@ -239,7 +239,7 @@ const Layout = ({ children }: LayoutProps) => {
               <Button
                 variant="ghost"
                 onClick={() => navigate('/customers')}
-                className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <Users className="w-4 h-4 mr-3" />
                 Customers
@@ -251,7 +251,7 @@ const Layout = ({ children }: LayoutProps) => {
               <Button
                 variant="ghost"
                 onClick={() => navigate('/reports')}
-                className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <FileText className="w-4 h-4 mr-3" />
                 Reports
@@ -263,7 +263,7 @@ const Layout = ({ children }: LayoutProps) => {
               <Button
                 variant="ghost"
                 onClick={() => navigate('/analytics')}
-                className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <TrendingUp className="w-4 h-4 mr-3" />
                 Analytics
@@ -275,7 +275,7 @@ const Layout = ({ children }: LayoutProps) => {
               <Button
                 variant="ghost"
                 onClick={() => navigate('/invoices')}
-                className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <FileText className="w-4 h-4 mr-3" />
                 Invoices
@@ -285,7 +285,7 @@ const Layout = ({ children }: LayoutProps) => {
         </nav>
 
         {/* Bottom Section with Notification */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-t border-border">
           {/* Notification Bell */}
           <div className="flex justify-center">
             <NotificationBell />
@@ -296,9 +296,9 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Top Header */}
-        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 transition-colors duration-200">
+        <header className="bg-card border-b border-border px-6 py-4 transition-colors duration-200">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Point Art Hub</h1>
+            <h1 className="text-2xl font-semibold text-foreground">Point Art Hub</h1>
 
             {/* Top Right Navigation */}
             <div className="flex items-center gap-3">
@@ -306,7 +306,7 @@ const Layout = ({ children }: LayoutProps) => {
               <Button
                 variant="outline"
                 onClick={() => navigate('/settings')}
-                className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-300 dark:border-gray-600"
+                className="text-foreground hover:bg-accent hover:text-accent-foreground border-border"
               >
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
@@ -316,7 +316,7 @@ const Layout = ({ children }: LayoutProps) => {
               <Button
                 variant="outline"
                 onClick={() => navigate('/profile')}
-                className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-300 dark:border-gray-600"
+                className="text-foreground hover:bg-accent hover:text-accent-foreground border-border"
               >
                 <User className="w-4 h-4 mr-2" />
                 Profile
@@ -326,7 +326,7 @@ const Layout = ({ children }: LayoutProps) => {
               <Button
                 variant="outline"
                 onClick={handleSignOut}
-                className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-300 dark:border-gray-600"
+                className="text-foreground hover:bg-accent hover:text-accent-foreground border-border"
               >
                 Sign Out
               </Button>
@@ -335,7 +335,7 @@ const Layout = ({ children }: LayoutProps) => {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 bg-gray-50 dark:bg-gray-800 transition-colors duration-200">
+        <main className="flex-1 p-6 bg-background transition-colors duration-200">
           {children}
         </main>
       </div>

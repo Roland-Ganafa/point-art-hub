@@ -628,6 +628,9 @@ const InvoiceManagement = () => {
                           <span className="text-pink-600">📱</span> 0774 528 246 / 0704 528 246
                         </p>
                         <p className="flex items-center justify-end gap-1">
+                          <span className="text-pink-600">💬</span> WhatsApp: 0759 919 826
+                        </p>
+                        <p className="flex items-center justify-end gap-1">
                           <span className="text-pink-600">✉️</span> pointartsolutions@yahoo.com
                         </p>
                       </div>
@@ -703,8 +706,8 @@ const InvoiceManagement = () => {
                               <span className="font-bold">E&O.E</span> Services once rendered are not renegotiable - Thanks
                             </div>
                           </td>
-                          <td className="p-0">
-                            <div className="flex items-center justify-between px-2 py-1">
+                          <td className="p-2">
+                            <div className="flex items-center justify-between">
                               <span className="font-bold text-sm">TOTAL</span>
                               <span className="font-bold text-base">{selectedInvoice.total_amount.toLocaleString()}</span>
                             </div>
@@ -735,14 +738,24 @@ const InvoiceManagement = () => {
                   </div>
                 </div>
 
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowViewDialog(false)}>
-                    Close
+                <DialogFooter className="flex justify-between">
+                  <Button
+                    variant="outline"
+                    onClick={() => window.print()}
+                    className="bg-green-50 text-green-700 hover:bg-green-100 border-green-300"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Print Receipt
                   </Button>
-                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-                    <Download className="h-4 w-4 mr-2" />
-                    Download PDF
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setShowViewDialog(false)}>
+                      Close
+                    </Button>
+                    <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                      <Download className="h-4 w-4 mr-2" />
+                      Download PDF
+                    </Button>
+                  </div>
                 </DialogFooter>
               </>
             )}
