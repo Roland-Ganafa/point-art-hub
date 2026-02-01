@@ -569,249 +569,250 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
         </TabsList>
 
         <TabsContent value="inventory" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-8 items-start">
-            <div className="xl:col-span-3 space-y-1">
-              <h3 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <Package2 className="h-6 w-6 text-blue-600" />
-                Stationery
+          <div className="flex justify-between items-center mb-8">
+            <div className="space-y-2">
+              <h3 className="text-3xl font-bold text-foreground flex items-center gap-3">
+                <Package2 className="h-8 w-8 text-blue-600" />
+                Stationery Management
               </h3>
-              <p className="text-xs text-muted-foreground">Smart inventory tracking</p>
+              <p className="text-muted-foreground">Manage your stationery inventory with smart tracking</p>
             </div>
-
-            <div className="xl:col-span-9 flex flex-wrap items-center gap-4 justify-end">
-              {/* Total Stock Value Card - More Compact */}
-              <div className="bg-gradient-to-br from-green-600 to-emerald-700 text-white rounded-xl p-3 shadow-md flex items-center gap-3 border border-green-500/20">
-                <div className="p-1.5 bg-white/20 rounded-lg">
-                  <TrendingUp className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-medium text-green-50 uppercase tracking-tight">Total Value</p>
-                  <p className="text-lg font-bold leading-tight">
-                    {formatUGX(items.reduce((sum, item) => sum + ((item.stock || 0) * item.rate), 0))}
-                  </p>
-                </div>
-              </div>
-
-              {/* Category Breakdown Badges */}
-              <div className="flex flex-wrap gap-2 items-center">
-                {Object.entries(categoryTotals).map(([category, total]) => (
-                  <div key={category} className="bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1 flex flex-col shadow-sm">
-                    <span className="text-[9px] uppercase font-bold text-blue-500 leading-none mb-0.5">{category}</span>
-                    <span className="text-xs font-bold text-gray-700 leading-none">{formatUGX(total as number)}</span>
+            <div className="flex items-center gap-4">
+              {/* Total Stock Value Card */}
+              <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg shrink-0">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-green-600 rounded-lg">
+                      <TrendingUp className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-green-700">Total Stock Value</p>
+                      <p className="text-2xl font-bold text-green-900">
+                        {formatUGX(items.reduce((sum, item) => sum + ((item.stock || 0) * item.rate), 0))}
+                      </p>
+                    </div>
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Category Breakdown Summary */}
+              <div className="flex gap-3 overflow-x-auto pb-2 max-w-[500px] no-scrollbar">
+                {Object.entries(categoryTotals).map(([category, total]) => (
+                  <Card key={category} className="border border-blue-100 bg-white/50 shadow-sm min-w-[150px] shrink-0">
+                    <CardContent className="p-3">
+                      <p className="text-[10px] uppercase tracking-wider font-bold text-blue-600 truncate">{category}</p>
+                      <p className="text-sm font-bold text-gray-800">{formatUGX(total as number)}</p>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
 
-              <div className="flex items-center gap-2">
-                <div className="relative w-48 lg:w-64">
-                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Search..."
-                    className="pl-8 h-9 text-sm border-input focus:border-primary transition-all duration-200"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-
-                <ExportDialog
-                  data={items}
-                  type="stationery"
-                  moduleTitle="Stationery Inventory"
-                  disabled={items.length === 0}
+              <div className="relative w-full max-w-md">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search items..."
+                  className="pl-9 border-input focus:border-primary focus:ring-primary transition-all duration-200 bg-background"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
+              </div>
 
-                {isAdmin && selectedIds.size > 0 && (
+              <ExportDialog
+                data={items}
+                type="stationery"
+                moduleTitle="Stationery Inventory"
+                disabled={items.length === 0}
+              />
+
+              {isAdmin && selectedIds.size > 0 && (
+                <Button
+                  variant="destructive"
+                  onClick={handleBulkDelete}
+                  className="animate-in fade-in zoom-in duration-200 shadow-lg"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Selected ({selectedIds.size})
+                </Button>
+              )}
+
+              <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) resetForm();
+              }}>
+                <DialogTrigger asChild>
                   <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleBulkDelete}
-                    className="h-9 shadow-sm"
+                    onClick={resetForm}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                   >
-                    <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                    Delete ({selectedIds.size})
+                    <Plus className="mr-2 h-4 w-4" />
+                    {isDialogOpen ? 'Close' : 'Add Item'}
                   </Button>
-                )}
+                </DialogTrigger>
+                <DialogContent className="max-w-md bg-background border-border shadow-2xl" aria-describedby="add-item-desc">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl font-bold text-foreground">
+                      {editingId ? 'Edit Item' : 'Add New Item'}
+                    </DialogTitle>
+                    <p id="add-item-desc" className="text-sm text-muted-foreground mt-1">Fill in the item details and submit to save.</p>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="font-medium text-foreground">Category</Label>
+                      <Select
+                        value={formData.category}
+                        onValueChange={(value) => setFormData({ ...formData, category: value })}
+                      >
+                        <SelectTrigger className="border-input focus:border-primary focus:ring-primary bg-background">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CATEGORIES.map(category => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                <Dialog open={isDialogOpen} onOpenChange={(open) => {
-                  setIsDialogOpen(open);
-                  if (!open) resetForm();
-                }}>
-                  <DialogTrigger asChild>
-                    <Button
-                      onClick={resetForm}
-                      size="sm"
-                      className="bg-primary hover:bg-primary/90 h-9 px-4 shadow-sm"
-                    >
-                      <Plus className="mr-1.5 h-3.5 w-3.5" />
-                      Add Item
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md bg-background border-border shadow-2xl" aria-describedby="add-item-desc">
-                    <DialogHeader>
-                      <DialogTitle className="text-xl font-bold text-foreground">
-                        {editingId ? 'Edit Item' : 'Add New Item'}
-                      </DialogTitle>
-                      <p id="add-item-desc" className="text-sm text-muted-foreground mt-1">Fill in the item details and submit to save.</p>
-                    </DialogHeader>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label className="font-medium text-foreground">Category</Label>
-                        <Select
-                          value={formData.category}
-                          onValueChange={(value) => setFormData({ ...formData, category: value })}
-                        >
-                          <SelectTrigger className="border-input focus:border-primary focus:ring-primary bg-background">
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {CATEGORIES.map(category => (
-                              <SelectItem key={category} value={category}>
-                                {category}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                    <div className="space-y-2">
+                      <Label className="font-medium">Item Name *</Label>
+                      <Input
+                        value={formData.item}
+                        onChange={(e) => setFormData({ ...formData, item: e.target.value })}
+                        required
+                        className={`transition-all duration-200 bg-background ${formErrors.item ? "border-destructive focus:border-destructive" : "border-input focus:border-primary focus:ring-primary"}`}
+                      />
+                      {formErrors.item && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{formErrors.item}</span>}
+                    </div>
 
+                    <div className="space-y-2">
+                      <Label className="font-medium">Description</Label>
+                      <Input
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className="border-input focus:border-primary focus:ring-primary transition-all duration-200 bg-background"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="font-medium">Item Name *</Label>
+                        <Label className="font-medium">Quantity *</Label>
                         <Input
-                          value={formData.item}
-                          onChange={(e) => setFormData({ ...formData, item: e.target.value })}
+                          type="number"
+                          min="0"
+                          value={formData.quantity}
+                          onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                           required
-                          className={`transition-all duration-200 bg-background ${formErrors.item ? "border-destructive focus:border-destructive" : "border-input focus:border-primary focus:ring-primary"}`}
-                        />
-                        {formErrors.item && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{formErrors.item}</span>}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="font-medium">Description</Label>
-                        <Input
-                          value={formData.description}
-                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                           className="border-input focus:border-primary focus:ring-primary transition-all duration-200 bg-background"
                         />
                       </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label className="font-medium">Quantity *</Label>
-                          <Input
-                            type="number"
-                            min="0"
-                            value={formData.quantity}
-                            onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                            required
-                            className="border-input focus:border-primary focus:ring-primary transition-all duration-200 bg-background"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="font-medium">Stock Buying Price (UGX) *</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={formData.rate}
-                            onChange={(e) => setFormData({ ...formData, rate: e.target.value })}
-                            required
-                            className="border-input focus:border-primary focus:ring-primary transition-all duration-200 bg-background"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label className="font-medium">Selling Price (UGX) *</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={formData.selling_price}
-                            onChange={(e) => setFormData({ ...formData, selling_price: e.target.value })}
-                            required
-                            className="border-input focus:border-primary focus:ring-primary transition-all duration-200 bg-background"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="font-medium flex items-center gap-2">
-                            <TrendingUp className="h-4 w-4 text-green-500" />
-                            Profit/Unit (UGX)
-                          </Label>
-                          <Input
-                            value={formData.profit_per_unit}
-                            disabled
-                            className="bg-muted border-input font-medium text-muted-foreground"
-                          />
-                        </div>
-                      </div>
-
                       <div className="space-y-2">
-                        <Label className="text-foreground">Low Stock Threshold</Label>
+                        <Label className="font-medium">Stock Buying Price (UGX) *</Label>
                         <Input
                           type="number"
-                          min="1"
-                          value={formData.low_stock_threshold}
-                          onChange={(e) => setFormData({ ...formData, low_stock_threshold: e.target.value })}
+                          step="0.01"
+                          min="0"
+                          value={formData.rate}
+                          onChange={(e) => setFormData({ ...formData, rate: e.target.value })}
+                          required
+                          className="border-input focus:border-primary focus:ring-primary transition-all duration-200 bg-background"
                         />
                       </div>
+                    </div>
 
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-foreground">Added By (Initials)</Label>
-                        <Select
-                          value={formData.sold_by}
-                          onValueChange={(value) => setFormData({ ...formData, sold_by: value })}
-                        >
-                          <SelectTrigger className="bg-background border-input">
-                            <SelectValue
-                              placeholder={
-                                salesProfiles.length > 0
-                                  ? "Select sales person"
-                                  : "No sales persons available"
-                              }
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="not_specified">Not Specified</SelectItem>
-                            {salesProfiles.length > 0 ? (
-                              salesProfiles.map(profile => (
-                                <SelectItem key={profile.id} value={profile.id}>
-                                  {profile.sales_initials} - {profile.full_name}
-                                </SelectItem>
-                              ))
-                            ) : (
-                              <SelectItem value="no_sales_persons" disabled>
-                                No sales persons with initials found
-                              </SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
-                        {salesProfiles.length === 0 && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            No users have sales initials assigned. Visit Admin Profile to assign initials.
-                          </p>
-                        )}
+                        <Label className="font-medium">Selling Price (UGX) *</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.selling_price}
+                          onChange={(e) => setFormData({ ...formData, selling_price: e.target.value })}
+                          required
+                          className="border-input focus:border-primary focus:ring-primary transition-all duration-200 bg-background"
+                        />
                       </div>
+                      <div className="space-y-2">
+                        <Label className="font-medium flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4 text-green-500" />
+                          Profit/Unit (UGX)
+                        </Label>
+                        <Input
+                          value={formData.profit_per_unit}
+                          disabled
+                          className="bg-muted border-input font-medium text-muted-foreground"
+                        />
+                      </div>
+                    </div>
 
-                      <Button
-                        type="submit"
-                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200 shadow-lg hover:shadow-xl"
-                        disabled={isLoading}
+                    <div className="space-y-2">
+                      <Label className="text-foreground">Low Stock Threshold</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={formData.low_stock_threshold}
+                        onChange={(e) => setFormData({ ...formData, low_stock_threshold: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-foreground">Added By (Initials)</Label>
+                      <Select
+                        value={formData.sold_by}
+                        onValueChange={(value) => setFormData({ ...formData, sold_by: value })}
                       >
-                        {isLoading ? (
-                          <div className="flex items-center gap-2">
-                            <CustomLoader size="sm" className="mr-2" />
-                            Saving...
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            {editingId ? 'Update Item' : 'Add Item'}
-                          </div>
-                        )}
-                      </Button>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              </div>
+                        <SelectTrigger className="bg-background border-input">
+                          <SelectValue
+                            placeholder={
+                              salesProfiles.length > 0
+                                ? "Select sales person"
+                                : "No sales persons available"
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="not_specified">Not Specified</SelectItem>
+                          {salesProfiles.length > 0 ? (
+                            salesProfiles.map(profile => (
+                              <SelectItem key={profile.id} value={profile.id}>
+                                {profile.sales_initials} - {profile.full_name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="no_sales_persons" disabled>
+                              No sales persons with initials found
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      {salesProfiles.length === 0 && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          No users have sales initials assigned. Visit Admin Profile to assign initials.
+                        </p>
+                      )}
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200 shadow-lg hover:shadow-xl"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center gap-2">
+                          <CustomLoader size="sm" className="mr-2" />
+                          Saving...
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          {editingId ? 'Update Item' : 'Add Item'}
+                        </div>
+                      )}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
