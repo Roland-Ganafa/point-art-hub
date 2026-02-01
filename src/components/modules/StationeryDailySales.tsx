@@ -219,6 +219,8 @@ const StationeryDailySales = () => {
       selling_price: sellingPrice,
       total_amount: sellingPrice * quantity,
       profit: (sellingPrice - rate) * quantity,
+      description: formData.description ? formData.description.trim() : null,
+      rate: rate,
       sold_by: formData.soldBy === "not_specified" ? null : formData.soldBy
       // Removed date field since it has a default value of now()
     };
@@ -477,6 +479,7 @@ const StationeryDailySales = () => {
                         itemId: value,
                         category: selectedItem?.category || "",
                         item: selectedItem?.item || "",
+                        description: selectedItem?.description || "",
                         rate: selectedItem?.rate?.toString() || "",
                         selling_price: selectedItem?.selling_price?.toString() || ""
                       });
@@ -487,8 +490,11 @@ const StationeryDailySales = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {stationeryItems.map(item => (
-                        <SelectItem key={item.id} value={item.id}>
-                          {item.item} (Stock: {item.stock})
+                        <SelectItem key={item.id} value={item.id} className="cursor-pointer">
+                          <div className="flex flex-col">
+                            <span className="font-semibold">{item.item}</span>
+                            <span className="text-xs text-muted-foreground">{item.description || "No description"}</span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -529,7 +535,7 @@ const StationeryDailySales = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="font-medium">Rate (UGX) *</Label>
+                    <Label className="font-medium">Stock Buying Price (UGX) *</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -634,12 +640,14 @@ const StationeryDailySales = () => {
             <Table>
               <TableHeader className="bg-gradient-to-r from-gray-50 to-blue-50">
                 <TableRow className="border-b border-blue-100">
-                  <TableHead className="w-[50px] font-semibold text-gray-700">#</TableHead>
                   <TableHead className="font-semibold text-gray-700">Category</TableHead>
                   <TableHead className="font-semibold text-gray-700">Item</TableHead>
                   <TableHead className="font-semibold text-gray-700">Description</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Rate</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Stock Buying Price</TableHead>
                   <TableHead className="font-semibold text-gray-700">Quantity</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Selling Price</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Total Value</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Profit</TableHead>
                   <TableHead className="font-semibold text-gray-700">Added By</TableHead>
                   <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
                 </TableRow>
@@ -653,12 +661,14 @@ const StationeryDailySales = () => {
                         className="group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-blue-50 hover:to-purple-50"
                         style={{ animationDelay: `${index * 50}ms` }}
                       >
-                        <TableCell className="font-medium text-gray-500">{index + 1}</TableCell>
                         <TableCell className="font-medium text-gray-600">{getItemCategory(item.item_id)}</TableCell>
                         <TableCell className="font-semibold text-gray-800 max-w-xs truncate">{getItemName(item.item_id)}</TableCell>
                         <TableCell className="text-gray-600">{item.description || "-"}</TableCell>
                         <TableCell className="font-medium text-blue-600">UGX {formatUGX(item.rate)}</TableCell>
                         <TableCell className="font-medium">{item.quantity}</TableCell>
+                        <TableCell className="font-medium text-purple-600">UGX {formatUGX(item.selling_price)}</TableCell>
+                        <TableCell className="font-bold text-indigo-700">UGX {formatUGX(item.selling_price * item.quantity)}</TableCell>
+                        <TableCell className="font-bold text-green-600">UGX {formatUGX((item.selling_price - (item.rate || 0)) * item.quantity)}</TableCell>
                         <TableCell className="text-gray-600">
                           {item.sold_by ? getSalesPersonName(item.sold_by) : "-"}
                         </TableCell>
@@ -689,7 +699,7 @@ const StationeryDailySales = () => {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-32 text-center">
+                    <TableCell colSpan={10} className="h-32 text-center">
                       <div className="flex flex-col items-center gap-4">
                         {isLoading ? ( // Use isLoading
                           <div className="flex flex-col items-center gap-3">

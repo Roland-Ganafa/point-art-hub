@@ -56,6 +56,7 @@ const Dashboard = () => {
       "art-services": 0,
     }
   });
+  const [dateFilter, setDateFilter] = useState<"today" | "month" | "all">("today");
   const [addTriggers, setAddTriggers] = useState<Record<string, number>>({
     stationery: 0,
     "gift-store": 0,
@@ -106,16 +107,45 @@ const Dashboard = () => {
         ]);
       };
 
-      // Fetch sales data from different tables with timeout
-      // using allSettled to allow partial loading
+      // Build filters based on selection
+      let startDate: string | null = null;
+      let endDate: string | null = null;
+
+      if (dateFilter === "today") {
+        const today = new Date();
+        startDate = new Date(today.setHours(0, 0, 0, 0)).toISOString();
+        endDate = new Date(today.setHours(23, 59, 59, 999)).toISOString();
+      } else if (dateFilter === "month") {
+        const today = new Date();
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+        endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
+      }
+
+      // Fetch data from different tables with timeout
+      const serviceQuery = (table: string) => {
+        let q = (supabase as any).from(table).select("*");
+        if (startDate && endDate) {
+          q = q.gte("date", startDate.split('T')[0]).lte("date", endDate.split('T')[0]);
+        }
+        return q as Promise<any>;
+      };
+
+      const salesQuery = (table: string) => {
+        let q = (supabase as any).from(table).select("*");
+        if (startDate && endDate) {
+          q = q.gte("date", startDate).lte("date", endDate);
+        }
+        return q as Promise<any>;
+      };
+
       const results = await Promise.allSettled([
-        fetchWithTimeout(supabase.from("stationery").select("*") as any),
-        fetchWithTimeout(supabase.from("gift_store").select("*") as any),
-        fetchWithTimeout(supabase.from("embroidery").select("*") as any),
-        fetchWithTimeout(supabase.from("machines").select("*") as any),
-        fetchWithTimeout(supabase.from("art_services").select("*") as any),
-        // FETCH ALL TIME SALES - Removed date filters to show total history
-        fetchWithTimeout((supabase as any).from("stationery_sales").select("*"))
+        fetchWithTimeout((supabase as any).from("stationery").select("*") as Promise<any>),
+        fetchWithTimeout((supabase as any).from("gift_store").select("*") as Promise<any>),
+        fetchWithTimeout(serviceQuery("embroidery")),
+        fetchWithTimeout(serviceQuery("machines")),
+        fetchWithTimeout(serviceQuery("art_services")),
+        fetchWithTimeout(salesQuery("stationery_sales")),
+        fetchWithTimeout((supabase as any).from("invoices").select("*").eq('status', 'paid') as Promise<any>)
       ]);
 
       const [
@@ -124,7 +154,8 @@ const Dashboard = () => {
         embroideryResult,
         machinesResult,
         artResult,
-        salesResult
+        salesResult,
+        invoicesResult
       ] = results;
 
       // Log errors for debugging but continue with available data
@@ -147,6 +178,7 @@ const Dashboard = () => {
       const machinesData = getData(machinesResult);
       const artData = getData(artResult);
       const salesData = getData(salesResult);
+      const invoiceData = getData(invoicesResult);
 
       // Calculate totals
       let totalSales = 0;
@@ -175,8 +207,18 @@ const Dashboard = () => {
 
       if (artData.length > 0) {
         servicesDone += artData.length;
-        totalSales += artData.reduce((sum: number, item: any) => sum + (item.sales || 0), 0);
-        totalProfit += artData.reduce((sum: number, item: any) => sum + (item.profit || 0), 0);
+        totalSales += artData.reduce((sum: number, item: any) => sum + (Number(item.sales) || 0), 0);
+        totalProfit += artData.reduce((sum: number, item: any) => sum + (Number(item.profit) || 0), 0);
+      }
+
+      // From paid invoices
+      if (invoiceData.length > 0) {
+        const filteredInvoices = dateFilter === 'all' ? invoiceData : invoiceData.filter((inv: any) => {
+          if (!startDate || !endDate) return true;
+          const invDate = new Date(inv.invoice_date);
+          return invDate >= new Date(startDate) && invDate <= new Date(endDate);
+        });
+        totalSales += filteredInvoices.reduce((sum: number, inv: any) => sum + (Number(inv.total_amount) || 0), 0);
       }
 
       setDashboardStats({
@@ -222,7 +264,7 @@ const Dashboard = () => {
         );
       }
     }
-  }, [retryCount, maxRetries, loading]);
+  }, [retryCount, maxRetries, loading, dateFilter]);
 
   // Fetch dashboard statistics with improved error handling
   useEffect(() => {
@@ -591,7 +633,35 @@ const Dashboard = () => {
           {(isAdmin || profile?.role === 'admin') && (
             <TabsContent value="overview" className="space-y-10 animate-in fade-in-50 duration-500">
               {/* Quick Stats Summary */}
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Quick Stats</h3>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <h3 className="text-2xl font-bold text-gray-900">Quick Stats</h3>
+                <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100">
+                  <Button
+                    variant={dateFilter === "today" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setDateFilter("today")}
+                    className="rounded-lg text-xs"
+                  >
+                    Today
+                  </Button>
+                  <Button
+                    variant={dateFilter === "month" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setDateFilter("month")}
+                    className="rounded-lg text-xs"
+                  >
+                    This Month
+                  </Button>
+                  <Button
+                    variant={dateFilter === "all" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setDateFilter("all")}
+                    className="rounded-lg text-xs"
+                  >
+                    All Time
+                  </Button>
+                </div>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 hover:shadow-xl transition-all duration-300 hover:scale-105 group">
                   <CardContent className="p-6">
@@ -606,7 +676,7 @@ const Dashboard = () => {
                     </div>
                     <div className="flex items-center text-sm text-green-600">
                       <TrendingUp className="h-4 w-4 mr-2" />
-                      <span className="font-medium">All-Time Statistics</span>
+                      <span className="font-medium capitalize">{dateFilter} Statistics</span>
                     </div>
                   </CardContent>
                 </Card>

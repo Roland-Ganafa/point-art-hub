@@ -129,6 +129,59 @@ export type Database = {
           },
         ]
       }
+      gift_daily_sales: {
+        Row: {
+          id: string
+          item: string
+          code: string | null
+          description: string | null
+          quantity: number
+          unit: string
+          bpx: number
+          spx: number
+          sold_by: string | null
+          date: string
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          item: string
+          code?: string | null
+          description?: string | null
+          quantity?: number
+          unit?: string
+          bpx: number
+          spx: number
+          sold_by?: string | null
+          date?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          item?: string
+          code?: string | null
+          description?: string | null
+          quantity?: number
+          unit?: string
+          bpx?: number
+          spx?: number
+          sold_by?: string | null
+          date?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_daily_sales_sold_by_fkey"
+            columns: ["sold_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gift_store: {
         Row: {
           buying_price: number
@@ -368,15 +421,68 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "stationery_category_id_fkey"
-            columns: ["category_id"]
+            foreignKeyName: "stationery_updated_by_fkey"
+            columns: ["updated_by"]
             isOneToOne: false
-            referencedRelation: "product_categories"
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stationery_sales: {
+        Row: {
+          id: string
+          item_id: string
+          quantity: number
+          selling_price: number
+          total_amount: number
+          profit: number
+          description: string | null
+          rate: number | null
+          sold_by: string | null
+          date: string
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          item_id: string
+          quantity: number
+          selling_price: number
+          total_amount: number
+          profit: number
+          description?: string | null
+          rate?: number | null
+          sold_by?: string | null
+          date?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          item_id?: string
+          quantity?: number
+          selling_price?: number
+          total_amount?: number
+          profit?: number
+          description?: string | null
+          rate?: number | null
+          sold_by?: string | null
+          date?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stationery_sales_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "stationery"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "stationery_updated_by_fkey"
-            columns: ["updated_by"]
+            foreignKeyName: "stationery_sales_sold_by_fkey"
+            columns: ["sold_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -399,7 +505,7 @@ export type Database = {
         Returns: string
       }
       is_admin: {
-        Args: record
+        Args: Record<string, unknown>
         Returns: boolean
       }
     }

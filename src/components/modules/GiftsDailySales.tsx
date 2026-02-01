@@ -20,6 +20,7 @@ interface GiftDailySale {
   date: string; // ISO date
   item: string;
   code: string | null;
+  description: string | null;
   quantity: number;
   unit: string;
   bpx: number;
@@ -35,6 +36,7 @@ interface OfflineGiftSale {
   date: string;
   item: string;
   code: string | null;
+  description: string | null;
   quantity: number;
   unit: string;
   bpx: number;
@@ -220,11 +222,12 @@ const GiftsDailySales = () => {
     const payload: any = {
       date: formData.date,
       item: combinedItem,
-      code: formData.code ? formData.code.trim() : null,
       quantity: quantity,
       unit: formData.unit,
       bpx: bpx,
       spx: spx,
+      code: formData.code ? formData.code.trim() : null,
+      description: formData.code ? formData.code.trim() : null,
       sold_by: formData.soldBy === "not_specified" ? null : formData.soldBy
     };
 
@@ -485,7 +488,7 @@ const GiftsDailySales = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="font-medium">Rate (UGX) *</Label>
+                        <Label className="font-medium">Selling Price (UGX) *</Label>
                         <Input
                           type="number"
                           step="0.01"
@@ -541,7 +544,7 @@ const GiftsDailySales = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="font-medium">Buying Price (UGX) *</Label>
+                        <Label className="font-medium">Stock Buying Price (UGX) *</Label>
                         <Input
                           type="number"
                           step="0.01"
@@ -661,12 +664,14 @@ const GiftsDailySales = () => {
                 <Table>
                   <TableHeader className="bg-gradient-to-r from-gray-50 to-green-50">
                     <TableRow className="border-b border-green-100">
-                      <TableHead className="w-[50px] font-semibold text-gray-700">#</TableHead>
                       <TableHead className="font-semibold text-gray-700">Category</TableHead>
                       <TableHead className="font-semibold text-gray-700">Item</TableHead>
                       <TableHead className="font-semibold text-gray-700">Description</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Rate</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Stock Buying Price</TableHead>
                       <TableHead className="font-semibold text-gray-700">Quantity</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Selling Price</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Total Value</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Profit</TableHead>
                       <TableHead className="font-semibold text-gray-700">Added By</TableHead>
                       <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
                     </TableRow>
@@ -685,12 +690,14 @@ const GiftsDailySales = () => {
                           key={sale.id}
                           className="group hover:bg-gradient-to-r transition-all duration-300 bg-yellow-50 border-l-4 border-yellow-400"
                         >
-                          <TableCell className="font-medium text-gray-500">{index + 1}</TableCell>
                           <TableCell className="font-medium">{category || "-"}</TableCell>
                           <TableCell className="font-semibold text-gray-800">{itemName || sale.item}</TableCell>
                           <TableCell className="text-gray-600">{sale.code || "-"}</TableCell>
-                          <TableCell className="font-medium text-green-600">{formatUGX(sale.spx)}</TableCell>
+                          <TableCell className="font-medium text-blue-600">UGX {formatUGX(sale.bpx)}</TableCell>
                           <TableCell className="font-medium">{sale.quantity}</TableCell>
+                          <TableCell className="font-medium text-purple-600">UGX {formatUGX(sale.spx)}</TableCell>
+                          <TableCell className="font-bold text-indigo-700">UGX {formatUGX(sale.spx * sale.quantity)}</TableCell>
+                          <TableCell className="font-bold text-green-600">UGX {formatUGX((sale.spx - sale.bpx) * sale.quantity)}</TableCell>
                           <TableCell className="font-medium">
                             {sale.sold_by ? getSalesPersonName(sale.sold_by) : "Not specified"}
                           </TableCell>
@@ -716,14 +723,14 @@ const GiftsDailySales = () => {
                             className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-green-50 hover:to-emerald-50`}
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
-                            <TableCell className="font-medium text-gray-500">
-                              {offlineGiftSales.length + index + 1}
-                            </TableCell>
-                            <TableCell className="font-medium">{category || "-"}</TableCell>
-                            <TableCell className="font-semibold text-gray-800">{itemName || item.item}</TableCell>
-                            <TableCell className="text-gray-600">{item.code || "-"}</TableCell>
-                            <TableCell className="font-medium text-green-600">{formatUGX(item.spx)}</TableCell>
+                            <TableCell className="font-medium text-gray-600">{category || "-"}</TableCell>
+                            <TableCell className="font-semibold text-gray-800 max-w-xs truncate">{itemName || item.item}</TableCell>
+                            <TableCell className="text-gray-600">{item.description || item.code || "-"}</TableCell>
+                            <TableCell className="font-medium text-blue-600">UGX {formatUGX(item.bpx)}</TableCell>
                             <TableCell className="font-medium">{item.quantity}</TableCell>
+                            <TableCell className="font-medium text-purple-600">UGX {formatUGX(item.spx)}</TableCell>
+                            <TableCell className="font-bold text-indigo-700">UGX {formatUGX(item.spx * item.quantity)}</TableCell>
+                            <TableCell className="font-bold text-green-600">UGX {formatUGX((item.spx - item.bpx) * item.quantity)}</TableCell>
                             <TableCell className="font-medium">
                               {item.sold_by ? getSalesPersonName(item.sold_by) : "Not specified"}
                             </TableCell>
@@ -752,7 +759,7 @@ const GiftsDailySales = () => {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={8} className="h-32 text-center">
+                        <TableCell colSpan={10} className="h-32 text-center">
                           <div className="flex flex-col items-center gap-4">
                             {loading ? (
                               <div className="flex items-center gap-3">

@@ -685,7 +685,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="font-medium">Rate (UGX) *</Label>
+                        <Label className="font-medium">Stock Buying Price (UGX) *</Label>
                         <Input
                           type="number"
                           step="0.01"
@@ -826,7 +826,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                       <TableHead className="font-semibold text-gray-700">Item</TableHead>
                       <TableHead className="font-semibold text-gray-700 text-left">Description</TableHead>
                       <TableHead className="font-semibold text-gray-700">Qty</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Rate (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Stock Buying Price (UGX)</TableHead>
                       <TableHead className="font-semibold text-gray-700">Total Value (UGX)</TableHead>
                       <TableHead className="font-semibold text-gray-700">Selling Price</TableHead>
                       <TableHead className="font-semibold text-gray-700">Profit/Unit</TableHead>
