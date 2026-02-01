@@ -80,6 +80,18 @@ export const generatePDF = (data: ExportData[], headers: Record<string, string>,
     theme: 'grid',
     styles: { fontSize: 8, cellPadding: 2 },
     headStyles: { fillColor: [66, 66, 66] },
+    didParseCell: (data) => {
+      // Check if this is the last row and if it looks like a totals row
+      // We can confidently assume the last row is totals based on our implementation
+      if (data.row.index === tableRows.length - 1) {
+        const firstCell = tableRows[data.row.index][0];
+        if (firstCell && String(firstCell).includes('TOTALS')) {
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.fillColor = [240, 240, 240];
+          data.cell.styles.textColor = [0, 0, 0];
+        }
+      }
+    }
   });
 
   doc.save(filename);
@@ -105,26 +117,49 @@ export const downloadCSV = (csvContent: string, filename: string): void => {
 // Prepare stationery data
 export const prepareStationeryData = (data: any[]) => {
   const headers = {
-    item_name: 'Item Name',
     category: 'Category',
+    item_name: 'Item Name',
+    description: 'Description',
     quantity: 'Qty',
     price: 'Price',
     cost: 'Cost',
+    total_value: 'Total Value',
     supplier: 'Supplier',
-    description: 'Description',
     created_at: 'Date Added'
   };
 
-  const processedData = data.map(item => ({
-    item_name: item.item_name || item.item,
-    category: item.category,
-    quantity: item.stock || item.quantity || 0,
-    price: item.price || item.selling_price || 0,
-    cost: item.cost || item.rate || 0,
-    supplier: item.supplier || '-',
-    description: item.description || '-',
-    created_at: item.created_at ? format(new Date(item.created_at), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')
-  }));
+  const processedData = data.map(item => {
+    const qty = item.stock || item.quantity || 0;
+    const cost = item.cost || item.rate || 0;
+
+    return {
+      category: item.category,
+      item_name: item.item_name || item.item,
+      description: item.description || '-',
+      quantity: qty,
+      price: item.price || item.selling_price || 0,
+      cost: cost,
+      total_value: qty * cost,
+      supplier: item.supplier || '-',
+      created_at: item.created_at ? format(new Date(item.created_at), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')
+    };
+  });
+
+  // Add Totals Row
+  const totalQuantity = processedData.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+  const grandTotalValue = processedData.reduce((sum, item) => sum + (Number(item.total_value) || 0), 0);
+
+  processedData.push({
+    category: '',
+    item_name: 'TOTALS',
+    description: '',
+    quantity: totalQuantity,
+    price: '', // Summing unit prices doesn't make sense
+    cost: '',
+    total_value: grandTotalValue,
+    supplier: '',
+    created_at: ''
+  });
 
   return { headers, processedData };
 };
@@ -132,8 +167,9 @@ export const prepareStationeryData = (data: any[]) => {
 // Prepare gift store data
 export const prepareGiftStoreData = (data: any[]) => {
   const headers = {
-    item_name: 'Item Name', // Changed so it matches key in processedData if needed, but keeping labels
     category: 'Category',
+    item_name: 'Item Name',
+    description: 'Description',
     quantity: 'Qty',
     price: 'Price',
     cost: 'Cost',
@@ -141,13 +177,27 @@ export const prepareGiftStoreData = (data: any[]) => {
   };
 
   const processedData = data.map(item => ({
-    item_name: item.item_name || item.item,
     category: item.category,
+    item_name: item.item_name || item.item,
+    description: item.description || '-',
     quantity: item.stock || item.quantity || 0,
     price: item.price || item.spx || 0,
     cost: item.cost || item.bpx || 0,
     created_at: item.created_at ? format(new Date(item.created_at), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')
   }));
+
+  // Add Totals Row
+  const totalQuantity = processedData.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+
+  processedData.push({
+    category: '',
+    item_name: 'TOTALS',
+    description: '',
+    quantity: totalQuantity,
+    price: '',
+    cost: '',
+    created_at: ''
+  });
 
   return { headers, processedData };
 };
@@ -178,6 +228,23 @@ export const prepareEmbroideryData = (data: any[]) => {
     date_completed: item.date_completed ? format(new Date(item.date_completed), 'yyyy-MM-dd') : '-'
   }));
 
+  // Add Totals Row
+  const totalCost = processedData.reduce((sum, item) => sum + (Number(item.cost) || 0), 0);
+  const totalSales = processedData.reduce((sum, item) => sum + (Number(item.sales) || 0), 0);
+  const totalProfit = processedData.reduce((sum, item) => sum + (Number(item.profit) || 0), 0);
+
+  processedData.push({
+    client_name: 'TOTALS',
+    service_type: '',
+    description: '',
+    cost: totalCost,
+    sales: totalSales,
+    profit: totalProfit,
+    status: '',
+    date_received: '',
+    date_completed: ''
+  });
+
   return { headers, processedData };
 };
 
@@ -207,6 +274,24 @@ export const prepareMachinesData = (data: any[]) => {
     done_by: item.done_by || '-'
   }));
 
+  // Add Totals Row
+  const totalQuantity = processedData.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+  const totalSales = processedData.reduce((sum, item) => sum + (Number(item.sales) || 0), 0);
+  const totalExpenditure = processedData.reduce((sum, item) => sum + (Number(item.expenditure) || 0), 0);
+  const totalProfit = processedData.reduce((sum, item) => sum + (Number(item.profit) || 0), 0);
+
+  processedData.push({
+    machine_name: 'TOTALS',
+    service_description: '',
+    quantity: totalQuantity,
+    rate: '',
+    sales: totalSales,
+    expenditure: totalExpenditure,
+    profit: totalProfit,
+    date: '',
+    done_by: ''
+  });
+
   return { headers, processedData };
 };
 
@@ -232,14 +317,29 @@ export const prepareArtServicesData = (data: any[]) => {
     date: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : '-'
   }));
 
+  // Add Totals Row
+  const totalQuantity = processedData.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+  const totalAmount = processedData.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+  const totalProfit = processedData.reduce((sum, item) => sum + (Number(item.profit) || 0), 0);
+
+  processedData.push({
+    item: 'TOTALS',
+    description: '',
+    quantity: totalQuantity,
+    rate: '',
+    amount: totalAmount,
+    profit: totalProfit,
+    date: ''
+  });
+
   return { headers, processedData };
 };
 
 // Prepare sales data
 export const prepareSalesData = (data: any[]) => {
   const headers = {
-    item: 'Item',
     category: 'Category',
+    item: 'Item',
     quantity: 'Qty',
     rate: 'rate',
     selling_price: 'Price',
@@ -264,8 +364,8 @@ export const prepareSalesData = (data: any[]) => {
     }
 
     return {
-      item: itemName,
       category: categoryName,
+      item: itemName,
       quantity: item.quantity,
       rate: item.rate || item.bpx || 0,
       selling_price: item.selling_price || item.spx || 0,
@@ -274,6 +374,23 @@ export const prepareSalesData = (data: any[]) => {
       date: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : '-',
       sold_by: item.sold_by || '-'
     };
+  });
+
+  // Add Totals Row
+  const totalQuantity = processedData.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+  const grandTotal = processedData.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
+  const totalProfit = processedData.reduce((sum, item) => sum + (Number(item.profit) || 0), 0);
+
+  processedData.push({
+    category: '',
+    item: 'TOTALS',
+    quantity: totalQuantity,
+    rate: '',
+    selling_price: '',
+    total: grandTotal,
+    profit: totalProfit,
+    date: '',
+    sold_by: ''
   });
 
   return { headers, processedData };
@@ -297,6 +414,17 @@ export const prepareCustomersData = (data: any[]) => {
     last_visit: item.last_visit ? format(new Date(item.last_visit), 'yyyy-MM-dd') : '-'
   }));
 
+  // Add Totals Row
+  const totalSpent = processedData.reduce((sum, item) => sum + (Number(item.total_spent) || 0), 0);
+
+  processedData.push({
+    full_name: 'TOTALS',
+    phone: '',
+    email: '',
+    total_spent: totalSpent,
+    last_visit: ''
+  });
+
   return { headers, processedData };
 };
 
@@ -319,6 +447,18 @@ export const prepareInvoicesData = (data: any[]) => {
     total_amount: item.total_amount || 0,
     status: item.status
   }));
+
+  // Add Totals Row
+  const grandTotal = processedData.reduce((sum, item) => sum + (Number(item.total_amount) || 0), 0);
+
+  processedData.push({
+    invoice_number: 'TOTALS',
+    customer_name: '',
+    date_issued: '',
+    due_date: '',
+    total_amount: grandTotal,
+    status: ''
+  });
 
   return { headers, processedData };
 };

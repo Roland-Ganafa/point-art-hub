@@ -22,6 +22,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   FileText,
   Plus,
   Trash2,
@@ -29,6 +35,14 @@ import {
   Download,
   Search,
   X,
+  Pencil,
+  ChevronDown,
+  FileCheck,
+  Receipt,
+  MapPin,
+  Phone,
+  Mail,
+  MessageCircle,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -45,6 +59,9 @@ const InvoiceManagement = () => {
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceWithItems | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingInvoiceId, setEditingInvoiceId] = useState<string | null>(null);
+  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
 
   const { toast } = useToast();
   const { user, isAdmin } = useUser();
@@ -55,6 +72,7 @@ const InvoiceManagement = () => {
     invoice_date: format(new Date(), 'yyyy-MM-dd'),
     notes: '',
   });
+  const [documentType, setDocumentType] = useState<'Pro - Forma' | 'Delivery Note' | 'Receipt' | 'Invoice'>('Pro - Forma');
 
   const [lineItems, setLineItems] = useState<Array<{
     particulars: string;
@@ -72,9 +90,12 @@ const InvoiceManagement = () => {
   const fetchInvoices = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('invoices')
-        .select('*')
+        .select(`
+          *,
+          items:invoice_items(*)
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -93,7 +114,7 @@ const InvoiceManagement = () => {
 
   const fetchInvoiceWithItems = async (invoiceId: string) => {
     try {
-      const { data: invoice, error: invoiceError } = await supabase
+      const { data: invoice, error: invoiceError } = await (supabase as any)
         .from('invoices')
         .select('*')
         .eq('id', invoiceId)
@@ -101,7 +122,7 @@ const InvoiceManagement = () => {
 
       if (invoiceError) throw invoiceError;
 
-      const { data: items, error: itemsError } = await supabase
+      const { data: items, error: itemsError } = await (supabase as any)
         .from('invoice_items')
         .select('*')
         .eq('invoice_id', invoiceId)
@@ -161,48 +182,83 @@ const InvoiceManagement = () => {
 
       setIsLoading(true);
 
-      // Get next invoice and reference numbers
-      const { data: nextInvoiceNum, error: invoiceNumError } = await supabase.rpc('get_next_invoice_number');
-      if (invoiceNumError) {
-        console.error('Error getting invoice number:', invoiceNumError);
-        throw new Error(`Failed to generate invoice number: ${invoiceNumError.message}`);
-      }
+      let invoiceId = editingInvoiceId;
+      let invoiceNumber = '';
 
-      const { data: nextRefNum, error: refNumError } = await supabase.rpc('get_next_reference_number');
-      if (refNumError) {
-        console.error('Error getting reference number:', refNumError);
-        throw new Error(`Failed to generate reference number: ${refNumError.message}`);
-      }
+      if (isEditing && editingInvoiceId) {
+        // Update existing invoice
+        const totalAmount = calculateTotal();
+        const amountInWords = numberToWords(totalAmount);
 
-      const totalAmount = calculateTotal();
-      const amountInWords = numberToWords(totalAmount);
+        const { data: invoice, error: invoiceError } = await (supabase as any)
+          .from('invoices')
+          .update({
+            customer_name: formData.customer_name,
+            invoice_date: formData.invoice_date,
+            total_amount: totalAmount,
+            amount_in_words: amountInWords,
+            notes: formData.notes,
+            updated_by: user?.id,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editingInvoiceId)
+          .select()
+          .single();
 
-      // Create invoice
-      const { data: invoice, error: invoiceError } = await supabase
-        .from('invoices')
-        .insert({
-          invoice_number: nextInvoiceNum,
-          reference_number: nextRefNum,
-          customer_name: formData.customer_name,
-          invoice_date: formData.invoice_date,
-          total_amount: totalAmount,
-          amount_in_words: amountInWords,
-          status: 'draft',
-          notes: formData.notes,
-          created_by: user?.id,
-          updated_by: user?.id,
-        })
-        .select()
-        .single();
+        if (invoiceError) throw invoiceError;
+        invoiceNumber = invoice.invoice_number;
 
-      if (invoiceError) {
-        console.error('Invoice creation error:', invoiceError);
-        throw new Error(`Failed to create invoice: ${invoiceError.message || invoiceError.code}`);
+        // Delete existing items
+        const { error: deleteError } = await (supabase as any)
+          .from('invoice_items')
+          .delete()
+          .eq('invoice_id', editingInvoiceId);
+
+        if (deleteError) throw deleteError;
+      } else {
+        // Create new invoice
+        // Get next invoice and reference numbers
+        const { data: nextInv, error: invError } = await (supabase as any).rpc('get_next_invoice_number');
+        if (invError) {
+          console.error('Error getting invoice number:', invError);
+          throw new Error(`Failed to generate invoice number: ${invError.message}`);
+        }
+
+        const { data: nextRef, error: refError } = await (supabase as any).rpc('get_next_reference_number');
+        if (refError) {
+          console.error('Error getting reference number:', refError);
+          throw new Error(`Failed to generate reference number: ${refError.message}`);
+        }
+
+        const totalAmount = calculateTotal();
+        const amountInWords = numberToWords(totalAmount);
+
+        // Create invoice
+        const { data: invoice, error: invoiceError } = await (supabase as any)
+          .from('invoices')
+          .insert({
+            invoice_number: nextInv,
+            reference_number: nextRef,
+            customer_name: formData.customer_name,
+            invoice_date: formData.invoice_date,
+            total_amount: totalAmount,
+            amount_in_words: amountInWords,
+            status: 'draft',
+            notes: formData.notes,
+            created_by: user?.id,
+            updated_by: user?.id,
+          })
+          .select()
+          .single();
+
+        if (invoiceError) throw invoiceError;
+        invoiceId = invoice.id;
+        invoiceNumber = invoice.invoice_number;
       }
 
       // Create invoice items
       const itemsToInsert = lineItems.map((item, index) => ({
-        invoice_id: invoice.id,
+        invoice_id: invoiceId,
         serial_number: index + 1,
         particulars: item.particulars,
         description: item.description,
@@ -211,28 +267,28 @@ const InvoiceManagement = () => {
         amount: calculateLineAmount(item.quantity, item.rate),
       }));
 
-      const { error: itemsError } = await supabase
+      const { error: itemsError } = await (supabase as any)
         .from('invoice_items')
         .insert(itemsToInsert);
 
       if (itemsError) {
         console.error('Invoice items creation error:', itemsError);
-        throw new Error(`Failed to create invoice items: ${itemsError.message}`);
+        throw new Error(`Failed to save invoice items: ${itemsError.message}`);
       }
 
       toast({
         title: 'Success',
-        description: `Invoice #${invoice.invoice_number} created successfully`,
+        description: `Invoice #${invoiceNumber} ${isEditing ? 'updated' : 'created'} successfully`,
       });
 
       setShowCreateDialog(false);
       resetForm();
       fetchInvoices();
     } catch (error: any) {
-      console.error('Error creating invoice:', error);
+      console.error('Error saving invoice:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create invoice. Please try again.',
+        description: error.message || 'Failed to save invoice. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -254,6 +310,38 @@ const InvoiceManagement = () => {
     }
   };
 
+  const handleEditInvoice = async (invoice: Invoice) => {
+    try {
+      setIsLoading(true);
+      const fullInvoice = await fetchInvoiceWithItems(invoice.id);
+
+      setFormData({
+        customer_name: fullInvoice.customer_name,
+        invoice_date: fullInvoice.invoice_date,
+        notes: fullInvoice.notes || '',
+      });
+
+      setLineItems(fullInvoice.items.map(item => ({
+        particulars: item.particulars,
+        description: item.description || '',
+        quantity: item.quantity,
+        rate: item.rate,
+      })));
+
+      setEditingInvoiceId(fullInvoice.id);
+      setIsEditing(true);
+      setShowCreateDialog(true);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load invoice for editing',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleDeleteInvoice = async (invoiceId: string) => {
     if (!isAdmin) {
       toast({
@@ -267,7 +355,7 @@ const InvoiceManagement = () => {
     if (!confirm('Are you sure you want to delete this invoice?')) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('invoices')
         .delete()
         .eq('id', invoiceId);
@@ -279,15 +367,65 @@ const InvoiceManagement = () => {
         description: 'Invoice deleted successfully',
       });
 
-      fetchInvoices();
-    } catch (error) {
+      setSelectedInvoiceIds(prev => prev.filter(id => id !== invoiceId));
+      await fetchInvoices();
+    } catch (error: any) {
       console.error('Error deleting invoice:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete invoice',
+        description: error.message || 'Failed to delete invoice',
         variant: 'destructive',
       });
     }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!isAdmin) return;
+    if (selectedInvoiceIds.length === 0) return;
+
+    if (!confirm(`Are you sure you want to delete ${selectedInvoiceIds.length} selected invoices?`)) return;
+
+    try {
+      setIsLoading(true);
+
+      const { error } = await (supabase as any)
+        .from('invoices')
+        .delete()
+        .in('id', selectedInvoiceIds);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: `${selectedInvoiceIds.length} invoices deleted successfully`,
+      });
+
+      setSelectedInvoiceIds([]);
+      await fetchInvoices();
+    } catch (error: any) {
+      console.error('Error in bulk delete:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete selected invoices',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedInvoiceIds.length === filteredInvoices.length) {
+      setSelectedInvoiceIds([]);
+    } else {
+      setSelectedInvoiceIds(filteredInvoices.map(inv => inv.id));
+    }
+  };
+
+  const toggleSelectInvoice = (id: string) => {
+    setSelectedInvoiceIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
   };
 
   const resetForm = () => {
@@ -297,6 +435,8 @@ const InvoiceManagement = () => {
       notes: '',
     });
     setLineItems([{ particulars: '', description: '', quantity: 1, rate: 0 }]);
+    setIsEditing(false);
+    setEditingInvoiceId(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -326,13 +466,49 @@ const InvoiceManagement = () => {
             <p className="text-gray-600 mt-2">Create and manage pro-forma invoices</p>
           </div>
 
-          <Button
-            onClick={() => setShowCreateDialog(true)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Invoice
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700">
+                <Plus className="h-4 w-4 mr-2" />
+                New Document
+                <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => {
+                resetForm();
+                setDocumentType('Invoice');
+                setShowCreateDialog(true);
+              }}>
+                <FileText className="h-4 w-4 mr-2" />
+                Create Invoice
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                resetForm();
+                setDocumentType('Pro - Forma');
+                setShowCreateDialog(true);
+              }}>
+                <FileText className="h-4 w-4 mr-2" />
+                Create Pro - Forma
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                resetForm();
+                setDocumentType('Delivery Note');
+                setShowCreateDialog(true);
+              }}>
+                <FileCheck className="h-4 w-4 mr-2" />
+                Create Delivery Note
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                resetForm();
+                setDocumentType('Receipt');
+                setShowCreateDialog(true);
+              }}>
+                <Receipt className="h-4 w-4 mr-2" />
+                Create Receipt
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Search */}
@@ -353,11 +529,26 @@ const InvoiceManagement = () => {
         {/* Invoices Table */}
         <Card className="border-0 shadow-xl">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              All Invoices
-            </CardTitle>
-            <CardDescription>View and manage your invoices</CardDescription>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="text-2xl font-bold flex items-center gap-2">
+                  <FileText className="h-6 w-6 text-blue-600" />
+                  All Invoices
+                </CardTitle>
+                <CardDescription>View and manage your invoices</CardDescription>
+              </div>
+              {isAdmin && selectedInvoiceIds.length > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleBulkDelete}
+                  className="flex items-center gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete Selected ({selectedInvoiceIds.length})
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -374,6 +565,14 @@ const InvoiceManagement = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[50px]">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
+                          checked={filteredInvoices.length > 0 && selectedInvoiceIds.length === filteredInvoices.length}
+                          onChange={toggleSelectAll}
+                        />
+                      </TableHead>
                       <TableHead>Invoice #</TableHead>
                       <TableHead>Reference #</TableHead>
                       <TableHead>Customer</TableHead>
@@ -384,8 +583,19 @@ const InvoiceManagement = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredInvoices.map((invoice) => (
-                      <TableRow key={invoice.id}>
+                    {filteredInvoices.map((invoice, index) => (
+                      <TableRow
+                        key={invoice.id}
+                        className={selectedInvoiceIds.includes(invoice.id) ? "bg-blue-50/50" : ""}
+                      >
+                        <TableCell>
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
+                            checked={selectedInvoiceIds.includes(invoice.id)}
+                            onChange={() => toggleSelectInvoice(invoice.id)}
+                          />
+                        </TableCell>
                         <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
                         <TableCell>{invoice.reference_number}</TableCell>
                         <TableCell>{invoice.customer_name}</TableCell>
@@ -400,6 +610,14 @@ const InvoiceManagement = () => {
                               onClick={() => handleViewInvoice(invoice)}
                             >
                               <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditInvoice(invoice)}
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            >
+                              <Pencil className="h-4 w-4" />
                             </Button>
                             {isAdmin && (
                               <Button
@@ -426,9 +644,9 @@ const InvoiceManagement = () => {
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Create New Invoice</DialogTitle>
+              <DialogTitle>{isEditing ? 'Edit Invoice' : 'Create New Invoice'}</DialogTitle>
               <DialogDescription>
-                Fill in the details to create a new pro-forma invoice
+                {isEditing ? 'Update the details of this pro-forma invoice' : 'Fill in the details to create a new pro-forma invoice'}
               </DialogDescription>
             </DialogHeader>
 
@@ -572,8 +790,9 @@ const InvoiceManagement = () => {
               <Button
                 onClick={handleCreateInvoice}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+                disabled={isLoading}
               >
-                Create Invoice
+                {isEditing ? 'Save Changes' : 'Create Invoice'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -592,148 +811,317 @@ const InvoiceManagement = () => {
                 </DialogHeader>
 
                 {/* Invoice Preview - Official Point Art Branded Template */}
-                <div className="bg-white relative overflow-hidden">
-                  {/* Pink triangular accent on left edge */}
-                  <div className="absolute left-0 top-0 bottom-0 w-8">
-                    <div className="absolute left-0 bottom-0 w-0 h-0 border-l-[32px] border-l-pink-600 border-b-[100px] border-b-transparent"></div>
-                  </div>
+                <div className="bg-white relative overflow-hidden min-h-[1000px] font-sans text-black pt-8 pb-12 px-1">
+                  {/* Corner Decorations for Pro-Forma */}
+                  {documentType === 'Pro - Forma' && (
+                    <>
+                      {/* Pink Triangle Bottom-Left */}
+                      <div className="absolute bottom-0 left-0 w-32 h-32 bg-pink-600 z-0" style={{ clipPath: 'polygon(0 0, 0% 100%, 100% 100%)' }}></div>
+                      {/* Black Square Bottom-Right */}
+                      <div className="absolute bottom-0 right-0 w-16 h-24 bg-black z-0"></div>
+                    </>
+                  )}
 
-                  <div className="border-2 border-black p-0">
+                  {/* Faded Watermark Logo in Background - Only for Pro-Forma */}
+                  {documentType === 'Pro - Forma' && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.08] z-0">
+                      <img
+                        src="/point-art-logo.svg"
+                        alt=""
+                        className="w-[600px] h-[600px] rotate-[-15deg]"
+                      />
+                    </div>
+                  )}
+
+                  {/* Top accent bars - Only for Invoice, Pro-Forma has them after header */}
+                  {documentType !== 'Pro - Forma' && (
+                    <div className="absolute top-0 left-0 right-0">
+                      <div className="h-1.5 bg-pink-600 w-full mb-1"></div>
+                      <div className="h-1 bg-black w-full"></div>
+                    </div>
+                  )}
+
+                  <div className="border-2 border-black p-0 relative z-10 m-4 bg-white">
                     {/* Header with Logo and Contact */}
-                    <div className="flex justify-between items-start p-4 pb-0">
-                      <div className="flex items-start gap-2">
+                    <div className="flex justify-between items-start p-4 pb-1">
+                      <div className="flex items-start gap-3">
                         <img
                           src="/point-art-logo.svg"
                           alt="Point Art Solutions Logo"
-                          className="h-20 w-20"
+                          className="h-24 w-24"
                         />
-                        <div className="flex flex-col">
+                        <div className="flex flex-col mt-2">
                           <div className="flex items-baseline gap-1">
-                            <span className="text-[32px] font-bold leading-none">POINT</span>
-                            <span className="text-[32px] font-bold leading-none text-pink-600">ART</span>
+                            <span className="text-[42px] font-black leading-none tracking-tight">POINT</span>
+                            <span className="text-[42px] font-black leading-none tracking-tight text-pink-600">ART</span>
                           </div>
-                          <div className="bg-pink-600 text-white px-2 py-0.5 text-sm font-bold mt-0.5">
+                          <div className="bg-pink-600 text-white px-2 py-0.5 text-lg font-black mt-1 inline-block text-center tracking-widest leading-none">
                             SOLUTIONS
                           </div>
                         </div>
                       </div>
-                      <div className="text-right text-xs leading-relaxed">
-                        <p className="flex items-center justify-end gap-1">
-                          <span className="text-pink-600">📍</span> PO. BOX 25434 Kampala (U)
-                        </p>
-                        <p className="flex items-center justify-end gap-1">
-                          <span className="text-pink-600">📞</span> 0704 528 246 / 0779 031 577
-                        </p>
-                        <p className="flex items-center justify-end gap-1">
-                          <span className="text-pink-600">📱</span> 0774 528 246 / 0704 528 246
-                        </p>
-                        <p className="flex items-center justify-end gap-1">
-                          <span className="text-pink-600">💬</span> WhatsApp: 0759 919 826
-                        </p>
-                        <p className="flex items-center justify-end gap-1">
-                          <span className="text-pink-600">✉️</span> pointartsolutions@yahoo.com
-                        </p>
+                      <div className="text-right flex flex-col gap-1 pr-2 pt-2">
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="text-[14px] font-bold text-gray-700">P.O BOX 25434 Kampala (U)</span>
+                          <div className="bg-pink-600 rounded-full p-1 flex items-center justify-center w-6 h-6">
+                            <MapPin className="text-white h-3.5 w-3.5" />
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-end gap-2 text-pink-600">
+                          <span className="text-[14px] font-bold text-gray-700">0704 528 246 / 0779 031 577</span>
+                          <div className="bg-red-600 rounded-full p-1 flex items-center justify-center w-6 h-6">
+                            <Phone className="text-white h-3.5 w-3.5" />
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-end gap-2 text-green-600 font-bold">
+                          <span className="text-[14px] font-bold text-gray-700">0774 528 246 / 0752 871 062</span>
+                          <div className="bg-green-600 rounded-full p-1 flex items-center justify-center w-6 h-6">
+                            <MessageCircle className="text-white h-3.5 w-3.5 shadow-sm" />
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-end gap-2 text-blue-800">
+                          <span className="text-[14px] font-bold text-gray-700 lowercase">pointartsolutions@yahoo.com</span>
+                          <div className="bg-blue-700 rounded-full p-1 flex items-center justify-center w-6 h-6">
+                            <Mail className="text-white h-3.5 w-3.5" />
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Black bar with services */}
-                    <div className="bg-black text-white text-[10px] font-bold py-1 px-4 mt-2">
-                      <span className="bg-white text-black px-1">For.</span> PRINTING | DESIGNING | BRANDING | SIGNS | EMBROIDERY | ENGRAVING | GENERAL SUPPLIES Etc...
+                    {/* Services Line with colored bars */}
+                    <div className="px-0">
+                      {documentType === 'Pro - Forma' ? (
+                        <>
+                          <div className="bg-black text-white py-1 px-2 text-[11px] font-black tracking-tighter text-center flex items-center justify-center gap-1">
+                            FOR: | PRINTING | DESIGNING | BRANDING | SIGNS | EMBROIDERY | ENGRAVING | GENERAL SUPPLIES ETC...
+                          </div>
+                          <div className="h-[2px] bg-pink-600 w-full mb-0.5"></div>
+                          <div className="h-[1px] bg-black w-full mb-2"></div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="h-1.5 bg-pink-600 w-full"></div>
+                          <div className="h-[1px] bg-black w-full"></div>
+                          <div className="py-1 text-center font-bold text-[10px] tracking-tight text-black">
+                            Experts in: Printing, Designing, Branding, Signs, Embroidery, Engraving & General Supply
+                          </div>
+                          <div className="h-[1px] bg-black w-full mb-4"></div>
+                        </>
+                      )}
                     </div>
+
+                    {/* Pro-forma ID Info */}
+                    {documentType === 'Pro - Forma' && (
+                      <div className="flex justify-between items-baseline px-8 mb-2">
+                        <div className="font-bold text-xl">101028852</div>
+                        <div className="font-black text-[30px] uppercase">PRO-FORMA</div>
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-black text-3xl">No.</span>
+                          <span className="text-red-500 font-bold text-2xl">{selectedInvoice.invoice_number}</span>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Reference, Pro-forma, Invoice Number */}
-                    <div className="flex justify-between items-center px-4 py-3 border-t-2 border-b-2 border-black mt-0">
-                      <span className="text-sm font-medium">{selectedInvoice.reference_number}</span>
-                      <h3 className="text-2xl font-black">PRO-FORMA</h3>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-sm font-medium">No.</span>
-                        <span className="text-pink-600 font-bold text-lg">{selectedInvoice.invoice_number}</span>
-                      </div>
+                    {/* Boxy layout for M/S and Date/No */}
+                    <div className="px-4 pb-4">
+                      {documentType === 'Pro - Forma' ? (
+                        <div className="flex items-end h-8 px-4 mb-2 relative">
+                          <div className="flex-1 flex items-end">
+                            <span className="font-bold text-lg mr-1 leading-none whitespace-nowrap">M/S:</span>
+                            <div className="flex-1 border-b border-dotted border-black h-0 mb-1 mx-1 relative">
+                              <span className="absolute bottom-1.5 left-2 font-bold text-lg">{selectedInvoice.customer_name}</span>
+                            </div>
+                            <span className="font-bold text-lg ml-2 mr-1 leading-none whitespace-nowrap">Date:</span>
+                            <div className="w-56 border-b border-dotted border-black h-0 mb-1 mx-1 relative">
+                              <span className="absolute bottom-1.5 left-2 font-bold text-lg">{format(new Date(selectedInvoice.invoice_date), 'dd/MM/yyyy')}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex gap-4 h-32">
+                          {/* Left box: M/S */}
+                          <div className="flex-1 border-2 border-black p-4 relative rounded-md">
+                            <div className="flex items-end">
+                              <span className="font-bold text-xl mr-2">M/S:</span>
+                              <div className="flex-1 border-b border-dotted border-black h-0 mb-1"></div>
+                              <span className="absolute left-16 top-4 font-bold text-lg">{selectedInvoice.customer_name}</span>
+                            </div>
+                            <div className="border-b border-dotted border-black h-0 mt-8 w-full"></div>
+                          </div>
+
+                          {/* Right box: Invoice Details */}
+                          <div className="w-[300px] border-2 border-black flex flex-col rounded-md overflow-hidden">
+                            <div className="bg-pink-600 text-white text-center py-1 font-black text-2xl tracking-[0.1em] border-b-2 border-black">
+                              {documentType.toUpperCase()}
+                            </div>
+                            <div className="flex flex-1">
+                              <div className="w-1/3 border-r-2 border-black flex items-center justify-center font-bold text-lg">No.</div>
+                              <div className="flex-1 flex items-center justify-start px-4 font-bold text-red-600 text-xl tracking-tight">
+                                {selectedInvoice.invoice_number}
+                              </div>
+                            </div>
+                            <div className="flex flex-1 border-t-2 border-black">
+                              <div className="w-1/3 border-r-2 border-black flex items-center justify-center font-bold text-lg">Date:</div>
+                              <div className="flex-1 flex items-center justify-start px-4 font-bold text-lg">
+                                {format(new Date(selectedInvoice.invoice_date), 'dd/MM/yyyy')}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Customer and Date */}
-                    <div className="px-4 py-2 text-sm">
-                      <div className="flex justify-between border-b border-dotted border-gray-400 pb-1">
-                        <div>
-                          <span className="font-bold">M/S:</span>
-                          <span className="ml-1">{selectedInvoice.customer_name}</span>
-                        </div>
-                        <div>
-                          <span className="font-bold">Date:</span>
-                          <span className="ml-1">{format(new Date(selectedInvoice.invoice_date), 'dd/MM/yyyy')}</span>
-                        </div>
-                      </div>
+                    {/* Items Table: Dynamic Columns */}
+                    <div className="border-t-2 border-black px-4">
+                      <table className="w-full border-collapse border-2 border-black">
+                        <thead>
+                          {documentType === 'Pro - Forma' ? (
+                            <tr className="border-b-2 border-black bg-white uppercase text-xs">
+                              <th className="border-r-2 border-black p-1 font-black text-center w-36">PARTICULARS</th>
+                              <th className="border-r-2 border-black p-1 font-black text-center">DESCRIPTION</th>
+                              <th className="border-r-2 border-black p-1 font-black text-center w-16">QTY</th>
+                              <th className="border-r-2 border-black p-1 font-black text-center w-24">RATE</th>
+                              <th className="p-1 font-black text-center w-36">AMT(UGX)</th>
+                            </tr>
+                          ) : (
+                            <tr className="border-b-2 border-black bg-white">
+                              <th className="border-r-2 border-black p-2 text-base font-black text-center">PARTICULARS</th>
+                              <th className="border-r-2 border-black p-2 text-base font-black text-center w-24">QTY</th>
+                              <th className="border-r-2 border-black p-2 text-base font-black text-center w-40">RATE</th>
+                              <th className="p-2 text-base font-black text-center w-40">AMOUNT</th>
+                            </tr>
+                          )}
+                        </thead>
+                        <tbody>
+                          {selectedInvoice.items.map((item, index) => (
+                            <tr key={item.id} className="h-10">
+                              {documentType === 'Pro - Forma' ? (
+                                <>
+                                  <td className="border-r-2 border-black p-2 text-sm font-bold uppercase">{item.particulars}</td>
+                                  <td className="border-r-2 border-black p-2 text-[10px] italic">{item.description || "-"}</td>
+                                  <td className="border-r-2 border-black p-2 text-base font-bold text-center">{item.quantity}</td>
+                                  <td className="border-r-2 border-black p-2 text-base font-bold text-center">{item.rate.toLocaleString()}</td>
+                                  <td className="p-2 text-base font-black text-right pr-4">{item.amount.toLocaleString()}</td>
+                                </>
+                              ) : (
+                                <>
+                                  <td className="border-r-2 border-black p-2 text-sm font-bold uppercase overflow-hidden whitespace-nowrap overflow-ellipsis">
+                                    {item.particulars} {item.description && <span className="text-[10px] text-gray-500 italic lowercase block leading-none">{item.description}</span>}
+                                  </td>
+                                  <td className="border-r-2 border-black p-2 text-base font-bold text-center">{item.quantity}</td>
+                                  <td className="border-r-2 border-black p-2 text-base font-bold text-center">{item.rate.toLocaleString()}</td>
+                                  <td className="p-2 text-base font-black text-right pr-4">{item.amount.toLocaleString()}</td>
+                                </>
+                              )}
+                            </tr>
+                          ))}
+                          {/* Empty rows to fill space */}
+                          {[...Array(Math.max(1, (documentType === 'Pro - Forma' ? 12 : 15) - selectedInvoice.items.length))].map((_, i) => (
+                            <tr key={`empty-${i}`} className="h-10">
+                              {documentType === 'Pro - Forma' ? (
+                                <>
+                                  <td className="border-r-2 border-black"></td>
+                                  <td className="border-r-2 border-black"></td>
+                                  <td className="border-r-2 border-black"></td>
+                                  <td className="border-r-2 border-black"></td>
+                                  <td className="border-r-2 border-black"></td>
+                                  <td></td>
+                                </>
+                              ) : (
+                                <>
+                                  <td className="border-r-2 border-black"></td>
+                                  <td className="border-r-2 border-black"></td>
+                                  <td className="border-r-2 border-black"></td>
+                                  <td></td>
+                                </>
+                              )}
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr className="border-t-2 border-black h-12">
+                            <td colSpan={documentType === 'Pro - Forma' ? 3 : 2} className="border-r-2 border-black p-2 px-4 relative">
+                              <div className="flex items-center justify-start gap-4">
+                                <span className="font-black italic text-xl">E&O.E</span>
+                                <span className="text-[14px] font-bold italic whitespace-nowrap leading-none">Services once rendered are not renegotiable - Thanks</span>
+                              </div>
+                            </td>
+                            <td className="border-r-2 border-black p-2 text-center align-middle bg-white">
+                              <span className="font-black text-2xl uppercase">TOTAL</span>
+                            </td>
+                            <td className="p-2 text-right pr-4 align-middle bg-white border-2 border-black border-y-0 border-r-0">
+                              <span className="font-black text-2xl">{selectedInvoice.total_amount.toLocaleString()}</span>
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
                     </div>
-
-                    {/* Items Table */}
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="border-y-2 border-black bg-white">
-                          <th className="border-r border-black p-2 text-xs font-bold text-left w-12">S/N</th>
-                          <th className="border-r border-black p-2 text-xs font-bold text-left">PARTICULARS</th>
-                          <th className="border-r border-black p-2 text-xs font-bold text-left">DESCRIPTION</th>
-                          <th className="border-r border-black p-2 text-xs font-bold text-center w-16">QTY</th>
-                          <th className="border-r border-black p-2 text-xs font-bold text-right w-24">RATE</th>
-                          <th className="p-2 text-xs font-bold text-right w-28">AMT(UGX)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedInvoice.items.map((item, index) => (
-                          <tr key={item.id} className={index < selectedInvoice.items.length - 1 ? 'border-b border-gray-300' : ''}>
-                            <td className="border-r border-black p-2 text-xs text-center">{item.serial_number}</td>
-                            <td className="border-r border-black p-2 text-xs">{item.particulars}</td>
-                            <td className="border-r border-black p-2 text-xs">{item.description || '-'}</td>
-                            <td className="border-r border-black p-2 text-xs text-center">{item.quantity}</td>
-                            <td className="border-r border-black p-2 text-xs text-right">{item.rate.toLocaleString()}</td>
-                            <td className="p-2 text-xs text-right font-semibold">{item.amount.toLocaleString()}</td>
-                          </tr>
-                        ))}
-                        {/* Empty rows to fill space if needed */}
-                        {[...Array(Math.max(0, 10 - selectedInvoice.items.length))].map((_, i) => (
-                          <tr key={`empty-${i}`} className="h-12">
-                            <td className="border-r border-black"></td>
-                            <td className="border-r border-black"></td>
-                            <td className="border-r border-black"></td>
-                            <td className="border-r border-black"></td>
-                            <td className="border-r border-black"></td>
-                            <td></td>
-                          </tr>
-                        ))}
-                        {/* E&O.E and Total Row */}
-                        <tr className="border-t-2 border-black">
-                          <td colSpan={5} className="border-r border-black p-2 align-top">
-                            <div className="text-[10px] italic">
-                              <span className="font-bold">E&O.E</span> Services once rendered are not renegotiable - Thanks
-                            </div>
-                          </td>
-                          <td className="p-2">
-                            <div className="flex items-center justify-between">
-                              <span className="font-bold text-sm">TOTAL</span>
-                              <span className="font-bold text-base">{selectedInvoice.total_amount.toLocaleString()}</span>
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
 
                     {/* Amount in Words */}
-                    <div className="px-4 py-2 border-t border-black">
-                      <div className="text-xs border-b border-dotted border-gray-400 pb-1">
-                        <span className="font-bold">Amount in words:</span>
-                        <span className="ml-1">{selectedInvoice.amount_in_words}</span>
-                      </div>
+                    <div className="px-6 py-2 pt-4">
+                      {documentType === 'Pro - Forma' ? (
+                        <div className="flex items-end mb-4">
+                          <span className="font-black italic text-base whitespace-nowrap">Amount in words:</span>
+                          <div className="flex-1 border-b border-dotted border-black ml-2 mb-1.5 h-0"></div>
+                          <span className="absolute ml-40 font-bold italic text-lg leading-none">{selectedInvoice?.amount_in_words}</span>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-end mb-4">
+                            <span className="font-bold whitespace-nowrap text-xl">Amount in words:</span>
+                            <div className="flex-1 border-b border-dotted border-black ml-2 mb-1.5 h-0"></div>
+                            <span className="absolute ml-48 font-bold italic text-lg leading-none">{selectedInvoice?.amount_in_words}</span>
+                          </div>
+                          <div className="border-b border-dotted border-black w-full h-0 mb-6"></div>
+                        </>
+                      )}
                     </div>
 
-                    {/* Signature Line */}
-                    <div className="px-4 py-3 text-xs italic">
-                      <div className="border-b border-dotted border-gray-400 pb-1">
-                        Sign on behalf of Point Art Solutions: .....................................
+                    {/* Payment Details Section - Only for Invoice */}
+                    {documentType === 'Invoice' && (
+                      <div className="mt-2 border-2 border-black overflow-hidden mx-4 rounded-sm">
+                        <div className="bg-black text-white text-center py-1 font-black text-sm tracking-[0.25em] uppercase">
+                          Payment Transaction Details
+                        </div>
+                        <div className="p-2 text-center text-[10px] font-black bg-white leading-relaxed">
+                          ACCOUNT NAME: <span className="font-bold">Point Art Solutions</span>,
+                          ACC No.: <span className="font-bold">3200655447</span>,
+                          BANK: <span className="font-bold">Centenary</span>,
+                          BRANCH: <span className="font-bold border-b border-black">Rubaga</span>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
-                    {/* Bottom pink stripe with tagline */}
-                    <div className="bg-pink-600 text-white text-center py-1 text-xs font-semibold border-t-2 border-black">
-                      "Expertise You Can Trust"
+                    {/* Signature and Tagline Footer */}
+                    <div className="flex flex-col items-center px-6 pt-4 pb-2 relative z-10">
+                      {documentType === 'Pro - Forma' ? (
+                        <>
+                          <div className="w-full flex justify-end mb-2">
+                            <div className="flex items-end gap-2 text-[14px] font-black italic">
+                              <span>Sign on behalf of Point Art Solutions:................................................</span>
+                            </div>
+                          </div>
+                          <div className="h-[2px] bg-pink-600 w-full mb-0.5"></div>
+                          <div className="h-[1px] bg-black w-full mb-1"></div>
+                          <div className="text-[12px] font-bold italic text-black uppercase tracking-tight">
+                            “Expertise You Can Trust”
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-full flex justify-end mb-4">
+                            <div className="flex items-end gap-2 text-[13px] font-bold italic">
+                              <span>Sign for: Point Art Solutions:</span>
+                              <div className="border-b border-dotted border-black w-72 mb-1"></div>
+                            </div>
+                          </div>
+                          <div className="h-[2px] bg-pink-600 w-full mb-1"></div>
+                          <div className="text-sm font-bold italic text-black font-serif">
+                            “Expertise You Can Trust”
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

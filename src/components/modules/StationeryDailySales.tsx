@@ -18,7 +18,7 @@ import { useOffline } from "@/hooks/useOffline";
 import { useOfflineStationerySales } from "@/hooks/useOfflineStationerySales";
 import { Database } from "@/integrations/supabase/types";
 
-type StationeryDailySale = Database["public"]["Tables"]["stationery_daily_sales"]["Row"];
+type StationeryDailySale = any; // Bypass missing type
 type ProfileItem = Pick<Database["public"]["Tables"]["profiles"]["Row"], "id" | "sales_initials" | "full_name">;
 type StationeryItem = Database["public"]["Tables"]["stationery"]["Row"];
 
@@ -90,8 +90,8 @@ const StationeryDailySales = () => {
       const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
 
       // First fetch the sales data
-      const { data, error } = await supabase
-        .from("stationery_sales") // Changed from "stationery_daily_sales" to "stationery_sales"
+      const { data, error } = await (supabase as any)
+        .from("stationery_sales")
         .select("*")
         .gte("date", startOfDay)
         .lte("date", endOfDay)
@@ -133,7 +133,7 @@ const StationeryDailySales = () => {
 
   const fetchSalesProfiles = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("profiles")
         .select("id, sales_initials, full_name")
         .not("sales_initials", "is", null);
@@ -272,16 +272,16 @@ const StationeryDailySales = () => {
 
       if (editingId) {
         // Update existing record
-        const result = await supabase
+        const result = await (supabase as any)
           .from("stationery_sales")
           .update(payload)
-          .eq("id", editingId as any);
+          .eq("id", editingId);
         error = result.error;
       } else {
         // Create new record
-        const result = await supabase
+        const result = await (supabase as any)
           .from("stationery_sales")
-          .insert([payload] as any);
+          .insert([payload]);
         error = result.error;
       }
 
@@ -353,10 +353,10 @@ const StationeryDailySales = () => {
 
     try {
       setIsLoading(true); // Use setIsLoading for deleting
-      const { error } = await supabase
-        .from("stationery_daily_sales")
+      const { error } = await (supabase as any)
+        .from("stationery_sales")
         .delete()
-        .eq("id", id as any);
+        .eq("id", id);
 
       if (error) throw error;
 
