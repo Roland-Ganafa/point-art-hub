@@ -205,7 +205,6 @@ export const prepareGiftStoreData = (data: any[]) => {
 // Prepare embroidery data
 export const prepareEmbroideryData = (data: any[]) => {
   const headers = {
-    service_type: 'Service',
     description: 'Description',
     cost: 'Cost',
     sales: 'Sales',
@@ -214,7 +213,6 @@ export const prepareEmbroideryData = (data: any[]) => {
   };
 
   const processedData = data.map(item => ({
-    service_type: item.service_type || '-',
     description: item.job_description,
     cost: item.expenditure || 0,
     sales: item.sales || item.quotation || 0,
@@ -228,8 +226,7 @@ export const prepareEmbroideryData = (data: any[]) => {
   const totalProfit = processedData.reduce((sum, item) => sum + (Number(item.profit) || 0), 0);
 
   processedData.push({
-    service_type: 'TOTALS',
-    description: '',
+    description: 'TOTALS',
     cost: totalCost,
     sales: totalSales,
     profit: totalProfit,

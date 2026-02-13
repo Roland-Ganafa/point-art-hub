@@ -58,8 +58,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
     quantity: "1",
     rate: "",
     expenditure: "",
-    done_by: "",
-    service_type: ""
+    done_by: ""
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
@@ -72,8 +71,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
       quantity: "1",
       rate: "",
       expenditure: "",
-      done_by: "",
-      service_type: ""
+      done_by: ""
     });
     setEditingId(null);
     setFormErrors({});
@@ -205,8 +203,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
       quantity: item.quantity.toString(),
       rate: item.rate?.toString() || "",
       expenditure: item.expenditure.toString(),
-      done_by: item.done_by || "",
-      service_type: item.service_type || ""
+      done_by: item.done_by || ""
     });
     setIsDialogOpen(true);
   };
@@ -337,8 +334,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
         deposit: deposit,
         quotation: quotation,
         done_by: formData.done_by === "not_specified" ? null : (formData.done_by || (profile?.id || null)),
-        date: new Date().toISOString().split('T')[0],
-        service_type: formData.service_type.trim() || null
+        date: new Date().toISOString().split('T')[0]
       };
 
       console.log("Submitting embroidery job data:", jobData);
@@ -556,15 +552,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label className="font-medium">Service Type</Label>
-                      <Input
-                        value={formData.service_type}
-                        onChange={(e) => setFormData({ ...formData, service_type: e.target.value })}
-                        placeholder="e.g. Branding, T-Shirt"
-                        className="border-purple-200 focus:border-purple-400 focus:ring-purple-200"
-                      />
-                    </div>
+
 
 
 
