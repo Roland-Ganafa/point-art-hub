@@ -205,27 +205,21 @@ export const prepareGiftStoreData = (data: any[]) => {
 // Prepare embroidery data
 export const prepareEmbroideryData = (data: any[]) => {
   const headers = {
-    client_name: 'Client',
     service_type: 'Service',
     description: 'Description',
     cost: 'Cost',
     sales: 'Sales',
     profit: 'Profit',
-    status: 'Status',
-    date_received: 'Received',
-    date_completed: 'Completed'
+    date_received: 'Received'
   };
 
   const processedData = data.map(item => ({
-    client_name: item.client_name,
-    service_type: item.service_type,
-    description: item.description,
-    cost: item.cost || 0,
-    sales: item.sales || 0,
+    service_type: item.service_type || '-',
+    description: item.job_description,
+    cost: item.expenditure || 0,
+    sales: item.sales || item.quotation || 0,
     profit: item.profit || 0,
-    status: item.status,
-    date_received: item.date_received ? format(new Date(item.date_received), 'yyyy-MM-dd') : '-',
-    date_completed: item.date_completed ? format(new Date(item.date_completed), 'yyyy-MM-dd') : '-'
+    date_received: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : '-'
   }));
 
   // Add Totals Row
@@ -234,15 +228,12 @@ export const prepareEmbroideryData = (data: any[]) => {
   const totalProfit = processedData.reduce((sum, item) => sum + (Number(item.profit) || 0), 0);
 
   processedData.push({
-    client_name: 'TOTALS',
-    service_type: '',
+    service_type: 'TOTALS',
     description: '',
     cost: totalCost,
     sales: totalSales,
     profit: totalProfit,
-    status: '',
-    date_received: '',
-    date_completed: ''
+    date_received: ''
   });
 
   return { headers, processedData };
@@ -308,11 +299,11 @@ export const prepareArtServicesData = (data: any[]) => {
   };
 
   const processedData = data.map(item => ({
-    item: item.item,
+    item: item.service_name,
     description: item.description,
     quantity: item.quantity,
     rate: item.rate,
-    amount: item.amount,
+    amount: item.sales,
     profit: item.profit,
     date: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : '-'
   }));

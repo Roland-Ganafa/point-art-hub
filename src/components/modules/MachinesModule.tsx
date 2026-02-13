@@ -497,7 +497,10 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
               )}
 
               <ExportDialog
-                data={items}
+                data={items.map(item => ({
+                  ...item,
+                  done_by: item.done_by ? salesProfiles.find(p => p.id === item.done_by)?.sales_initials || item.done_by : "-"
+                }))}
                 type="machines"
                 moduleTitle="Machine Services"
                 disabled={items.length === 0}

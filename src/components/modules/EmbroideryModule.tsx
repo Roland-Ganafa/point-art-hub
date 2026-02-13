@@ -33,6 +33,11 @@ interface EmbroideryItem {
   created_at: string;
   quotation?: number;
   deposit?: number;
+  client_name?: string | null;
+  service_type?: string | null;
+  status?: string | null;
+  date_completed?: string | null;
+  date_received?: string | null;
 }
 type ProfileItem = Pick<Database["public"]["Tables"]["profiles"]["Row"], "id" | "sales_initials" | "full_name">;
 
@@ -53,7 +58,8 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
     quantity: "1",
     rate: "",
     expenditure: "",
-    done_by: ""
+    done_by: "",
+    service_type: ""
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
@@ -66,7 +72,8 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
       quantity: "1",
       rate: "",
       expenditure: "",
-      done_by: ""
+      done_by: "",
+      service_type: ""
     });
     setEditingId(null);
     setFormErrors({});
@@ -198,7 +205,8 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
       quantity: item.quantity.toString(),
       rate: item.rate?.toString() || "",
       expenditure: item.expenditure.toString(),
-      done_by: item.done_by || ""
+      done_by: item.done_by || "",
+      service_type: item.service_type || ""
     });
     setIsDialogOpen(true);
   };
@@ -320,16 +328,17 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
       // Calculate derived values
       const quotation = quantity * rate;
 
-      // Create job data object - Include all required columns
-      const jobData = {
+      // Create job data object - Include required columns
+      const jobData: any = {
         job_description: formData.job_description.trim(),
         quantity: quantity,
         rate: rate,
         expenditure: expenditure,
         deposit: deposit,
-        quotation: quotation, // This is required and NOT generated in embroidery table
+        quotation: quotation,
         done_by: formData.done_by === "not_specified" ? null : (formData.done_by || (profile?.id || null)),
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split('T')[0],
+        service_type: formData.service_type.trim() || null
       };
 
       console.log("Submitting embroidery job data:", jobData);
@@ -548,6 +557,18 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                     </div>
 
                     <div className="space-y-2">
+                      <Label className="font-medium">Service Type</Label>
+                      <Input
+                        value={formData.service_type}
+                        onChange={(e) => setFormData({ ...formData, service_type: e.target.value })}
+                        placeholder="e.g. Branding, T-Shirt"
+                        className="border-purple-200 focus:border-purple-400 focus:ring-purple-200"
+                      />
+                    </div>
+
+
+
+                    <div className="space-y-2">
                       <Label>Done By (Initials)</Label>
                       <Select
                         value={formData.done_by}
@@ -712,7 +733,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={isAdmin ? 9 : 8} className="h-32 text-center">
+                        <TableCell colSpan={isAdmin ? 10 : 9} className="h-32 text-center">
                           <div className="flex flex-col items-center gap-4">
                             {isLoading ? (
                               <div className="flex flex-col items-center gap-3">
