@@ -7,11 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Edit, Trash2, TrendingUp, ShoppingCart, Gift, Star, WifiOff } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Plus, Edit, Trash2, TrendingUp, ShoppingCart, Gift, Star, WifiOff, CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
-import { format } from "date-fns";
+import { format, isToday, addDays, subDays } from "date-fns";
 import { useOffline } from "@/hooks/useOffline";
 import { useOfflineGiftSales } from "@/hooks/useOfflineGiftSales";
 
@@ -65,6 +67,8 @@ const GiftsDailySales = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [salesProfiles, setSalesProfiles] = useState<Array<{ id: string, sales_initials: string, full_name: string }>>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().slice(0, 10),
     category: "",
@@ -98,14 +102,14 @@ const GiftsDailySales = () => {
     setCalculatedProfit(profit);
   }, [formData.bpx, formData.spx, formData.quantity]);
 
-  const fetchData = async () => {
+  const fetchData = async (dateToFetch?: Date) => {
     try {
       setLoading(true);
-      const today = new Date();
-      const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
-      const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
+      const targetDate = dateToFetch || selectedDate;
+      const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0).toISOString();
+      const endOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999).toISOString();
 
-      // First fetch the sales data
+      // Fetch sales data for the selected date
       const { data, error } = await supabase
         .from("gift_daily_sales")
         .select("*")
@@ -155,6 +159,11 @@ const GiftsDailySales = () => {
     fetchData();
     fetchSalesProfiles();
   }, []);
+
+  // Re-fetch when selectedDate changes
+  useEffect(() => {
+    fetchData(selectedDate);
+  }, [selectedDate]);
 
   // Sync offline sales when coming back online
   useEffect(() => {
@@ -409,9 +418,81 @@ const GiftsDailySales = () => {
                 <ShoppingCart className="h-8 w-8 text-green-600" />
                 Daily Gift Store Sales
               </h3>
-              <p className="text-muted-foreground">Track and manage today's gift store sales</p>
+              <p className="text-muted-foreground">
+                {isToday(selectedDate)
+                  ? "Track and manage today's gift store sales"
+                  : `Viewing sales for ${format(selectedDate, "EEEE, MMMM d, yyyy")}`
+                }
+              </p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              {/* Date Navigation */}
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 border-green-200 hover:bg-green-50 hover:border-green-300 transition-all duration-200"
+                  onClick={() => setSelectedDate(prev => subDays(prev, 1))}
+                  title="Previous day"
+                >
+                  <ChevronLeft className="h-4 w-4 text-green-600" />
+                </Button>
+
+                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={`min-w-[200px] justify-start text-left font-medium border-green-200 hover:bg-green-50 hover:border-green-300 transition-all duration-200 ${isToday(selectedDate)
+                          ? "bg-gradient-to-r from-green-50 to-emerald-50 border-green-300 shadow-sm"
+                          : ""
+                        }`}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4 text-green-600" />
+                      {isToday(selectedDate)
+                        ? "Today"
+                        : format(selectedDate, "MMM d, yyyy")
+                      }
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-white shadow-xl border-green-100" align="end">
+                    <div className="p-2 border-b border-green-100">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-green-600 hover:bg-green-50 font-medium"
+                        onClick={() => {
+                          setSelectedDate(new Date());
+                          setIsCalendarOpen(false);
+                        }}
+                      >
+                        Go to Today
+                      </Button>
+                    </div>
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => {
+                        if (date) {
+                          setSelectedDate(date);
+                          setIsCalendarOpen(false);
+                        }
+                      }}
+                      initialFocus
+                      className="rounded-md"
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 border-green-200 hover:bg-green-50 hover:border-green-300 transition-all duration-200"
+                  onClick={() => setSelectedDate(prev => addDays(prev, 1))}
+                  title="Next day"
+                >
+                  <ChevronRight className="h-4 w-4 text-green-600" />
+                </Button>
+              </div>
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 setIsDialogOpen(open);
                 if (!open) {
@@ -652,7 +733,7 @@ const GiftsDailySales = () => {
                 <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg text-white">
                   <Gift className="h-6 w-6" />
                 </div>
-                Today's Sales Records
+                {isToday(selectedDate) ? "Today's Sales Records" : `Sales Records — ${format(selectedDate, "MMM d, yyyy")}`}
                 <div className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
                   <Star className="h-4 w-4 text-yellow-500" />
                   {items.length + offlineGiftSales.length} records
@@ -769,7 +850,7 @@ const GiftsDailySales = () => {
                             ) : (
                               <div className="flex flex-col items-center gap-3">
                                 <Gift className="h-12 w-12 text-gray-400" />
-                                <span className="text-lg text-gray-600">No sales recorded today.</span>
+                                <span className="text-lg text-gray-600">{isToday(selectedDate) ? "No sales recorded today." : `No sales recorded for ${format(selectedDate, "MMM d, yyyy")}.`}</span>
                                 <span className="text-sm text-gray-500">Start by recording your first sale!</span>
                               </div>
                             )}
