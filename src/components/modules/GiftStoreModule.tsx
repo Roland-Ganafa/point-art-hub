@@ -736,7 +736,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <Table>
+                <Table className="min-w-[1200px]">
                   <TableHeader className="bg-gradient-to-r from-gray-50 to-green-50">
                     <TableRow className="border-b border-green-100">
                       {isAdmin && (

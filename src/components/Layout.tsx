@@ -294,7 +294,7 @@ const Layout = ({ children }: LayoutProps) => {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header */}
         <header className="bg-card border-b border-border px-6 py-4 transition-colors duration-200">
           <div className="flex justify-between items-center">
@@ -335,7 +335,7 @@ const Layout = ({ children }: LayoutProps) => {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 bg-background transition-colors duration-200">
+        <main className="flex-1 p-6 bg-background transition-colors duration-200 overflow-auto">
           {children}
         </main>
       </div>
