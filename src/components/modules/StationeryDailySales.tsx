@@ -508,16 +508,6 @@ const StationeryDailySales = () => {
             type="sales"
             moduleTitle="Stationery Sales"
             disabled={items.length === 0 || isLoading}
-            trigger={
-              <Button
-                variant="outline"
-                className="border-blue-200 text-blue-700 hover:bg-blue-50 transition-all duration-200 shadow-sm"
-                disabled={items.length === 0 || isLoading}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Button>
-            }
           />
 
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
