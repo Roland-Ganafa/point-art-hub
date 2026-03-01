@@ -56,7 +56,7 @@ const StationeryDailySales = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().slice(0, 10),
+    date: format(new Date(), 'yyyy-MM-dd'),
     category: "",
     item: "",
     itemId: "", // Add item ID for linking to stationery table
@@ -244,6 +244,18 @@ const StationeryDailySales = () => {
       return;
     }
 
+    // Combine the selected date with the current time to handle timezones safely
+    const currentDate = new Date();
+    const [year, month, day] = formData.date.split('-');
+    const saleDate = new Date(
+      parseInt(year),
+      parseInt(month) - 1,
+      parseInt(day),
+      currentDate.getHours(),
+      currentDate.getMinutes(),
+      currentDate.getSeconds()
+    );
+
     const payload: any = {
       item_id: formData.itemId,
       quantity: quantity,
@@ -252,8 +264,8 @@ const StationeryDailySales = () => {
       profit: (sellingPrice - rate) * quantity,
       description: formData.description ? formData.description.trim() : null,
       rate: rate,
-      sold_by: formData.soldBy === "not_specified" ? null : formData.soldBy
-      // Removed date field since it has a default value of now()
+      sold_by: formData.soldBy === "not_specified" ? null : formData.soldBy,
+      date: saleDate.toISOString()
     };
 
     // Log the payload for debugging
@@ -264,7 +276,7 @@ const StationeryDailySales = () => {
       // If offline, store sale locally
       if (isOffline) {
         const offlineSale = {
-          date: formData.date,
+          date: saleDate.toISOString(),
           category: formData.category,
           item: formData.item,
           description: formData.description ? formData.description.trim() : null,
@@ -286,7 +298,7 @@ const StationeryDailySales = () => {
 
         // Reset form
         setFormData({
-          date: new Date().toISOString().slice(0, 10),
+          date: format(new Date(), 'yyyy-MM-dd'),
           category: "",
           item: "",
           itemId: "",
@@ -327,7 +339,7 @@ const StationeryDailySales = () => {
 
       // Reset form
       setFormData({
-        date: new Date().toISOString().slice(0, 10),
+        date: format(new Date(), 'yyyy-MM-dd'),
         category: "",
         item: "",
         itemId: "",
@@ -367,7 +379,7 @@ const StationeryDailySales = () => {
     const stationeryItem = stationeryItems.find(si => si.id === item.item_id);
 
     setFormData({
-      date: item.date,
+      date: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
       category: stationeryItem?.category || "",
       item: stationeryItem?.item || "",
       itemId: item.item_id || "",
@@ -536,7 +548,7 @@ const StationeryDailySales = () => {
             if (!open) {
               // Reset form when closing
               setFormData({
-                date: new Date().toISOString().slice(0, 10),
+                date: format(new Date(), 'yyyy-MM-dd'),
                 category: "",
                 item: "",
                 itemId: "",
