@@ -47,6 +47,7 @@ const StationeryDailySales = () => {
   const { toast } = useToast();
   const { profile } = useUser();
   const [items, setItems] = useState<StationeryDailySale[]>([]);
+  const [allSales, setAllSales] = useState<StationeryDailySale[]>([]);
   const [stationeryItems, setStationeryItems] = useState<StationeryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false); // Renamed 'loading' to 'isLoading'
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -113,11 +114,31 @@ const StationeryDailySales = () => {
 
       // Fetch stationery items for dropdown
       await fetchStationeryItems();
+
+      // Also fetch all sales for the export dialog
+      await fetchAllSales();
     } catch (error) {
       console.error("Error in fetchData:", error);
       toast({ title: "Error fetching daily sales", description: "An unexpected error occurred", variant: "destructive" });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchAllSales = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from("stationery_sales")
+        .select("*")
+        .order("date", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching all daily sales:", error);
+      } else {
+        setAllSales(data as unknown as StationeryDailySale[] || []);
+      }
+    } catch (error) {
+      console.error("Error in fetchAllSales:", error);
     }
   };
 
@@ -504,10 +525,10 @@ const StationeryDailySales = () => {
           </div>
 
           <ExportDialog
-            data={items}
+            data={allSales}
             type="sales"
             moduleTitle="Stationery Sales"
-            disabled={items.length === 0 || isLoading}
+            disabled={allSales.length === 0 || isLoading}
           />
 
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
