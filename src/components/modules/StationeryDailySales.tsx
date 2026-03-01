@@ -11,7 +11,6 @@ import CustomLoader from "@/components/ui/CustomLoader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Plus, Edit, Trash2, TrendingUp, ShoppingCart, Package2, Star, WifiOff, CalendarIcon, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +19,7 @@ import { format, isToday, addDays, subDays } from "date-fns";
 import { useOffline } from "@/hooks/useOffline";
 import { useOfflineStationerySales } from "@/hooks/useOfflineStationerySales";
 import { Database } from "@/integrations/supabase/types";
-import { exportData } from "@/utils/exportUtils";
+import ExportDialog from "@/components/ExportDialog";
 
 type StationeryDailySale = any; // Bypass missing type
 type ProfileItem = Pick<Database["public"]["Tables"]["profiles"]["Row"], "id" | "sales_initials" | "full_name">;
@@ -175,10 +174,6 @@ const StationeryDailySales = () => {
       syncOfflineStationerySales();
     }
   }, [isOffline]);
-
-  const handleExport = (exportFormat: 'csv' | 'pdf' = 'csv') => {
-    exportData(items, 'sales', { filename: `stationery-sales-${format(selectedDate, 'yyyy-MM-dd')}`, format: exportFormat });
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -508,26 +503,22 @@ const StationeryDailySales = () => {
             </Button>
           </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          <ExportDialog
+            data={items}
+            type="sales"
+            moduleTitle="Stationery Sales"
+            disabled={items.length === 0 || isLoading}
+            trigger={
               <Button
                 variant="outline"
                 className="border-blue-200 text-blue-700 hover:bg-blue-50 transition-all duration-200 shadow-sm"
                 disabled={items.length === 0 || isLoading}
               >
                 <Download className="mr-2 h-4 w-4" />
-                Download
+                Export
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40 border-blue-100 shadow-lg">
-              <DropdownMenuItem onClick={() => handleExport('csv')} className="cursor-pointer text-blue-700 hover:bg-blue-50 font-medium py-2">
-                Download as CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport('pdf')} className="cursor-pointer text-blue-700 hover:bg-blue-50 font-medium py-2">
-                Download as PDF
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            }
+          />
 
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
             setIsDialogOpen(open);
