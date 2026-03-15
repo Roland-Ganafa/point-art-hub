@@ -171,23 +171,26 @@ export const prepareGiftStoreData = (data: any[]) => {
     item_name: 'Item Name',
     description: 'Description',
     quantity: 'Qty',
-    price: 'Price',
-    cost: 'Cost',
+    price: 'Price (UGX)',
+    cost: 'Cost (UGX)',
     created_at: 'Date Added'
   };
 
   const processedData = data.map(item => ({
-    category: item.category,
+    category: item.category ? (item.custom_category || item.category).replace(/_/g, ' ') : '-',
     item_name: item.item_name || item.item,
     description: item.description || '-',
-    quantity: item.stock || item.quantity || 0,
-    price: item.price || item.spx || 0,
-    cost: item.cost || item.bpx || 0,
+    quantity: item.stock !== undefined ? item.stock : (item.quantity || 0),
+    // selling_price is the correct field from gift_store table
+    price: item.selling_price || item.price || item.spx || 0,
+    // rate is the buying cost field from gift_store table
+    cost: item.rate || item.cost || item.bpx || 0,
     created_at: item.created_at ? format(new Date(item.created_at), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')
   }));
 
   // Add Totals Row
   const totalQuantity = processedData.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+  const totalValue = processedData.reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity) || 0), 0);
 
   processedData.push({
     category: '',
@@ -203,22 +206,31 @@ export const prepareGiftStoreData = (data: any[]) => {
 };
 
 // Prepare embroidery data
-export const prepareEmbroideryData = (data: any[]) => {
+export const prepareEmbroideryData = (data: any[], profilesMap?: Record<string, string>) => {
   const headers = {
     description: 'Description',
     cost: 'Cost',
     sales: 'Sales',
     profit: 'Profit',
+    done_by: 'Done By',
     date_received: 'Received'
   };
 
-  const processedData = data.map(item => ({
-    description: item.job_description,
-    cost: item.expenditure || 0,
-    sales: item.sales || item.quotation || 0,
-    profit: item.profit || 0,
-    date_received: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : '-'
-  }));
+  const processedData = data.map(item => {
+    // Resolve done_by to name if profiles map is provided
+    let doneBy = '-';
+    if (item.done_by) {
+      doneBy = profilesMap?.[item.done_by] || item.done_by;
+    }
+    return {
+      description: item.job_description,
+      cost: item.expenditure || 0,
+      sales: item.sales || item.quotation || 0,
+      profit: item.profit || 0,
+      done_by: doneBy,
+      date_received: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : '-'
+    };
+  });
 
   // Add Totals Row
   const totalCost = processedData.reduce((sum, item) => sum + (Number(item.cost) || 0), 0);
@@ -230,6 +242,7 @@ export const prepareEmbroideryData = (data: any[]) => {
     cost: totalCost,
     sales: totalSales,
     profit: totalProfit,
+    done_by: '',
     date_received: ''
   });
 

@@ -340,8 +340,8 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
       errors.item = "Item name is required";
     }
 
-    if (!formData.quantity || parseInt(formData.quantity) <= 0) {
-      errors.quantity = "Quantity must be greater than 0";
+    if (formData.quantity === '' || parseInt(formData.quantity) < 0 || isNaN(parseInt(formData.quantity))) {
+      errors.quantity = "Quantity must be 0 or greater";
     }
 
     if (!formData.rate || parseFloat(formData.rate) <= 0) {
@@ -548,6 +548,12 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
     setEditingId(null);
   };
 
+  // Compute low-stock items
+  const lowStockItems = items.filter(item => {
+    const actualStock = item.stock !== undefined ? item.stock : item.quantity;
+    return actualStock <= (item.low_stock_threshold || 5);
+  });
+
   return (
     <div className="space-y-8 p-6">
       <Tabs defaultValue="inventory" className="space-y-8">
@@ -565,6 +571,18 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
           >
             <ShoppingCart className="h-4 w-4" />
             Daily Sales
+          </TabsTrigger>
+          <TabsTrigger
+            value="low-stock"
+            className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2 relative"
+          >
+            <AlertTriangle className="h-4 w-4 text-red-500" />
+            Low Stock
+            {lowStockItems.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                {lowStockItems.length}
+              </span>
+            )}
           </TabsTrigger>
         </TabsList>
 
@@ -994,6 +1012,117 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
         <TabsContent value="daily-sales" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden">
             <StationeryDailySales />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="low-stock" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-2xl font-bold text-foreground flex items-center gap-3">
+                  <AlertTriangle className="h-7 w-7 text-red-500" />
+                  Low Stock Report
+                </h3>
+                <p className="text-muted-foreground text-sm mt-1">
+                  {lowStockItems.length} item{lowStockItems.length !== 1 ? 's' : ''} at or below threshold
+                </p>
+              </div>
+              <ExportDialog
+                data={lowStockItems}
+                type="stationery"
+                moduleTitle="Stationery — Low Stock Report"
+                disabled={lowStockItems.length === 0}
+              />
+            </div>
+
+            {lowStockItems.length === 0 ? (
+              <Card className="border-border shadow-xl bg-card">
+                <CardContent className="py-16 text-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="p-4 bg-green-100 rounded-full">
+                      <Package2 className="h-12 w-12 text-green-600" />
+                    </div>
+                    <p className="text-xl font-semibold text-green-700">All stock levels are healthy!</p>
+                    <p className="text-muted-foreground">No items are currently below their low-stock threshold.</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-border shadow-2xl bg-card overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-red-50 to-pink-50 border-b border-red-100">
+                  <CardTitle className="text-xl font-bold flex items-center gap-3 text-red-800">
+                    <div className="p-2 bg-red-500 rounded-lg text-white">
+                      <AlertTriangle className="h-5 w-5" />
+                    </div>
+                    Items Requiring Immediate Attention
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader className="bg-red-50/50">
+                        <TableRow className="border-b border-red-100">
+                          <TableHead className="font-semibold text-gray-700">#</TableHead>
+                          <TableHead className="font-semibold text-gray-700">Category</TableHead>
+                          <TableHead className="font-semibold text-gray-700">Item Name</TableHead>
+                          <TableHead className="font-semibold text-gray-700">Description</TableHead>
+                          <TableHead className="font-semibold text-gray-700 text-center">Current Stock</TableHead>
+                          <TableHead className="font-semibold text-gray-700 text-center">Min. Threshold</TableHead>
+                          <TableHead className="font-semibold text-gray-700 text-center">Status</TableHead>
+                          <TableHead className="font-semibold text-gray-700">Buying Price</TableHead>
+                          <TableHead className="font-semibold text-gray-700">Selling Price</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {lowStockItems.map((item, index) => {
+                          const actualStock = item.stock !== undefined ? item.stock : item.quantity;
+                          const threshold = item.low_stock_threshold || 5;
+                          const isOutOfStock = actualStock === 0;
+                          return (
+                            <TableRow
+                              key={item.id}
+                              className={`transition-colors ${
+                                isOutOfStock
+                                  ? 'bg-red-100 border-l-4 border-red-600 hover:bg-red-200'
+                                  : 'bg-orange-50 border-l-4 border-orange-400 hover:bg-orange-100'
+                              }`}
+                            >
+                              <TableCell className="font-medium text-gray-500">{index + 1}</TableCell>
+                              <TableCell className="font-medium">{item.category || '-'}</TableCell>
+                              <TableCell className="font-bold text-gray-800">{item.item}</TableCell>
+                              <TableCell className="text-gray-500">{item.description || '-'}</TableCell>
+                              <TableCell className="text-center">
+                                <span className={`text-2xl font-black ${
+                                  isOutOfStock ? 'text-red-700' : 'text-orange-600'
+                                }`}>
+                                  {actualStock}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-center font-medium text-gray-600">{threshold}</TableCell>
+                              <TableCell className="text-center">
+                                {isOutOfStock ? (
+                                  <span className="inline-flex items-center gap-1 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                                    <AlertTriangle className="h-3 w-3" />
+                                    OUT OF STOCK
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                                    <AlertTriangle className="h-3 w-3" />
+                                    LOW STOCK
+                                  </span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-blue-600 font-medium">{formatUGX(item.rate)}</TableCell>
+                              <TableCell className="text-purple-600 font-medium">{formatUGX(item.selling_price)}</TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </TabsContent>
       </Tabs>

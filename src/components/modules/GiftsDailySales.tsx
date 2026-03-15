@@ -16,6 +16,7 @@ import { useUser } from "@/contexts/UserContext";
 import { format, isToday, addDays, subDays } from "date-fns";
 import { useOffline } from "@/hooks/useOffline";
 import { useOfflineGiftSales } from "@/hooks/useOfflineGiftSales";
+import ExportDialog from "@/components/ExportDialog";
 
 interface GiftDailySale {
   id: string;
@@ -59,6 +60,22 @@ const startEndOfMonth = (yyyymm: string) => {
   return { start: toISO(start), end: toISO(end) };
 };
 
+interface GiftStoreInventoryItem {
+  id: string;
+  item: string;
+  category: string;
+  custom_category: string | null;
+  description: string | null;
+  quantity: number;
+  rate: number;
+  stock?: number;
+  selling_price?: number;
+  profit_per_unit?: number;
+  low_stock_threshold?: number;
+  date: string;
+  created_at?: string;
+}
+
 const GiftsDailySales = () => {
   const { toast } = useToast();
   const { profile } = useUser();
@@ -69,6 +86,9 @@ const GiftsDailySales = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  // Gift store inventory state
+  const [inventoryItems, setInventoryItems] = useState<GiftStoreInventoryItem[]>([]);
+  const [inventoryLoading, setInventoryLoading] = useState(false);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().slice(0, 10),
     category: "",
@@ -133,6 +153,27 @@ const GiftsDailySales = () => {
     }
   };
 
+  const fetchInventoryItems = async () => {
+    try {
+      setInventoryLoading(true);
+      const { data, error } = await supabase
+        .from("gift_store")
+        .select("*")
+        .order("category", { ascending: true })
+        .order("item", { ascending: true });
+
+      if (error) {
+        toast({ title: "Error fetching inventory", description: error.message, variant: "destructive" });
+      } else {
+        setInventoryItems(data as any || []);
+      }
+    } catch (error) {
+      console.error("Error in fetchInventoryItems:", error);
+    } finally {
+      setInventoryLoading(false);
+    }
+  };
+
   const fetchSalesProfiles = async () => {
     try {
       const { data, error } = await supabase
@@ -158,6 +199,7 @@ const GiftsDailySales = () => {
   useEffect(() => {
     fetchData();
     fetchSalesProfiles();
+    fetchInventoryItems();
   }, []);
 
   // Re-fetch when selectedDate changes
@@ -264,7 +306,7 @@ const GiftsDailySales = () => {
 
         // Reset form
         setFormData({
-          date: new Date().toISOString().slice(0, 10),
+          date: format(selectedDate, 'yyyy-MM-dd'),
           category: "",
           item: "",
           code: "",
@@ -303,9 +345,9 @@ const GiftsDailySales = () => {
         description: editingId ? "Sale updated successfully" : "Sale recorded successfully",
       });
 
-      // Reset form
+      // Reset form — use selectedDate so repeated entries for the same day work correctly
       setFormData({
-        date: new Date().toISOString().slice(0, 10),
+        date: format(selectedDate, 'yyyy-MM-dd'),
         category: "",
         item: "",
         code: "",
@@ -493,12 +535,27 @@ const GiftsDailySales = () => {
                   <ChevronRight className="h-4 w-4 text-green-600" />
                 </Button>
               </div>
+              {/* Export button for daily sales */}
+              <ExportDialog
+                data={items.map(item => {
+                  const [category, ...rest] = item.item.split(': ');
+                  return {
+                    ...item,
+                    category: rest.length > 0 ? category : '-',
+                    item: rest.length > 0 ? rest.join(': ') : item.item,
+                  };
+                })}
+                type="sales"
+                moduleTitle={`Gift Store Daily Sales — ${format(selectedDate, 'MMM d, yyyy')}`}
+                disabled={items.length === 0}
+              />
+
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 setIsDialogOpen(open);
                 if (!open) {
-                  // Reset form when closing
+                  // Reset form when closing — keep selectedDate as date
                   setFormData({
-                    date: new Date().toISOString().slice(0, 10),
+                    date: format(selectedDate, 'yyyy-MM-dd'),
                     category: "",
                     item: "",
                     code: "",
@@ -866,9 +923,96 @@ const GiftsDailySales = () => {
         </TabsContent>
 
         <TabsContent value="inventory" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden p-6">
-            <h3 className="text-xl font-bold mb-4">Inventory Management</h3>
-            <p className="text-muted-foreground">Inventory management for gift store items is available in the main Gift Store Management section.</p>
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-2">
+                  <Gift className="h-7 w-7 text-green-600" />
+                  Gift Store Inventory
+                </h3>
+                <p className="text-muted-foreground text-sm mt-1">{inventoryItems.length} items in stock</p>
+              </div>
+              <ExportDialog
+                data={inventoryItems}
+                type="gift_store"
+                moduleTitle="Gift Store Inventory"
+                disabled={inventoryItems.length === 0}
+              />
+            </div>
+
+            <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader className="bg-gradient-to-r from-gray-50 to-green-50">
+                      <TableRow className="border-b border-green-100">
+                        <TableHead className="font-semibold text-gray-700">#</TableHead>
+                        <TableHead className="font-semibold text-gray-700">Category</TableHead>
+                        <TableHead className="font-semibold text-gray-700">Item Name</TableHead>
+                        <TableHead className="font-semibold text-gray-700">Description</TableHead>
+                        <TableHead className="font-semibold text-gray-700">Qty</TableHead>
+                        <TableHead className="font-semibold text-gray-700">Cost (UGX)</TableHead>
+                        <TableHead className="font-semibold text-gray-700">Price (UGX)</TableHead>
+                        <TableHead className="font-semibold text-gray-700">Profit/Unit</TableHead>
+                        <TableHead className="font-semibold text-gray-700">Date Added</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {inventoryLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={9} className="h-32 text-center">
+                            <div className="flex items-center justify-center gap-3">
+                              <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+                              <span className="text-gray-600">Loading inventory...</span>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ) : inventoryItems.length > 0 ? (
+                        inventoryItems.map((item, index) => {
+                          const stock = item.stock !== undefined ? item.stock : item.quantity;
+                          const lowStockThreshold = item.low_stock_threshold ?? 5;
+                          const isLowStock = stock <= lowStockThreshold;
+                          const profit = (item.selling_price ?? 0) - item.rate;
+                          return (
+                            <TableRow
+                              key={item.id}
+                              className={`hover:bg-green-50 transition-colors ${
+                                isLowStock ? 'bg-red-50 border-l-4 border-red-400' : ''
+                              }`}
+                            >
+                              <TableCell className="text-gray-500">{index + 1}</TableCell>
+                              <TableCell className="font-medium capitalize">{(item.custom_category || item.category).replace(/_/g, ' ')}</TableCell>
+                              <TableCell className="font-semibold text-gray-800">{item.item}</TableCell>
+                              <TableCell className="text-gray-500">{item.description || '-'}</TableCell>
+                              <TableCell className={`font-bold ${isLowStock ? 'text-red-600' : 'text-gray-800'}`}>
+                                {stock} {isLowStock && <span className="text-xs text-red-500 ml-1">(LOW)</span>}
+                              </TableCell>
+                              <TableCell className="text-blue-600 font-medium">{formatUGX(item.rate)}</TableCell>
+                              <TableCell className="text-purple-600 font-medium">{formatUGX(item.selling_price ?? 0)}</TableCell>
+                              <TableCell className={`font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {formatUGX(profit)}
+                              </TableCell>
+                              <TableCell className="text-gray-500 text-sm">
+                                {item.created_at ? format(new Date(item.created_at), 'yyyy-MM-dd') : item.date}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={9} className="h-32 text-center">
+                            <div className="flex flex-col items-center gap-3">
+                              <Gift className="h-12 w-12 text-gray-400" />
+                              <span className="text-lg text-gray-600">No inventory items found.</span>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>
