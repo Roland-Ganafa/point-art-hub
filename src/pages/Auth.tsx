@@ -242,18 +242,15 @@ const Auth = () => {
         {/* ── LEFT PANEL ── */}
         <div className={`flex flex-col w-full lg:w-[44%] px-8 py-10 lg:px-14 lg:py-12 ${mounted ? 'anim-left' : 'opacity-0'}`}>
 
-          {/* Logo — properly aligned */}
-          <div className="flex items-center gap-2.5 mb-10">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg,rgba(236,72,153,.12),rgba(139,92,246,.12))', border: '1.5px solid rgba(236,72,153,.25)' }}>
-              <img src="/point-art-logo.svg" alt="Point Art" className="w-6 h-6 object-contain" />
-            </div>
+          {/* Logo */}
+          <div className="flex items-center gap-3 mb-10">
+            <img src="/point-art-logo.svg" alt="Point Art" className="w-12 h-12 object-contain flex-shrink-0" />
             <div className="leading-none">
-              <div className="font-extrabold text-base tracking-tight flex items-baseline gap-1">
-                <span className="text-gray-900">Point</span>
-                <span className="grad-text">Art</span>
+              <div className="font-extrabold text-xl tracking-tight">
+                <span className="text-gray-900">POINT</span>
+                <span className="grad-text ml-1.5">ART</span>
               </div>
-              <div className="text-[9px] font-bold tracking-[0.2em] uppercase text-gray-400 mt-0.5">Hub</div>
+              <div className="text-[10px] font-bold tracking-[0.25em] uppercase text-gray-400 mt-0.5">Solutions</div>
             </div>
           </div>
 
@@ -372,15 +369,34 @@ const Auth = () => {
 
             {/* Top section */}
             <div>
+              {/* Logo hero */}
+              <div className="flex items-center gap-4 mb-7">
+                <div className="relative flex-shrink-0">
+                  <div className="absolute inset-0 rounded-2xl" style={{ background:'radial-gradient(circle,rgba(236,72,153,.5) 0%,transparent 70%)', filter:'blur(14px)', transform:'scale(1.3)' }} />
+                  <div className="relative w-16 h-16 rounded-2xl flex items-center justify-center"
+                    style={{ background:'rgba(255,255,255,.07)', border:'1.5px solid rgba(236,72,153,.3)' }}>
+                    <img src="/point-art-logo.svg" alt="Point Art" className="w-10 h-10 object-contain" />
+                  </div>
+                </div>
+                <div>
+                  <div className="font-extrabold text-2xl tracking-tight leading-none">
+                    <span className="text-white">POINT</span>
+                    <span className="grad-text ml-1.5">ART</span>
+                  </div>
+                  <div className="text-[10px] font-bold tracking-[0.3em] uppercase text-gray-500 mt-1">Solutions</div>
+                  <div className="text-[10px] italic text-gray-600 mt-0.5">"Expertise You Can Trust"</div>
+                </div>
+              </div>
+
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full mb-7 text-xs font-bold tracking-wide"
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full mb-6 text-xs font-bold tracking-wide"
                 style={{ background:'rgba(236,72,153,.15)', border:'1px solid rgba(236,72,153,.35)', color:'#f9a8d4' }}>
                 <span className="w-2 h-2 rounded-full bg-pink-400 pulse-dot" />
                 Business Management Platform
               </div>
 
               {/* Headline */}
-              <h2 className="text-[2.6rem] font-extrabold text-white leading-tight tracking-tight mb-3">
+              <h2 className="text-[2.2rem] font-extrabold text-white leading-tight tracking-tight mb-3">
                 Built for the<br />
                 <span className="grad-text">frontlines of business</span>
               </h2>
