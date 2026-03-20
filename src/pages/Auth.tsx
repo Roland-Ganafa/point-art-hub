@@ -253,7 +253,7 @@ const Auth = () => {
         <div className={`flex flex-col w-full lg:w-[44%] px-8 py-10 lg:px-14 lg:py-12 ${mounted ? 'anim-left' : 'opacity-0'}`}>
 
           {/* Logo */}
-          <div className="flex items-center gap-3 mb-10">
+          <div className="flex items-center justify-center gap-3 mb-10">
             <img src="/point-art-logo.svg" alt="Point Art" className="w-12 h-12 object-contain flex-shrink-0" />
             <div className="leading-none">
               <div className="font-extrabold text-xl tracking-tight">
