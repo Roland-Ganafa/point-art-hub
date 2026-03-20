@@ -52,39 +52,51 @@ export default function ActivityLog() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
+      // Fetch profiles for manual UUID → name resolution (done_by has no FK in some tables)
+      const { data: profileRows } = await supabase
+        .from("profiles")
+        .select("id, full_name, sales_initials");
+      const profileMap: Record<string, string> = {};
+      (profileRows || []).forEach((p: any) => {
+        profileMap[p.id] = [p.full_name, p.sales_initials ? `(${p.sales_initials})` : ""]
+          .filter(Boolean).join(" ").trim();
+      });
+      const resolveEmployee = (id: string | null): string =>
+        id ? (profileMap[id] || "Unknown") : "Unknown";
+
       const [statRes, giftRes, embRes, machRes, artRes] = await Promise.all([
-        // Stationery Sales — join to stationery item name + profile
+        // Stationery Sales — join to stationery item name + profile (sold_by has FK)
         supabase
           .from("stationery_sales")
           .select("id, created_at, total_amount, quantity, selling_price, stationery!item_id(item), profiles!sold_by(full_name, sales_initials)")
           .order("created_at", { ascending: false })
           .limit(500),
 
-        // Gift Daily Sales
+        // Gift Daily Sales (sold_by has FK)
         supabase
           .from("gift_daily_sales")
           .select("id, created_at, item, quantity, spx, profiles!sold_by(full_name, sales_initials)")
           .order("created_at", { ascending: false })
           .limit(500),
 
-        // Embroidery (uses updated_at + updated_by)
+        // Embroidery (uses updated_at + updated_by FK)
         supabase
           .from("embroidery")
           .select("id, updated_at, item_name, quantity, total_amount, customer_name, profiles!updated_by(full_name, sales_initials)")
           .order("updated_at", { ascending: false })
           .limit(500),
 
-        // Machines
-        supabase
+        // Machines — done_by has no FK, fetch it raw for manual resolution
+        (supabase as any)
           .from("machines")
-          .select("id, created_at, machine_type, quantity, total_amount, customer_name, profiles!updated_by(full_name, sales_initials)")
+          .select("id, created_at, machine_type, quantity, total_amount, customer_name, done_by, profiles!updated_by(full_name, sales_initials)")
           .order("created_at", { ascending: false })
           .limit(500),
 
-        // Art Services
-        supabase
+        // Art Services — done_by has no FK, fetch it raw for manual resolution
+        (supabase as any)
           .from("art_services")
-          .select("id, created_at, service_name, quantity, sales, description, profiles!updated_by(full_name, sales_initials)")
+          .select("id, created_at, service_name, quantity, sales, description, done_by, profiles!updated_by(full_name, sales_initials)")
           .order("created_at", { ascending: false })
           .limit(500),
       ]);
@@ -136,31 +148,37 @@ export default function ActivityLog() {
         });
       });
 
-      // Machines
+      // Machines — prefer done_by (who entered), fall back to updated_by profile
       (machRes.data || []).forEach((r: any) => {
         const profile = r.profiles;
-        const emp = profile ? `${profile.full_name || ""}${profile.sales_initials ? ` (${profile.sales_initials})` : ""}`.trim() : "Unknown";
+        const profileName = profile ? `${profile.full_name || ""}${profile.sales_initials ? ` (${profile.sales_initials})` : ""}`.trim() : "";
+        const emp = resolveEmployee(r.done_by) !== "Unknown"
+          ? resolveEmployee(r.done_by)
+          : (profileName || "Unknown");
         combined.push({
           id: `mach-${r.id}`,
           created_at: r.created_at || "",
           module: "Machines",
           description: r.machine_type,
-          employee: emp || "Unknown",
+          employee: emp,
           amount: r.total_amount,
           extra: r.customer_name ? `Customer: ${r.customer_name}` : undefined,
         });
       });
 
-      // Art Services
+      // Art Services — prefer done_by (who entered), fall back to updated_by profile
       (artRes.data || []).forEach((r: any) => {
         const profile = r.profiles;
-        const emp = profile ? `${profile.full_name || ""}${profile.sales_initials ? ` (${profile.sales_initials})` : ""}`.trim() : "Unknown";
+        const profileName = profile ? `${profile.full_name || ""}${profile.sales_initials ? ` (${profile.sales_initials})` : ""}`.trim() : "";
+        const emp = resolveEmployee(r.done_by) !== "Unknown"
+          ? resolveEmployee(r.done_by)
+          : (profileName || "Unknown");
         combined.push({
           id: `art-${r.id}`,
           created_at: r.created_at || "",
           module: "Art Services",
           description: r.service_name,
-          employee: emp || "Unknown",
+          employee: emp,
           amount: r.sales,
           extra: r.description || undefined,
         });
