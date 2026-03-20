@@ -78,10 +78,16 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
     setFormErrors({});
   }, []);
 
+  const getPersonName = (id: string | null) => {
+    if (!id) return "-";
+    const p = salesProfiles.find(x => x.id === id);
+    return p?.full_name || p?.sales_initials || "Unknown";
+  };
+
   // Filter items based on search
   const filteredItems = items.filter(item =>
     item.job_description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.done_by && item.done_by.toLowerCase().includes(searchTerm.toLowerCase()))
+    getPersonName(item.done_by).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Calculate totals
@@ -701,7 +707,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                               {item.created_at ? new Date(item.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : "-"}
                             </TableCell>
                             <TableCell className="text-gray-600">
-                              {item.done_by ? salesProfiles.find(p => p.id === item.done_by)?.sales_initials || item.done_by : "-"}
+                              {getPersonName(item.done_by)}
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center gap-2 justify-end">
