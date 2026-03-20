@@ -841,12 +841,12 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader className="bg-muted/50">
-                    <TableRow className="border-b border-border hover:bg-muted/50">
+              <div className="overflow-x-auto overflow-y-auto max-h-[600px] rounded-b-xl">
+                <Table className="min-w-[1100px]">
+                  <TableHeader className="bg-gradient-to-r from-blue-50 to-purple-50 sticky top-0 z-10 shadow-sm">
+                    <TableRow className="border-b-2 border-blue-100 hover:bg-transparent">
                       {isAdmin && (
-                        <TableHead className="w-[50px]">
+                        <TableHead className="w-[44px] bg-gradient-to-r from-blue-50 to-purple-50">
                           <Checkbox
                             checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length}
                             onCheckedChange={toggleSelectAll}
@@ -855,18 +855,18 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                           />
                         </TableHead>
                       )}
-                      <TableHead className="w-[50px] font-semibold text-gray-700">#</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Category</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Item</TableHead>
-                      <TableHead className="font-semibold text-gray-700 text-left">Description</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Qty</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Stock Buying Price (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Total Value (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Selling Price</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Profit/Unit</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Stock Date</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Stock Alert</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
+                      <TableHead className="w-[44px] font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">#</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Category</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Item</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 text-left whitespace-nowrap">Description</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Qty</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Buying Price (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Total Value (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Selling Price</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Profit/Unit</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Stock Date</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Stock Alert</TableHead>
+                      <TableHead className="text-right font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
