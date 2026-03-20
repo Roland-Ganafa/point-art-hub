@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -38,11 +38,9 @@ interface UserRole {
   permissions: string[];
 }
 
-const UserPermissions = () => {
-  const [selectedRole, setSelectedRole] = useState("user");
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(["User Management"]);
-  const [permissions, setPermissions] = useState<Permission[]>([
+const STORAGE_KEY = "point-art-role-permissions";
+
+const DEFAULT_PERMISSIONS: Permission[] = [
     // User Management Permissions
     { id: "view_users", name: "View Users", description: "Can view user profiles and information", category: "User Management", enabled: true },
     { id: "create_users", name: "Create Users", description: "Can create new user accounts", category: "User Management", enabled: false },
@@ -70,14 +68,28 @@ const UserPermissions = () => {
     { id: "view_settings", name: "View Settings", description: "Can view system settings", category: "System", enabled: false },
     { id: "edit_settings", name: "Edit Settings", description: "Can modify system settings", category: "System", enabled: false },
     { id: "manage_backups", name: "Manage Backups", description: "Can create and restore backups", category: "System", enabled: false },
-  ]);
+];
+
+const UserPermissions = () => {
+  const [selectedRole, setSelectedRole] = useState("user");
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(["User Management"]);
+  const [permissions, setPermissions] = useState<Permission[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return DEFAULT_PERMISSIONS;
+  });
+
+  const allPermissionIds = DEFAULT_PERMISSIONS.map(p => p.id);
 
   const roleTemplates: UserRole[] = [
     {
       id: "admin",
       name: "Administrator",
       description: "Full access to all system features",
-      permissions: permissions.map(p => p.id)
+      permissions: allPermissionIds
     },
     {
       id: "manager",
@@ -131,30 +143,19 @@ const UserPermissions = () => {
 
   const handleSavePermissions = async () => {
     try {
-      // Show success message
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(permissions));
       const roleName = roleTemplates.find(r => r.id === selectedRole)?.name;
-      setMessage({ 
-        type: 'success', 
-        text: `Permissions for ${roleName} role have been updated.` 
+      setMessage({
+        type: 'success',
+        text: `Permissions for ${roleName} role saved successfully.`
       });
-      
-      // In a real implementation, you would:
-      // 1. Save to Supabase permissions table
-      // 2. Log the action with auditLogger
-      // 3. Update user roles in the database
-      
-      console.log('Saving permissions:', {
-        role: selectedRole,
-        enabled_permissions: permissions.filter(p => p.enabled).map(p => p.id)
-      });
-      
-      setTimeout(() => setMessage(null), 5000);
+      setTimeout(() => setMessage(null), 4000);
     } catch (error) {
-      setMessage({ 
-        type: 'error', 
-        text: 'Failed to update permissions' 
+      setMessage({
+        type: 'error',
+        text: 'Failed to save permissions. Please try again.'
       });
-      setTimeout(() => setMessage(null), 5000);
+      setTimeout(() => setMessage(null), 4000);
     }
   };
 

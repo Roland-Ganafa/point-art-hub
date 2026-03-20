@@ -261,11 +261,37 @@ const CustomerManagement = () => {
                          (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
                          (customer.phone && customer.phone.includes(searchTerm)) ||
                          (customer.company && customer.company.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+
     const matchesType = filterType === "all" || customer.customer_type === filterType;
-    
+
     return matchesSearch && matchesType;
   });
+
+  const exportCustomers = () => {
+    const rows = [
+      ['Name', 'Email', 'Phone', 'Company', 'Type', 'Total Purchases', 'Outstanding Balance', 'Credit Limit', 'Status'],
+      ...filteredCustomers.map(c => [
+        c.full_name,
+        c.email || '',
+        c.phone || '',
+        c.company || '',
+        c.customer_type,
+        c.total_purchases.toString(),
+        c.outstanding_balance.toString(),
+        c.credit_limit.toString(),
+        c.is_active ? 'Active' : 'Inactive',
+      ]),
+    ];
+    const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `customers-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: 'Exported', description: `${filteredCustomers.length} customers exported to CSV` });
+  };
 
   // Calculate statistics
   const stats = {
@@ -389,9 +415,9 @@ const CustomerManagement = () => {
                   </SelectContent>
                 </Select>
                 
-                <Button variant="outline" className="border-green-200 hover:bg-green-50">
+                <Button variant="outline" className="border-green-200 hover:bg-green-50" onClick={exportCustomers}>
                   <Download className="h-4 w-4 mr-2" />
-                  Export
+                  Export CSV
                 </Button>
               </div>
             </div>

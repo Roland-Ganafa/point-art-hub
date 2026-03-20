@@ -1,12 +1,51 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings, Bell, HardDrive, Building } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Settings, Bell, HardDrive, Building, Save, CheckCircle } from 'lucide-react';
 import GeneralSettings from '@/components/settings/GeneralSettings';
 import NotificationSettings from '@/components/settings/NotificationSettings';
 import BackupSettings from '@/components/settings/BackupSettings';
 
+const BUSINESS_KEY = "point-art-business-settings";
+
+interface BusinessSettings {
+  business_name: string;
+  address: string;
+  phone: string;
+  email: string;
+  tin: string;
+  currency: string;
+  website: string;
+}
+
+const DEFAULT_BUSINESS: BusinessSettings = {
+  business_name: "Point Art Hub",
+  address: "",
+  phone: "",
+  email: "",
+  tin: "",
+  currency: "UGX",
+  website: "",
+};
+
 const SettingsPage = () => {
+  const [business, setBusiness] = useState<BusinessSettings>(() => {
+    try { const s = localStorage.getItem(BUSINESS_KEY); return s ? JSON.parse(s) : DEFAULT_BUSINESS; } catch { return DEFAULT_BUSINESS; }
+  });
+  const [saved, setSaved] = useState(false);
+
+  const saveBusiness = () => {
+    try {
+      localStorage.setItem(BUSINESS_KEY, JSON.stringify(business));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {}
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -94,11 +133,56 @@ const SettingsPage = () => {
                 Business Information
               </CardTitle>
               <CardDescription>
-                Update your business details for invoices and reports
+                Your business details used on invoices, reports, and exports
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Business settings are managed in the General tab.</p>
+            <CardContent className="space-y-5">
+              {saved && (
+                <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-2 text-sm">
+                  <CheckCircle className="h-4 w-4" /> Business settings saved successfully.
+                </div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Business Name</Label>
+                  <Input value={business.business_name} onChange={e => setBusiness(b => ({ ...b, business_name: e.target.value }))} placeholder="Point Art Hub" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Phone Number</Label>
+                  <Input value={business.phone} onChange={e => setBusiness(b => ({ ...b, phone: e.target.value }))} placeholder="+256 700 000000" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Email Address</Label>
+                  <Input type="email" value={business.email} onChange={e => setBusiness(b => ({ ...b, email: e.target.value }))} placeholder="info@pointarthub.com" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Website</Label>
+                  <Input value={business.website} onChange={e => setBusiness(b => ({ ...b, website: e.target.value }))} placeholder="www.pointarthub.com" />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label>Business Address</Label>
+                  <Input value={business.address} onChange={e => setBusiness(b => ({ ...b, address: e.target.value }))} placeholder="Street, City, Country" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>TIN / Tax ID</Label>
+                  <Input value={business.tin} onChange={e => setBusiness(b => ({ ...b, tin: e.target.value }))} placeholder="1234567890" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Default Currency</Label>
+                  <Select value={business.currency} onValueChange={v => setBusiness(b => ({ ...b, currency: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="UGX">UGX — Ugandan Shilling</SelectItem>
+                      <SelectItem value="USD">USD — US Dollar</SelectItem>
+                      <SelectItem value="KES">KES — Kenyan Shilling</SelectItem>
+                      <SelectItem value="TZS">TZS — Tanzanian Shilling</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Button onClick={saveBusiness} className="bg-primary hover:bg-primary/90">
+                <Save className="h-4 w-4 mr-2" /> Save Business Settings
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>

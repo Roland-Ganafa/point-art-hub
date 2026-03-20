@@ -28,6 +28,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import ExportDialog from "@/components/ExportDialog";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import CustomLoader from "@/components/ui/CustomLoader";
 import { useUser } from '@/contexts/UserContext';
 
@@ -347,9 +349,95 @@ const Reports = () => {
       URL.revokeObjectURL(url);
     }
 
+    if (format === 'pdf') {
+      const doc = new jsPDF();
+      const today = new Date().toLocaleDateString('en-GB');
+
+      // Header
+      doc.setFillColor(234, 88, 12);
+      doc.rect(0, 0, 210, 28, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Point Art Hub — Sales Report', 14, 12);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Period: ${dateRange} | Generated: ${today}`, 14, 22);
+
+      // Summary
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Summary', 14, 38);
+
+      autoTable(doc, {
+        startY: 42,
+        head: [['Metric', 'Value']],
+        body: [
+          ['Total Sales', formatUGX(reportData.totalSales)],
+          ['Total Profit', formatUGX(reportData.totalProfit)],
+          ['Total Expenses', formatUGX(reportData.totalExpenses)],
+          ['Items Sold', reportData.itemsSold.toString()],
+          ['Services Done', reportData.servicesDone.toString()],
+        ],
+        headStyles: { fillColor: [234, 88, 12] },
+        alternateRowStyles: { fillColor: [255, 247, 237] },
+        styles: { fontSize: 10 },
+      });
+
+      // Top Selling Items
+      const afterSummary = (doc as any).lastAutoTable.finalY + 10;
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Top Selling Items', 14, afterSummary);
+
+      autoTable(doc, {
+        startY: afterSummary + 4,
+        head: [['Item Name', 'Qty Sold', 'Revenue (UGX)']],
+        body: reportData.topSellingItems.map(item => [
+          item.item_name,
+          item.total_sold.toString(),
+          formatUGX(item.total_revenue),
+        ]),
+        headStyles: { fillColor: [124, 58, 237] },
+        alternateRowStyles: { fillColor: [245, 243, 255] },
+        styles: { fontSize: 10 },
+      });
+
+      // Sales by Category
+      const afterItems = (doc as any).lastAutoTable.finalY + 10;
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Sales by Category', 14, afterItems);
+
+      autoTable(doc, {
+        startY: afterItems + 4,
+        head: [['Category', 'Sales (UGX)', 'Profit (UGX)']],
+        body: reportData.salesByCategory.map(cat => [
+          cat.category,
+          formatUGX(cat.sales),
+          formatUGX(cat.profit),
+        ]),
+        headStyles: { fillColor: [5, 150, 105] },
+        alternateRowStyles: { fillColor: [236, 253, 245] },
+        styles: { fontSize: 10 },
+      });
+
+      // Footer
+      const pageCount = doc.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(`Point Art Hub | Page ${i} of ${pageCount}`, 14, 290);
+      }
+
+      doc.save(`point-art-hub-report-${dateRange}-${new Date().toISOString().split('T')[0]}.pdf`);
+    }
+
     toast({
-      title: 'Export Started',
-      description: `Report exported successfully in ${format.toUpperCase()} format`,
+      title: 'Export Complete',
+      description: `Report exported successfully as ${format.toUpperCase()}`,
     });
   };
 

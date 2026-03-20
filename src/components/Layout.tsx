@@ -124,21 +124,8 @@ const Layout = ({ children }: LayoutProps) => {
           <p className="text-gray-700 dark:text-gray-300 mb-4">{authError}</p>
           <div className="space-y-3">
             <Button
-              onClick={() => navigate('/bypass-auth')}
-              className="w-full bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 font-semibold"
-            >
-              Enter Development Mode
-            </Button>
-            <Button
-              onClick={() => navigate('/direct-login')}
-              className="w-full bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 transition-all duration-300 text-white font-medium shadow-md hover:shadow-lg"
-            >
-              Use Fast Login
-            </Button>
-            <Button
-              variant="outline"
               onClick={() => navigate('/auth')}
-              className="w-full"
+              className="w-full bg-primary hover:bg-primary/90"
             >
               Go to Login
             </Button>
@@ -156,41 +143,12 @@ const Layout = ({ children }: LayoutProps) => {
   }
 
   if (!user) {
-    // Show redirect message while navigation happens
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <div className="text-lg mb-4">Redirecting to login...</div>
-        <div className="flex space-x-4">
-          <Button
-            onClick={() => navigate('/bypass-auth')}
-            className="bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 font-semibold"
-          >
-            Enter Development Mode
-          </Button>
-        </div>
-        <div className="flex space-x-4 mt-4">
-          <Button
-            onClick={() => {
-              if (redirectTimer) window.clearTimeout(redirectTimer);
-              window.location.href = '/auth';
-            }}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            Standard Login
-          </Button>
-          <Button
-            onClick={() => {
-              if (redirectTimer) window.clearTimeout(redirectTimer);
-              window.location.href = '/direct-login';
-            }}
-            className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 transition-all duration-300 text-white font-medium shadow-md hover:shadow-lg"
-          >
-            Fast Login
-          </Button>
-        </div>
-        <p className="mt-4 text-sm text-gray-500 max-w-md text-center">
-          If you're experiencing connection timeouts, try the Fast Login option which bypasses session checks.
-        </p>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-muted-foreground">Redirecting to login...</p>
+        <Button onClick={() => navigate('/auth')} className="bg-primary hover:bg-primary/90">
+          Go to Login
+        </Button>
       </div>
     );
   }

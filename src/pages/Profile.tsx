@@ -379,7 +379,7 @@ const ProfilePage = () => {
                   <Settings className="h-4 w-4 mr-2" />
                   Account Settings
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full" onClick={() => navigate('/activity-log')}>
                   <Activity className="h-4 w-4 mr-2" />
                   View Activity
                 </Button>

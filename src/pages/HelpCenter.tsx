@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,6 +62,8 @@ interface FAQ {
 const HelpCenter = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Sample help articles
   const helpArticles: HelpArticle[] = [
@@ -543,7 +547,10 @@ Advanced features for system administrators.
                     <p className="text-gray-600 text-sm mb-3">
                       {video.description}
                     </p>
-                    <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
+                    <Button
+                      className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                      onClick={() => toast({ title: 'Coming Soon', description: `"${video.title}" tutorial video will be available shortly.` })}
+                    >
                       <Play className="h-4 w-4 mr-2" />
                       Watch Now
                     </Button>
@@ -596,7 +603,7 @@ Advanced features for system administrators.
                   <p className="text-green-700 mb-4">
                     Get your inventory up and running in 5 minutes with this essential guide.
                   </p>
-                  <Button variant="outline" className="border-green-300 text-green-700 hover:bg-green-200">
+                  <Button variant="outline" className="border-green-300 text-green-700 hover:bg-green-200" onClick={() => navigate('/')}>
                     Start Guide
                     <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
@@ -614,7 +621,7 @@ Advanced features for system administrators.
                   <p className="text-blue-700 mb-4">
                     Learn to process sales efficiently and track performance metrics.
                   </p>
-                  <Button variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-200">
+                  <Button variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-200" onClick={() => navigate('/')}>
                     Start Guide
                     <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
@@ -632,7 +639,7 @@ Advanced features for system administrators.
                   <p className="text-purple-700 mb-4">
                     Master reporting tools to gain valuable business insights.
                   </p>
-                  <Button variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-200">
+                  <Button variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-200" onClick={() => navigate('/reports')}>
                     Start Guide
                     <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
@@ -650,7 +657,7 @@ Advanced features for system administrators.
                   <p className="text-orange-700 mb-4">
                     Configure your system settings for optimal performance.
                   </p>
-                  <Button variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-200">
+                  <Button variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-200" onClick={() => navigate('/settings')}>
                     Start Guide
                     <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
@@ -668,11 +675,19 @@ Advanced features for system administrators.
               Our support team is here to help you succeed. Get personalized assistance with any questions or issues.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20">
+              <Button
+                variant="outline"
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+                onClick={() => window.open('mailto:support@pointarthub.com', '_blank')}
+              >
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Contact Support
               </Button>
-              <Button variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20">
+              <Button
+                variant="outline"
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+                onClick={() => toast({ title: 'Training Request', description: 'Contact support@pointarthub.com to schedule a training session.' })}
+              >
                 <Book className="h-4 w-4 mr-2" />
                 Schedule Training
               </Button>

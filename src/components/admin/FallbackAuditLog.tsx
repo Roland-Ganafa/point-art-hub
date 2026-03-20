@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertTriangle, Database, Copy, CheckCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * FallbackAuditLog Component
@@ -11,6 +12,7 @@ import { RefreshCw, AlertTriangle, Database, Copy, CheckCircle } from "lucide-re
 const FallbackAuditLog = () => {
   const [copied, setCopied] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const { toast } = useToast();
 
   // SQL script to create the audit_log table
   const createTableSQL = `-- Create audit_log table for tracking admin actions
