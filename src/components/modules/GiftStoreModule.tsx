@@ -702,7 +702,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                       <Label className="font-medium">Low Stock Threshold</Label>
                       <Input
                         type="number"
-                        min="1"
+                        min="0"
                         value={formData.low_stock_threshold}
                         onChange={(e) => setFormData({ ...formData, low_stock_threshold: e.target.value })}
                         className={`border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200 ${formErrors.low_stock_threshold ? "border-red-500 focus:border-red-500" : ""}`}

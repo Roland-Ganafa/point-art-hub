@@ -762,7 +762,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                       <Label className="text-foreground">Low Stock Threshold</Label>
                       <Input
                         type="number"
-                        min="1"
+                        min="0"
                         value={formData.low_stock_threshold}
                         onChange={(e) => setFormData({ ...formData, low_stock_threshold: e.target.value })}
                       />
