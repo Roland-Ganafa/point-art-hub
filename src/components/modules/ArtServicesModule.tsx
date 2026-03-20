@@ -637,7 +637,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
+              <div className="">
                 <Table>
                   <TableHeader className="bg-gradient-to-r from-gray-50 to-blue-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
                     <TableRow className="border-b border-blue-100">
@@ -829,7 +829,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
               </div>
             </div>
 
-            <div className="overflow-x-auto overflow-y-auto max-h-[400px]">
+            <div className="">
               <Table>
                 <TableHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
                   <TableRow>

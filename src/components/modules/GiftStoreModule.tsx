@@ -757,8 +757,8 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
-                <Table className="min-w-[1200px]">
+              <div className="">
+                <Table>
                   <TableHeader className="bg-gradient-to-r from-gray-50 to-green-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
                     <TableRow className="border-b border-green-100">
                       {isAdmin && (
@@ -951,8 +951,8 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto overflow-y-auto max-h-[500px]">
-                <Table className="min-w-[900px]">
+              <div className="">
+                <Table>
                   <TableHeader className="bg-gradient-to-r from-gray-50 to-red-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
                     <TableRow className="border-b border-red-100">
                       <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">#</TableHead>

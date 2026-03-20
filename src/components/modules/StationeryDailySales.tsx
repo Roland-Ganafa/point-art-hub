@@ -759,7 +759,7 @@ const StationeryDailySales = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
+          <div className="">
             <Table>
               <TableHeader className="bg-gradient-to-r from-gray-50 to-blue-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
                 <TableRow className="border-b border-blue-100">
