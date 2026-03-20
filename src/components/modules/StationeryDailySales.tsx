@@ -761,7 +761,7 @@ const StationeryDailySales = () => {
         <CardContent className="p-0">
           <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
             <Table>
-              <TableHeader className="bg-gradient-to-r from-gray-50 to-blue-50 sticky top-0 z-10 shadow-sm">
+              <TableHeader className="bg-gradient-to-r from-gray-50 to-blue-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
                 <TableRow className="border-b border-blue-100">
                   <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Category</TableHead>
                   <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Item</TableHead>

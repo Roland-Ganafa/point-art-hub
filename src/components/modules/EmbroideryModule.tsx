@@ -638,7 +638,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
             <CardContent className="p-0">
               <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
                 <Table>
-                  <TableHeader className="bg-gradient-to-r from-gray-50 to-purple-50 sticky top-0 z-10 shadow-sm">
+                  <TableHeader className="bg-gradient-to-r from-gray-50 to-purple-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
                     <TableRow className="border-b border-purple-100">
                       {isAdmin && (
                         <TableHead className="w-[50px] bg-gradient-to-r from-gray-50 to-purple-50">
@@ -829,7 +829,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
               <CardContent className="p-0">
                 <div className="overflow-x-auto overflow-y-auto max-h-[400px]">
                   <Table>
-                    <TableHeader className="bg-gradient-to-r from-gray-50 to-purple-50 sticky top-0 z-10 shadow-sm">
+                    <TableHeader className="bg-gradient-to-r from-gray-50 to-purple-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
                       <TableRow className="border-b border-purple-100">
                         <TableHead className="w-[50px] font-semibold text-gray-700 text-left bg-gradient-to-r from-gray-50 to-purple-50 whitespace-nowrap">#</TableHead>
                         <TableHead className="font-semibold text-gray-700 text-left bg-gradient-to-r from-gray-50 to-purple-50 whitespace-nowrap">Job Description</TableHead>

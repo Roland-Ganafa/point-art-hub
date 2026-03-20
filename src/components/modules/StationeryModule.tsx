@@ -843,7 +843,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
             <CardContent className="p-0">
               <div className="overflow-x-auto overflow-y-auto max-h-[600px] rounded-b-xl">
                 <Table className="min-w-[1100px]">
-                  <TableHeader className="bg-gradient-to-r from-blue-50 to-purple-50 sticky top-0 z-10 shadow-sm">
+                  <TableHeader className="bg-gradient-to-r from-blue-50 to-purple-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
                     <TableRow className="border-b-2 border-blue-100 hover:bg-transparent">
                       {isAdmin && (
                         <TableHead className="w-[44px] bg-gradient-to-r from-blue-50 to-purple-50">
@@ -1053,7 +1053,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                 <CardContent className="p-0">
                   <div className="overflow-x-auto overflow-y-auto max-h-[500px]">
                     <Table>
-                      <TableHeader className="bg-red-50/50 sticky top-0 z-10 shadow-sm">
+                      <TableHeader className="bg-red-50/50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
                         <TableRow className="border-b border-red-100">
                           <TableHead className="font-semibold text-gray-700 bg-red-50 whitespace-nowrap">#</TableHead>
                           <TableHead className="font-semibold text-gray-700 bg-red-50 whitespace-nowrap">Category</TableHead>
