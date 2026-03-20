@@ -803,21 +803,21 @@ const GiftsDailySales = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
                 <Table>
-                  <TableHeader className="bg-gradient-to-r from-gray-50 to-green-50">
+                  <TableHeader className="bg-gradient-to-r from-gray-50 to-green-50 sticky top-0 z-10 shadow-sm">
                     <TableRow className="border-b border-green-100">
-                      <TableHead className="font-semibold text-gray-700">Category</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Item</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Description</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Stock Buying Price</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Quantity</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Selling Price</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Total Value</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Profit</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Time</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Added By</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Category</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Item</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Description</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Stock Buying Price</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Quantity</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Selling Price</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Total Value</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Profit</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Time</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Added By</TableHead>
+                      <TableHead className="text-right font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -952,19 +952,19 @@ const GiftsDailySales = () => {
 
             <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
               <CardContent className="p-0">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto overflow-y-auto max-h-[500px]">
                   <Table>
-                    <TableHeader className="bg-gradient-to-r from-gray-50 to-green-50">
+                    <TableHeader className="bg-gradient-to-r from-gray-50 to-green-50 sticky top-0 z-10 shadow-sm">
                       <TableRow className="border-b border-green-100">
-                        <TableHead className="font-semibold text-gray-700">#</TableHead>
-                        <TableHead className="font-semibold text-gray-700">Category</TableHead>
-                        <TableHead className="font-semibold text-gray-700">Item Name</TableHead>
-                        <TableHead className="font-semibold text-gray-700">Description</TableHead>
-                        <TableHead className="font-semibold text-gray-700">Qty</TableHead>
-                        <TableHead className="font-semibold text-gray-700">Cost (UGX)</TableHead>
-                        <TableHead className="font-semibold text-gray-700">Price (UGX)</TableHead>
-                        <TableHead className="font-semibold text-gray-700">Profit/Unit</TableHead>
-                        <TableHead className="font-semibold text-gray-700">Date Added</TableHead>
+                        <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">#</TableHead>
+                        <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Category</TableHead>
+                        <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Item Name</TableHead>
+                        <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Description</TableHead>
+                        <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Qty</TableHead>
+                        <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Cost (UGX)</TableHead>
+                        <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Price (UGX)</TableHead>
+                        <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Profit/Unit</TableHead>
+                        <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Date Added</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

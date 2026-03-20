@@ -736,11 +736,11 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
                 <Table>
-                  <TableHeader className="bg-gradient-to-r from-gray-50 to-blue-50">
+                  <TableHeader className="bg-gradient-to-r from-gray-50 to-blue-50 sticky top-0 z-10 shadow-sm">
                     <TableRow className="border-b border-blue-100">
-                      <TableHead className="w-[50px]">
+                      <TableHead className="w-[50px] bg-gradient-to-r from-gray-50 to-blue-50">
                         <input
                           type="checkbox"
                           checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length}
@@ -748,18 +748,18 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                           className="accent-blue-600 h-4 w-4"
                         />
                       </TableHead>
-                      <TableHead className="w-[30px] font-semibold text-gray-700">#</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Machine Type</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Service Description</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Quantity</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Rate (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Sales (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Expenditure</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Profit</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Date</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Time</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Done By</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
+                      <TableHead className="w-[30px] font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">#</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Machine Type</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Service Description</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Quantity</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Rate (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Sales (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Expenditure</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Profit</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Date</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Time</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Done By</TableHead>
+                      <TableHead className="text-right font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -940,14 +940,14 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overflow-y-auto max-h-[400px]">
               <Table>
-                <TableHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
+                <TableHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 sticky top-0 z-10 shadow-sm">
                   <TableRow>
-                    <TableHead className="w-[50px] font-semibold text-gray-700">#</TableHead>
-                    <TableHead className="font-semibold text-gray-700 text-left">Machine Category</TableHead>
-                    <TableHead className="text-right font-semibold text-gray-700">Total Sales (UGX)</TableHead>
-                    <TableHead className="text-right font-semibold text-gray-700">Total Profit (UGX)</TableHead>
+                    <TableHead className="w-[50px] font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-cyan-50 whitespace-nowrap">#</TableHead>
+                    <TableHead className="font-semibold text-gray-700 text-left bg-gradient-to-r from-blue-50 to-cyan-50 whitespace-nowrap">Machine Category</TableHead>
+                    <TableHead className="text-right font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-cyan-50 whitespace-nowrap">Total Sales (UGX)</TableHead>
+                    <TableHead className="text-right font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-cyan-50 whitespace-nowrap">Total Profit (UGX)</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

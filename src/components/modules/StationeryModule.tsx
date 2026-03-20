@@ -1051,19 +1051,19 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto overflow-y-auto max-h-[500px]">
                     <Table>
-                      <TableHeader className="bg-red-50/50">
+                      <TableHeader className="bg-red-50/50 sticky top-0 z-10 shadow-sm">
                         <TableRow className="border-b border-red-100">
-                          <TableHead className="font-semibold text-gray-700">#</TableHead>
-                          <TableHead className="font-semibold text-gray-700">Category</TableHead>
-                          <TableHead className="font-semibold text-gray-700">Item Name</TableHead>
-                          <TableHead className="font-semibold text-gray-700">Description</TableHead>
-                          <TableHead className="font-semibold text-gray-700 text-center">Current Stock</TableHead>
-                          <TableHead className="font-semibold text-gray-700 text-center">Min. Threshold</TableHead>
-                          <TableHead className="font-semibold text-gray-700 text-center">Status</TableHead>
-                          <TableHead className="font-semibold text-gray-700">Buying Price</TableHead>
-                          <TableHead className="font-semibold text-gray-700">Selling Price</TableHead>
+                          <TableHead className="font-semibold text-gray-700 bg-red-50 whitespace-nowrap">#</TableHead>
+                          <TableHead className="font-semibold text-gray-700 bg-red-50 whitespace-nowrap">Category</TableHead>
+                          <TableHead className="font-semibold text-gray-700 bg-red-50 whitespace-nowrap">Item Name</TableHead>
+                          <TableHead className="font-semibold text-gray-700 bg-red-50 whitespace-nowrap">Description</TableHead>
+                          <TableHead className="font-semibold text-gray-700 text-center bg-red-50 whitespace-nowrap">Current Stock</TableHead>
+                          <TableHead className="font-semibold text-gray-700 text-center bg-red-50 whitespace-nowrap">Min. Threshold</TableHead>
+                          <TableHead className="font-semibold text-gray-700 text-center bg-red-50 whitespace-nowrap">Status</TableHead>
+                          <TableHead className="font-semibold text-gray-700 bg-red-50 whitespace-nowrap">Buying Price</TableHead>
+                          <TableHead className="font-semibold text-gray-700 bg-red-50 whitespace-nowrap">Selling Price</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>

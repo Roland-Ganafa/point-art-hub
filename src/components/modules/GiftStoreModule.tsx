@@ -757,12 +757,12 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
                 <Table className="min-w-[1200px]">
-                  <TableHeader className="bg-gradient-to-r from-gray-50 to-green-50">
+                  <TableHeader className="bg-gradient-to-r from-gray-50 to-green-50 sticky top-0 z-10 shadow-sm">
                     <TableRow className="border-b border-green-100">
                       {isAdmin && (
-                        <TableHead className="w-[50px]">
+                        <TableHead className="w-[50px] bg-gradient-to-r from-gray-50 to-green-50">
                           <Checkbox
                             checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length}
                             onCheckedChange={toggleSelectAll}
@@ -771,18 +771,18 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                           />
                         </TableHead>
                       )}
-                      <TableHead className="w-[50px] font-semibold text-gray-700">#</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Category</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Item</TableHead>
-                      <TableHead className="font-semibold text-gray-700 text-left">Description</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Qty</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Rate (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Total Value (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Selling Price</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Profit/Unit</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Stock Date</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Stock Alert</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
+                      <TableHead className="w-[50px] font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">#</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Category</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Item</TableHead>
+                      <TableHead className="font-semibold text-gray-700 text-left bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Description</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Qty</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Rate (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Total Value (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Selling Price</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Profit/Unit</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Stock Date</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Stock Alert</TableHead>
+                      <TableHead className="text-right font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -951,19 +951,19 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto overflow-y-auto max-h-[500px]">
                 <Table className="min-w-[900px]">
-                  <TableHeader className="bg-gradient-to-r from-gray-50 to-red-50">
+                  <TableHeader className="bg-gradient-to-r from-gray-50 to-red-50 sticky top-0 z-10 shadow-sm">
                     <TableRow className="border-b border-red-100">
-                      <TableHead className="font-semibold text-gray-700">#</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Category</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Item</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Description</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Current Stock</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Min Threshold</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Status</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Rate (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700">Selling Price (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">#</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">Category</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">Item</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">Description</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">Current Stock</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">Min Threshold</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">Status</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">Rate (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">Selling Price (UGX)</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
