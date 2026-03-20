@@ -446,7 +446,7 @@ const StationeryDailySales = () => {
     <div className="space-y-8 p-6">
       {/* Offline status indicator */}
       {isOffline && (
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded">
+        <div className="bg-yellow-100 dark:bg-yellow-900/30 border-l-4 border-yellow-500 dark:border-yellow-600 p-4 rounded">
           <div className="flex items-center">
             <WifiOff className="h-5 w-5 text-yellow-600 mr-2" />
             <p className="text-yellow-700 font-medium">Offline Mode: Sales will be saved locally and synced when online</p>
@@ -473,7 +473,7 @@ const StationeryDailySales = () => {
             <Button
               variant="outline"
               size="icon"
-              className="h-9 w-9 border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+              className="h-9 w-9 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:border-blue-300 transition-all duration-200"
               onClick={() => setSelectedDate(prev => subDays(prev, 1))}
               title="Previous day"
             >
@@ -484,8 +484,8 @@ const StationeryDailySales = () => {
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className={`min-w-[200px] justify-start text-left font-medium border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 ${isToday(selectedDate)
-                    ? "bg-gradient-to-r from-blue-50 to-purple-50 border-blue-300 shadow-sm"
+                  className={`min-w-[200px] justify-start text-left font-medium border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:border-blue-300 transition-all duration-200 ${isToday(selectedDate)
+                    ? "bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 border-blue-300 shadow-sm"
                     : ""
                     }`}
                 >
@@ -496,12 +496,12 @@ const StationeryDailySales = () => {
                   }
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-white shadow-xl border-blue-100" align="end">
-                <div className="p-2 border-b border-blue-100">
+              <PopoverContent className="w-auto p-0 bg-white dark:bg-gray-900 shadow-xl border-blue-100 dark:border-blue-900/50" align="end">
+                <div className="p-2 border-b border-blue-100 dark:border-blue-900/50">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full text-blue-600 hover:bg-blue-50 font-medium"
+                    className="w-full text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20 font-medium"
                     onClick={() => {
                       setSelectedDate(new Date());
                       setIsCalendarOpen(false);
@@ -528,7 +528,7 @@ const StationeryDailySales = () => {
             <Button
               variant="outline"
               size="icon"
-              className="h-9 w-9 border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+              className="h-9 w-9 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:border-blue-300 transition-all duration-200"
               onClick={() => setSelectedDate(prev => addDays(prev, 1))}
               title="Next day"
             >
@@ -584,7 +584,7 @@ const StationeryDailySales = () => {
                 )}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
+            <DialogContent className="max-w-md bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-0 shadow-2xl">
               <DialogHeader>
                 <DialogTitle className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                   {editingId ? '✏️ Edit Sale' : '✨ Record New Sale'}
@@ -608,7 +608,7 @@ const StationeryDailySales = () => {
                       });
                     }}
                   >
-                    <SelectTrigger className="border-blue-200 focus:border-blue-400 focus:ring-blue-200">
+                    <SelectTrigger className="border-blue-200 dark:border-blue-800 focus:border-blue-400 focus:ring-blue-200">
                       <SelectValue placeholder="Select item" />
                     </SelectTrigger>
                     <SelectContent>
@@ -629,7 +629,7 @@ const StationeryDailySales = () => {
                   <Input
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                    className="border-blue-200 dark:border-blue-800 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
                   />
                 </div>
 
@@ -642,7 +642,7 @@ const StationeryDailySales = () => {
                       value={formData.quantity}
                       onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                       required
-                      className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                      className="border-blue-200 dark:border-blue-800 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
                     />
                   </div>
                   <div className="space-y-2">
@@ -651,7 +651,7 @@ const StationeryDailySales = () => {
                       type="date"
                       value={formData.date}
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                      className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                      className="border-blue-200 dark:border-blue-800 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
                     />
                   </div>
                 </div>
@@ -666,7 +666,7 @@ const StationeryDailySales = () => {
                       value={formData.rate}
                       onChange={(e) => setFormData({ ...formData, rate: e.target.value })}
                       required
-                      className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                      className="border-blue-200 dark:border-blue-800 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
                     />
                   </div>
                   <div className="space-y-2">
@@ -678,7 +678,7 @@ const StationeryDailySales = () => {
                       value={formData.selling_price}
                       onChange={(e) => setFormData({ ...formData, selling_price: e.target.value })}
                       required
-                      className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                      className="border-blue-200 dark:border-blue-800 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
                     />
                   </div>
                 </div>
@@ -691,7 +691,7 @@ const StationeryDailySales = () => {
                   <Input
                     value={calculatedProfit.toFixed(2)}
                     disabled
-                    className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 font-medium"
+                    className="bg-gradient-to-r from-green-50 dark:from-green-950/30 to-emerald-50 border-green-200 dark:border-green-800 font-medium"
                   />
                 </div>
 
@@ -735,8 +735,8 @@ const StationeryDailySales = () => {
         </div>
       </div>
 
-      <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-blue-50 via-purple-50 to-indigo-50 border-b border-blue-100">
+      <Card className="border-0 shadow-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-blue-50 dark:from-blue-950/30 via-purple-50 to-indigo-50 dark:to-indigo-950/30 border-b border-blue-100 dark:border-blue-900/50">
           <CardTitle className="text-2xl font-bold flex items-center gap-3">
             <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white">
               <Package2 className="h-6 w-6" />
@@ -761,19 +761,19 @@ const StationeryDailySales = () => {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table className="w-full">
-              <TableHeader className="bg-gradient-to-r from-gray-50 to-blue-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
-                <TableRow className="border-b border-blue-100">
-                  <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Category</TableHead>
-                  <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Item</TableHead>
-                  <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Description</TableHead>
-                  <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Stock Buying Price</TableHead>
-                  <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Quantity</TableHead>
-                  <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Selling Price</TableHead>
-                  <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Total Value</TableHead>
-                  <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Profit</TableHead>
-                  <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Time</TableHead>
-                  <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Added By</TableHead>
-                  <TableHead className="text-right font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Actions</TableHead>
+              <TableHeader className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
+                <TableRow className="border-b border-blue-100 dark:border-blue-900/50">
+                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Category</TableHead>
+                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Item</TableHead>
+                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Description</TableHead>
+                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Stock Buying Price</TableHead>
+                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Quantity</TableHead>
+                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Selling Price</TableHead>
+                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Total Value</TableHead>
+                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Profit</TableHead>
+                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Time</TableHead>
+                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Added By</TableHead>
+                  <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -782,21 +782,21 @@ const StationeryDailySales = () => {
                     return (
                       <TableRow
                         key={item.id}
-                        className="group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-blue-50 hover:to-purple-50"
+                        className="group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-blue-50 dark:hover:from-blue-950/30 dark:from-blue-950/30 hover:to-purple-50 dark:hover:to-purple-950/30 dark:to-purple-950/30"
                         style={{ animationDelay: `${index * 50}ms` }}
                       >
-                        <TableCell className="font-medium text-gray-600">{getItemCategory(item.item_id)}</TableCell>
-                        <TableCell className="font-semibold text-gray-800 max-w-xs truncate">{getItemName(item.item_id)}</TableCell>
-                        <TableCell className="text-gray-600">{item.description || "-"}</TableCell>
+                        <TableCell className="font-medium text-gray-600 dark:text-gray-400">{getItemCategory(item.item_id)}</TableCell>
+                        <TableCell className="font-semibold text-gray-800 dark:text-gray-200 max-w-xs truncate">{getItemName(item.item_id)}</TableCell>
+                        <TableCell className="text-gray-600 dark:text-gray-400">{item.description || "-"}</TableCell>
                         <TableCell className="font-medium text-blue-600">UGX {formatUGX(item.rate)}</TableCell>
                         <TableCell className="font-medium">{item.quantity}</TableCell>
                         <TableCell className="font-medium text-purple-600">UGX {formatUGX(item.selling_price)}</TableCell>
                         <TableCell className="font-bold text-indigo-700">UGX {formatUGX(item.selling_price * item.quantity)}</TableCell>
                         <TableCell className="font-bold text-green-600">UGX {formatUGX((item.selling_price - (item.rate || 0)) * item.quantity)}</TableCell>
-                        <TableCell className="text-gray-500 text-xs">
+                        <TableCell className="text-gray-500 dark:text-gray-400 text-xs">
                           {item.created_at ? new Date(item.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : "-"}
                         </TableCell>
-                        <TableCell className="text-gray-600">
+                        <TableCell className="text-gray-600 dark:text-gray-400">
                           {item.sold_by ? getSalesPersonName(item.sold_by) : "-"}
                         </TableCell>
                         <TableCell className="text-right">
@@ -804,7 +804,7 @@ const StationeryDailySales = () => {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 hover:bg-blue-100 hover:scale-110 transition-all duration-200"
+                              className="h-8 w-8 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:scale-110 transition-all duration-200"
                               onClick={() => handleEdit(item)}
                               disabled={isLoading} // Disable edit button while loading/saving
                             >
@@ -813,7 +813,7 @@ const StationeryDailySales = () => {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 hover:bg-red-100 hover:scale-110 transition-all duration-200"
+                              className="h-8 w-8 hover:bg-red-100 dark:hover:bg-red-900/30 hover:scale-110 transition-all duration-200"
                               onClick={() => handleDelete(item.id)}
                               disabled={isLoading} // Disable delete button while loading/saving
                             >
@@ -831,13 +831,13 @@ const StationeryDailySales = () => {
                         {isLoading ? ( // Use isLoading
                           <div className="flex flex-col items-center gap-3">
                             <CustomLoader size="lg" />
-                            <span className="text-lg text-gray-600 font-medium">Loading sales records...</span>
+                            <span className="text-lg text-gray-600 dark:text-gray-400 font-medium">Loading sales records...</span>
                           </div>
                         ) : (
                           <div className="flex flex-col items-center gap-3">
                             <Package2 className="h-12 w-12 text-gray-400" />
-                            <span className="text-lg text-gray-600">No sales recorded today.</span>
-                            <span className="text-sm text-gray-500">Start by recording your first sale!</span>
+                            <span className="text-lg text-gray-600 dark:text-gray-400">No sales recorded today.</span>
+                            <span className="text-sm text-gray-500 dark:text-gray-400">Start by recording your first sale!</span>
                           </div>
                         )}
                       </div>

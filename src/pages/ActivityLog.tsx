@@ -21,11 +21,11 @@ interface ActivityEntry {
 }
 
 const MODULE_COLORS: Record<string, string> = {
-  Stationery: "bg-blue-100 text-blue-700",
-  "Gift Store": "bg-green-100 text-green-700",
-  Embroidery: "bg-purple-100 text-purple-700",
-  Machines: "bg-orange-100 text-orange-700",
-  "Art Services": "bg-pink-100 text-pink-700",
+  Stationery: "bg-blue-100 dark:bg-blue-900/30 text-blue-700",
+  "Gift Store": "bg-green-100 dark:bg-green-900/30 text-green-700",
+  Embroidery: "bg-purple-100 dark:bg-purple-900/30 text-purple-700",
+  Machines: "bg-orange-100 dark:bg-orange-900/30 text-orange-700",
+  "Art Services": "bg-pink-100 dark:bg-pink-900/30 text-pink-700",
 };
 
 const formatUGX = (n: number | null) =>
@@ -302,7 +302,7 @@ export default function ActivityLog() {
 
       {/* Table */}
       <Card className="shadow-sm overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-red-50 to-pink-50 border-b pb-3 pt-4 px-4">
+        <CardHeader className="bg-gradient-to-r from-red-50 dark:from-red-950/30 to-pink-50 dark:to-pink-950/30 border-b pb-3 pt-4 px-4">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <Clock className="h-4 w-4 text-red-600" />
             All Activity — sorted by most recent
@@ -311,22 +311,22 @@ export default function ActivityLog() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table className="w-full">
-              <TableHeader className="bg-gradient-to-r from-gray-50 to-red-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
-                <TableRow className="border-b-2 border-red-100">
-                  <TableHead className="bg-gradient-to-r from-gray-50 to-red-50 font-semibold whitespace-nowrap">#</TableHead>
-                  <TableHead className="bg-gradient-to-r from-gray-50 to-red-50 font-semibold whitespace-nowrap">
+              <TableHeader className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
+                <TableRow className="border-b-2 border-red-100 dark:border-red-900/50">
+                  <TableHead className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 font-semibold whitespace-nowrap">#</TableHead>
+                  <TableHead className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 font-semibold whitespace-nowrap">
                     <Clock className="inline h-3.5 w-3.5 mr-1 text-red-500" />Time
                   </TableHead>
-                  <TableHead className="bg-gradient-to-r from-gray-50 to-red-50 font-semibold whitespace-nowrap">Date</TableHead>
-                  <TableHead className="bg-gradient-to-r from-gray-50 to-red-50 font-semibold whitespace-nowrap">
+                  <TableHead className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 font-semibold whitespace-nowrap">Date</TableHead>
+                  <TableHead className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 font-semibold whitespace-nowrap">
                     <User className="inline h-3.5 w-3.5 mr-1 text-red-500" />Employee
                   </TableHead>
-                  <TableHead className="bg-gradient-to-r from-gray-50 to-red-50 font-semibold whitespace-nowrap">Module</TableHead>
-                  <TableHead className="bg-gradient-to-r from-gray-50 to-red-50 font-semibold whitespace-nowrap">
+                  <TableHead className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 font-semibold whitespace-nowrap">Module</TableHead>
+                  <TableHead className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 font-semibold whitespace-nowrap">
                     <Package className="inline h-3.5 w-3.5 mr-1 text-red-500" />Item / Service
                   </TableHead>
-                  <TableHead className="bg-gradient-to-r from-gray-50 to-red-50 font-semibold whitespace-nowrap">Details</TableHead>
-                  <TableHead className="bg-gradient-to-r from-gray-50 to-red-50 font-semibold text-right whitespace-nowrap">Amount (UGX)</TableHead>
+                  <TableHead className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 font-semibold whitespace-nowrap">Details</TableHead>
+                  <TableHead className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 font-semibold text-right whitespace-nowrap">Amount (UGX)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -347,13 +347,13 @@ export default function ActivityLog() {
                   filtered.map((entry, idx) => {
                     const { date, time } = formatDateTime(entry.created_at);
                     return (
-                      <TableRow key={entry.id} className="hover:bg-red-50/30 transition-colors">
+                      <TableRow key={entry.id} className="hover:bg-red-50/30 dark:bg-red-950/10 transition-colors">
                         <TableCell className="text-xs text-muted-foreground">{idx + 1}</TableCell>
                         <TableCell className="font-mono text-sm font-semibold text-red-700 whitespace-nowrap">{time}</TableCell>
                         <TableCell className="text-sm whitespace-nowrap">{date}</TableCell>
                         <TableCell className="font-medium text-sm whitespace-nowrap">{entry.employee}</TableCell>
                         <TableCell>
-                          <Badge className={`text-xs font-semibold ${MODULE_COLORS[entry.module] || "bg-gray-100 text-gray-700"}`}>
+                          <Badge className={`text-xs font-semibold ${MODULE_COLORS[entry.module] || "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"}`}>
                             {entry.module}
                           </Badge>
                         </TableCell>

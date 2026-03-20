@@ -792,7 +792,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
 
           {/* Row 2: Stats + Search */}
           <div className="flex flex-wrap items-center gap-3">
-            <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 shadow-sm shrink-0">
+            <Card className="border-2 border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 dark:from-green-950/30 to-emerald-50 shadow-sm shrink-0">
               <CardContent className="p-3">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 bg-green-600 rounded-md">
@@ -810,9 +810,9 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
 
             <div className="flex gap-2 flex-wrap">
               {Object.entries(categoryTotals).map(([category, total]) => (
-                <div key={category} className="border border-blue-100 bg-white/80 shadow-sm rounded-lg px-3 py-1.5 shrink-0">
+                <div key={category} className="border border-blue-100 dark:border-blue-900/50 bg-white/80 dark:bg-gray-900/80 shadow-sm rounded-lg px-3 py-1.5 shrink-0">
                   <p className="text-[10px] uppercase tracking-wider font-bold text-blue-600 truncate max-w-[120px]">{category}</p>
-                  <p className="text-xs font-bold text-gray-800">{formatUGX(total as number)}</p>
+                  <p className="text-xs font-bold text-gray-800 dark:text-gray-200">{formatUGX(total as number)}</p>
                 </div>
               ))}
             </div>
@@ -845,10 +845,10 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
             <CardContent className="p-0">
               <div className="overflow-x-auto rounded-b-xl">
                 <Table className="w-full">
-                  <TableHeader className="bg-gradient-to-r from-blue-50 to-purple-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
-                    <TableRow className="border-b-2 border-blue-100 hover:bg-transparent">
+                  <TableHeader className="bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
+                    <TableRow className="border-b-2 border-blue-100 dark:border-blue-900/50 hover:bg-transparent">
                       {isAdmin && (
-                        <TableHead className="w-[44px] bg-gradient-to-r from-blue-50 to-purple-50">
+                        <TableHead className="w-[44px] bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30">
                           <Checkbox
                             checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length}
                             onCheckedChange={toggleSelectAll}
@@ -857,18 +857,18 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                           />
                         </TableHead>
                       )}
-                      <TableHead className="w-[44px] font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">#</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Category</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Item</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 text-left whitespace-nowrap">Description</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Qty</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Buying Price (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Total Value (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Selling Price</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Profit/Unit</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Stock Date</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Stock Alert</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 whitespace-nowrap">Actions</TableHead>
+                      <TableHead className="w-[44px] font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">#</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Category</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Item</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 text-left whitespace-nowrap">Description</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Qty</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Buying Price (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Total Value (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Selling Price</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Profit/Unit</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Stock Date</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Stock Alert</TableHead>
+                      <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -881,8 +881,8 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                           <TableRow
                             key={item.id}
                             className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 ${isLowStock
-                              ? "bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 border-l-4 border-red-400"
-                              : "hover:from-blue-50 hover:to-purple-50"
+                              ? "bg-gradient-to-r from-red-50 dark:from-red-950/30 to-pink-50 dark:to-pink-950/30 hover:from-red-100 hover:to-pink-100 dark:to-pink-900/30 border-l-4 border-red-400"
+                              : "hover:from-blue-50 dark:hover:from-blue-950/30 dark:from-blue-950/30 hover:to-purple-50 dark:hover:to-purple-950/30 dark:to-purple-950/30"
                               }`}
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
@@ -896,7 +896,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                                 />
                               )}
                             </TableCell>
-                            <TableCell className="font-medium text-gray-500">
+                            <TableCell className="font-medium text-gray-500 dark:text-gray-400">
                               {index + 1}
                             </TableCell>
                             <TableCell className="font-medium">
@@ -905,8 +905,8 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                                 {item.category || "-"}
                               </div>
                             </TableCell>
-                            <TableCell className="font-semibold text-gray-800">{item.item}</TableCell>
-                            <TableCell className="text-gray-500 max-w-xs truncate text-left">{item.description || '-'}</TableCell>
+                            <TableCell className="font-semibold text-gray-800 dark:text-gray-200">{item.item}</TableCell>
+                            <TableCell className="text-gray-500 dark:text-gray-400 max-w-xs truncate text-left">{item.description || '-'}</TableCell>
                             <TableCell className="font-medium">{item.quantity}</TableCell>
                             <TableCell className="font-medium text-blue-600">{formatUGX(item.rate)}</TableCell>
                             <TableCell className="font-medium text-green-600">
@@ -919,17 +919,17 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                                 {formatUGX(item.profit_per_unit)}
                               </div>
                             </TableCell>
-                            <TableCell className="text-gray-600">
+                            <TableCell className="text-gray-600 dark:text-gray-400">
                               {new Date(item.date).toLocaleDateString()}
                             </TableCell>
                             <TableCell>
                               {isLowStock ? (
-                                <div className="flex items-center gap-2 text-red-600 font-semibold bg-red-100 px-3 py-1 rounded-full">
+                                <div className="flex items-center gap-2 text-red-600 font-semibold bg-red-100 dark:bg-red-900/30 px-3 py-1 rounded-full">
                                   <AlertTriangle className="h-4 w-4 animate-bounce" />
                                   <span>LOW: {actualStock} units (Min: {item.low_stock_threshold || 5})</span>
                                 </div>
                               ) : (
-                                <div className="flex items-center gap-2 text-green-600 font-medium bg-green-100 px-3 py-1 rounded-full">
+                                <div className="flex items-center gap-2 text-green-600 font-medium bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-full">
                                   <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
                                   <span>Good: {actualStock} units</span>
                                 </div>
@@ -951,7 +951,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                                   size="sm"
                                   onClick={() => handleDelete(item.id)}
                                   disabled={!isAdmin}
-                                  className="hover:scale-105 transition-transform duration-200 hover:bg-red-50 hover:text-red-600 border-red-200"
+                                  className="hover:scale-105 transition-transform duration-200 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 border-red-200 dark:border-red-800"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -967,13 +967,13 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                             {isLoading ? (
                               <div className="flex flex-col items-center gap-3">
                                 <CustomLoader size="lg" />
-                                <span className="text-lg text-gray-600 font-medium">Loading stationery items...</span>
+                                <span className="text-lg text-gray-600 dark:text-gray-400 font-medium">Loading stationery items...</span>
                               </div>
                             ) : (
                               <div className="flex flex-col items-center gap-3">
                                 <Package2 className="h-12 w-12 text-gray-400" />
-                                <span className="text-lg text-gray-600">No items found.</span>
-                                <span className="text-sm text-gray-500">Start by adding your first item!</span>
+                                <span className="text-lg text-gray-600 dark:text-gray-400">No items found.</span>
+                                <span className="text-sm text-gray-500 dark:text-gray-400">Start by adding your first item!</span>
                               </div>
                             )}
                           </div>
@@ -982,9 +982,9 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                     )}
                     {/* Totals Row */}
                     {filteredItems.length > 0 && (
-                      <TableRow className="bg-gradient-to-r from-blue-50 to-purple-50 border-t-2 border-primary font-bold">
+                      <TableRow className="bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 border-t-2 border-primary font-bold">
                         {isAdmin && <TableCell></TableCell>}
-                        <TableCell colSpan={5} className="text-right text-lg font-bold text-gray-800">
+                        <TableCell colSpan={5} className="text-right text-lg font-bold text-gray-800 dark:text-gray-200">
                           TOTALS:
                         </TableCell>
                         <TableCell className="font-bold text-lg text-green-700">
@@ -1005,7 +1005,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
         </TabsContent>
 
         <TabsContent value="daily-sales" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden">
+          <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden">
             <StationeryDailySales />
           </div>
         </TabsContent>
@@ -1034,7 +1034,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
               <Card className="border-border shadow-xl bg-card">
                 <CardContent className="py-16 text-center">
                   <div className="flex flex-col items-center gap-4">
-                    <div className="p-4 bg-green-100 rounded-full">
+                    <div className="p-4 bg-green-100 dark:bg-green-900/30 rounded-full">
                       <Package2 className="h-12 w-12 text-green-600" />
                     </div>
                     <p className="text-xl font-semibold text-green-700">All stock levels are healthy!</p>
@@ -1044,7 +1044,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
               </Card>
             ) : (
               <Card className="border-border shadow-2xl bg-card overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-red-50 to-pink-50 border-b border-red-100">
+                <CardHeader className="bg-gradient-to-r from-red-50 dark:from-red-950/30 to-pink-50 dark:to-pink-950/30 border-b border-red-100 dark:border-red-900/50">
                   <CardTitle className="text-xl font-bold flex items-center gap-3 text-red-800">
                     <div className="p-2 bg-red-500 rounded-lg text-white">
                       <AlertTriangle className="h-5 w-5" />
@@ -1056,16 +1056,16 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                   <div className="">
                     <Table>
                       <TableHeader className="bg-red-50/50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
-                        <TableRow className="border-b border-red-100">
-                          <TableHead className="font-semibold text-gray-700 bg-red-50 whitespace-nowrap">#</TableHead>
-                          <TableHead className="font-semibold text-gray-700 bg-red-50 whitespace-nowrap">Category</TableHead>
-                          <TableHead className="font-semibold text-gray-700 bg-red-50 whitespace-nowrap">Item Name</TableHead>
-                          <TableHead className="font-semibold text-gray-700 bg-red-50 whitespace-nowrap">Description</TableHead>
-                          <TableHead className="font-semibold text-gray-700 text-center bg-red-50 whitespace-nowrap">Current Stock</TableHead>
-                          <TableHead className="font-semibold text-gray-700 text-center bg-red-50 whitespace-nowrap">Min. Threshold</TableHead>
-                          <TableHead className="font-semibold text-gray-700 text-center bg-red-50 whitespace-nowrap">Status</TableHead>
-                          <TableHead className="font-semibold text-gray-700 bg-red-50 whitespace-nowrap">Buying Price</TableHead>
-                          <TableHead className="font-semibold text-gray-700 bg-red-50 whitespace-nowrap">Selling Price</TableHead>
+                        <TableRow className="border-b border-red-100 dark:border-red-900/50">
+                          <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-red-50 dark:bg-red-950/30 whitespace-nowrap">#</TableHead>
+                          <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-red-50 dark:bg-red-950/30 whitespace-nowrap">Category</TableHead>
+                          <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-red-50 dark:bg-red-950/30 whitespace-nowrap">Item Name</TableHead>
+                          <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-red-50 dark:bg-red-950/30 whitespace-nowrap">Description</TableHead>
+                          <TableHead className="font-semibold text-gray-700 dark:text-gray-300 text-center bg-red-50 dark:bg-red-950/30 whitespace-nowrap">Current Stock</TableHead>
+                          <TableHead className="font-semibold text-gray-700 dark:text-gray-300 text-center bg-red-50 dark:bg-red-950/30 whitespace-nowrap">Min. Threshold</TableHead>
+                          <TableHead className="font-semibold text-gray-700 dark:text-gray-300 text-center bg-red-50 dark:bg-red-950/30 whitespace-nowrap">Status</TableHead>
+                          <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-red-50 dark:bg-red-950/30 whitespace-nowrap">Buying Price</TableHead>
+                          <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-red-50 dark:bg-red-950/30 whitespace-nowrap">Selling Price</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1078,14 +1078,14 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                               key={item.id}
                               className={`transition-colors ${
                                 isOutOfStock
-                                  ? 'bg-red-100 border-l-4 border-red-600 hover:bg-red-200'
-                                  : 'bg-orange-50 border-l-4 border-orange-400 hover:bg-orange-100'
+                                  ? 'bg-red-100 dark:bg-red-900/30 border-l-4 border-red-600 hover:bg-red-200'
+                                  : 'bg-orange-50 dark:bg-orange-950/30 border-l-4 border-orange-400 hover:bg-orange-100'
                               }`}
                             >
-                              <TableCell className="font-medium text-gray-500">{index + 1}</TableCell>
+                              <TableCell className="font-medium text-gray-500 dark:text-gray-400">{index + 1}</TableCell>
                               <TableCell className="font-medium">{item.category || '-'}</TableCell>
-                              <TableCell className="font-bold text-gray-800">{item.item}</TableCell>
-                              <TableCell className="text-gray-500">{item.description || '-'}</TableCell>
+                              <TableCell className="font-bold text-gray-800 dark:text-gray-200">{item.item}</TableCell>
+                              <TableCell className="text-gray-500 dark:text-gray-400">{item.description || '-'}</TableCell>
                               <TableCell className="text-center">
                                 <span className={`text-2xl font-black ${
                                   isOutOfStock ? 'text-red-700' : 'text-orange-600'
@@ -1093,7 +1093,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                                   {actualStock}
                                 </span>
                               </TableCell>
-                              <TableCell className="text-center font-medium text-gray-600">{threshold}</TableCell>
+                              <TableCell className="text-center font-medium text-gray-600 dark:text-gray-400">{threshold}</TableCell>
                               <TableCell className="text-center">
                                 {isOutOfStock ? (
                                   <span className="inline-flex items-center gap-1 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">

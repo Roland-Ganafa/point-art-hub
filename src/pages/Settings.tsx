@@ -56,31 +56,31 @@ const SettingsPage = () => {
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-1 shadow-lg">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl p-1 shadow-lg">
           <TabsTrigger 
             value="general" 
-            className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 rounded-lg"
+            className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-md transition-all duration-300 rounded-lg"
           >
             <Settings className="h-4 w-4 mr-2" />
             General
           </TabsTrigger>
           <TabsTrigger 
             value="notifications" 
-            className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 rounded-lg"
+            className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-md transition-all duration-300 rounded-lg"
           >
             <Bell className="h-4 w-4 mr-2" />
             Notifications
           </TabsTrigger>
           <TabsTrigger 
             value="backup" 
-            className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 rounded-lg"
+            className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-md transition-all duration-300 rounded-lg"
           >
             <HardDrive className="h-4 w-4 mr-2" />
             Backup
           </TabsTrigger>
           <TabsTrigger 
             value="business" 
-            className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 rounded-lg"
+            className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-md transition-all duration-300 rounded-lg"
           >
             <Building className="h-4 w-4 mr-2" />
             Business
@@ -92,7 +92,7 @@ const SettingsPage = () => {
         </TabsContent>
 
         <TabsContent value="notifications" className="space-y-6 animate-in fade-in-50 duration-300">
-          <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+          <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bell className="h-5 w-5" />
@@ -109,7 +109,7 @@ const SettingsPage = () => {
         </TabsContent>
 
         <TabsContent value="backup" className="space-y-6 animate-in fade-in-50 duration-300">
-          <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+          <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <HardDrive className="h-5 w-5" />
@@ -126,7 +126,7 @@ const SettingsPage = () => {
         </TabsContent>
 
         <TabsContent value="business" className="space-y-6 animate-in fade-in-50 duration-300">
-          <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+          <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Building className="h-5 w-5" />
@@ -138,7 +138,7 @@ const SettingsPage = () => {
             </CardHeader>
             <CardContent className="space-y-5">
               {saved && (
-                <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-2 text-sm">
+                <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 text-green-700 rounded-lg px-4 py-2 text-sm">
                   <CheckCircle className="h-4 w-4" /> Business settings saved successfully.
                 </div>
               )}

@@ -443,17 +443,17 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
   return (
     <div className="space-y-8 p-6">
       <Tabs defaultValue="inventory" className="space-y-8">
-        <TabsList className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl p-1 shadow-lg">
+        <TabsList className="bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-cyan-50 dark:to-cyan-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-1 shadow-lg">
           <TabsTrigger
             value="inventory"
-            className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
+            className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <ShoppingCart className="h-4 w-4" />
             Inventory
           </TabsTrigger>
           <TabsTrigger
             value="daily-sales"
-            className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
+            className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <TrendingUp className="h-4 w-4" />
             Daily Sales
@@ -471,7 +471,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
             </div>
             <div className="flex items-center gap-4">
               {/* Today's Sales Summary */}
-              <div className="bg-white px-4 py-2 rounded-lg border border-blue-100 shadow-sm flex flex-col items-end min-w-[140px]">
+              <div className="bg-white dark:bg-gray-900 px-4 py-2 rounded-lg border border-blue-100 dark:border-blue-900/50 shadow-sm flex flex-col items-end min-w-[140px]">
                 <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Today's Sales</span>
                 <span className="text-lg font-bold text-green-600">
                   {formatUGX(items
@@ -488,7 +488,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search services..."
-                  className="pl-9 border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                  className="pl-9 border-blue-200 dark:border-blue-800 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -526,7 +526,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                     Add Service
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
+                <DialogContent className="max-w-md bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-0 shadow-2xl">
                   <DialogHeader>
                     <DialogTitle className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                       {editingId ? '✏️ Edit Machine Service' : '✨ Add New Machine Service'}
@@ -548,7 +548,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                           }));
                         }}
                       >
-                        <SelectTrigger className="border-blue-200 focus:border-blue-400 focus:ring-blue-200">
+                        <SelectTrigger className="border-blue-200 dark:border-blue-800 focus:border-blue-400 focus:ring-blue-200">
                           <SelectValue placeholder="Select machine type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -601,7 +601,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                           value={formData.laminate_type}
                           onValueChange={(value) => setFormData({ ...formData, laminate_type: value })}
                         >
-                          <SelectTrigger className="border-blue-200 focus:border-blue-400 focus:ring-blue-200">
+                          <SelectTrigger className="border-blue-200 dark:border-blue-800 focus:border-blue-400 focus:ring-blue-200">
                             <SelectValue placeholder="Select paper size" />
                           </SelectTrigger>
                           <SelectContent>
@@ -619,7 +619,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                         value={formData.service_description}
                         onChange={(e) => setFormData({ ...formData, service_description: e.target.value })}
                         required
-                        className={`border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200 ${formErrors.service_description ? "border-red-500 focus:border-red-500" : ""}`}
+                        className={`border-blue-200 dark:border-blue-800 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200 ${formErrors.service_description ? "border-red-500 focus:border-red-500" : ""}`}
                       />
                       {formErrors.service_description && <span className="text-red-500 text-sm flex items-center gap-1"><Search className="h-3 w-3" />{formErrors.service_description}</span>}
                     </div>
@@ -633,7 +633,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                           value={formData.quantity}
                           onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                           required
-                          className={`border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200 ${formErrors.quantity ? "border-red-500 focus:border-red-500" : ""}`}
+                          className={`border-blue-200 dark:border-blue-800 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200 ${formErrors.quantity ? "border-red-500 focus:border-red-500" : ""}`}
                         />
                         {formErrors.quantity && <span className="text-red-500 text-sm flex items-center gap-1"><Search className="h-3 w-3" />{formErrors.quantity}</span>}
                       </div>
@@ -647,7 +647,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                             value={formData.rate}
                             onChange={(e) => setFormData({ ...formData, rate: e.target.value })}
                             required
-                            className={`border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200 ${formErrors.rate ? "border-red-500 focus:border-red-500" : ""}`}
+                            className={`border-blue-200 dark:border-blue-800 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200 ${formErrors.rate ? "border-red-500 focus:border-red-500" : ""}`}
                           />
                           {formErrors.rate && <span className="text-red-500 text-sm flex items-center gap-1"><Search className="h-3 w-3" />{formErrors.rate}</span>}
                         </div>
@@ -660,7 +660,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                             value={formData.expenditure}
                             onChange={(e) => setFormData({ ...formData, expenditure: e.target.value })}
                             placeholder="Optional"
-                            className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                            className="border-blue-200 dark:border-blue-800 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
                           />
                         </div>
                       </div>
@@ -710,7 +710,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                         value={formData.date}
                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                         required
-                        className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                        className="border-blue-200 dark:border-blue-800 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
                       />
                     </div>
 
@@ -736,8 +736,8 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
             </div>
           </div>
 
-          <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-blue-50 via-cyan-50 to-sky-50 border-b border-blue-100">
+          <Card className="border-0 shadow-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-blue-50 dark:from-blue-950/30 via-cyan-50 to-sky-50 dark:to-sky-950/30 border-b border-blue-100 dark:border-blue-900/50">
               <CardTitle className="text-2xl font-bold flex items-center gap-3">
                 <div className="p-2 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg text-white">
                   <Monitor className="h-6 w-6" />
@@ -752,9 +752,9 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table className="w-full">
-                  <TableHeader className="bg-gradient-to-r from-gray-50 to-blue-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
-                    <TableRow className="border-b border-blue-100">
-                      <TableHead className="w-[50px] bg-gradient-to-r from-gray-50 to-blue-50">
+                  <TableHeader className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
+                    <TableRow className="border-b border-blue-100 dark:border-blue-900/50">
+                      <TableHead className="w-[50px] bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30">
                         <input
                           type="checkbox"
                           checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length}
@@ -762,18 +762,18 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                           className="accent-blue-600 h-4 w-4"
                         />
                       </TableHead>
-                      <TableHead className="w-[30px] font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">#</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Machine Type</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Service Description</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Quantity</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Rate (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Sales (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Expenditure</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Profit</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Date</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Time</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Done By</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-blue-50 whitespace-nowrap">Actions</TableHead>
+                      <TableHead className="w-[30px] font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">#</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Machine Type</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Service Description</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Quantity</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Rate (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Sales (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Expenditure</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Profit</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Date</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Time</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Done By</TableHead>
+                      <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-950/30 whitespace-nowrap">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -784,7 +784,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                         return (
                           <TableRow
                             key={item.id}
-                            className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-blue-50 hover:to-cyan-50 ${selectedIds.has(item.id) ? "bg-blue-50" : ""}`}
+                            className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-blue-50 dark:hover:from-blue-950/30 dark:from-blue-950/30 hover:to-cyan-50 dark:hover:to-cyan-950/30 dark:to-cyan-950/30 ${selectedIds.has(item.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""}`}
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
                             <TableCell>
@@ -795,7 +795,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                                 className="accent-blue-600 h-4 w-4"
                               />
                             </TableCell>
-                            <TableCell className="font-medium text-gray-600">
+                            <TableCell className="font-medium text-gray-600 dark:text-gray-400">
                               {index + 1}
                             </TableCell>
                             <TableCell className="font-medium">
@@ -804,7 +804,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                                 {item.machine_name.charAt(0).toUpperCase() + item.machine_name.slice(1)}
                               </div>
                             </TableCell>
-                            <TableCell className="font-semibold text-gray-800 max-w-xs truncate">{item.service_description}</TableCell>
+                            <TableCell className="font-semibold text-gray-800 dark:text-gray-200 max-w-xs truncate">{item.service_description}</TableCell>
                             <TableCell className="font-medium">{item.quantity}</TableCell>
                             <TableCell className="font-medium text-blue-600">{formatUGX(item.rate)}</TableCell>
                             <TableCell className="font-medium text-cyan-600">{formatUGX(sales)}</TableCell>
@@ -815,13 +815,13 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                                 {formatUGX(profit)}
                               </div>
                             </TableCell>
-                            <TableCell className="text-gray-600">
+                            <TableCell className="text-gray-600 dark:text-gray-400">
                               {new Date(item.date).toLocaleDateString()}
                             </TableCell>
-                            <TableCell className="text-gray-500 text-xs">
+                            <TableCell className="text-gray-500 dark:text-gray-400 text-xs">
                               {item.created_at ? new Date(item.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : "-"}
                             </TableCell>
-                            <TableCell className="text-gray-600">
+                            <TableCell className="text-gray-600 dark:text-gray-400">
                               {getPersonName(item.done_by)}
                             </TableCell>
                             <TableCell className="text-right">
@@ -829,7 +829,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 hover:bg-blue-100 hover:scale-110 transition-all duration-200"
+                                  className="h-8 w-8 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:scale-110 transition-all duration-200"
                                   onClick={() => handleEdit(item)}
                                   disabled={!isAdmin}
                                   title={!isAdmin ? "Admin access required" : "Edit service"}
@@ -839,7 +839,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 hover:bg-red-100 hover:scale-110 transition-all duration-200"
+                                  className="h-8 w-8 hover:bg-red-100 dark:hover:bg-red-900/30 hover:scale-110 transition-all duration-200"
                                   onClick={() => handleDelete(item.id)}
                                   disabled={!isAdmin}
                                   title={!isAdmin ? "Admin access required" : "Delete service"}
@@ -858,13 +858,13 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                             {isLoading ? (
                               <div className="flex flex-col items-center gap-3">
                                 <CustomLoader size="lg" />
-                                <span className="text-lg text-gray-600 font-medium">Loading machine services...</span>
+                                <span className="text-lg text-gray-600 dark:text-gray-400 font-medium">Loading machine services...</span>
                               </div>
                             ) : (
                               <div className="flex flex-col items-center gap-3">
                                 <Monitor className="h-12 w-12 text-gray-400" />
-                                <span className="text-lg text-gray-600">No machine services found.</span>
-                                <span className="text-sm text-gray-500">Start by adding your first service!</span>
+                                <span className="text-lg text-gray-600 dark:text-gray-400">No machine services found.</span>
+                                <span className="text-sm text-gray-500 dark:text-gray-400">Start by adding your first service!</span>
                               </div>
                             )}
                           </div>
@@ -873,8 +873,8 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                     )}
                     {/* Totals Row */}
                     {filteredItems.length > 0 && (
-                      <TableRow className="bg-blue-50/50 font-bold border-t-2 border-blue-200">
-                        <TableCell colSpan={6} className="text-right text-gray-700">TOTALS</TableCell>
+                      <TableRow className="bg-blue-50/50 dark:bg-blue-950/20 font-bold border-t-2 border-blue-200 dark:border-blue-800">
+                        <TableCell colSpan={6} className="text-right text-gray-700 dark:text-gray-300">TOTALS</TableCell>
                         <TableCell className="text-cyan-700">
                           {formatUGX(filteredItems.reduce((sum, item) => sum + (item.rate * item.quantity), 0))}
                         </TableCell>
@@ -895,20 +895,20 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
         </TabsContent>
 
         <TabsContent value="daily-sales" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden p-6">
+          <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden p-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
               <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-blue-600" />
                 Sales Report - {viewMode === 'daily' ? selectedDate.toLocaleDateString() : selectedDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
               </h3>
 
-              <div className="flex items-center gap-4 bg-white/50 p-1.5 rounded-lg border border-blue-100">
-                <div className="flex items-center gap-2 bg-blue-50/50 rounded-md p-1">
+              <div className="flex items-center gap-4 bg-white/50 dark:bg-gray-900/50 p-1.5 rounded-lg border border-blue-100 dark:border-blue-900/50">
+                <div className="flex items-center gap-2 bg-blue-50/50 dark:bg-blue-950/20 rounded-md p-1">
                   <Button
                     variant={viewMode === 'daily' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setViewMode('daily')}
-                    className={`h-7 px-3 text-xs ${viewMode === 'daily' ? 'bg-white text-blue-600 shadow-sm border border-blue-100 hover:bg-white' : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'}`}
+                    className={`h-7 px-3 text-xs ${viewMode === 'daily' ? 'bg-white dark:bg-gray-900 text-blue-600 shadow-sm border border-blue-100 dark:border-blue-900/50 hover:bg-white' : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50'}`}
                   >
                     Daily
                   </Button>
@@ -916,7 +916,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                     variant={viewMode === 'monthly' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setViewMode('monthly')}
-                    className={`h-7 px-3 text-xs ${viewMode === 'monthly' ? 'bg-white text-blue-600 shadow-sm border border-blue-100 hover:bg-white' : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'}`}
+                    className={`h-7 px-3 text-xs ${viewMode === 'monthly' ? 'bg-white dark:bg-gray-900 text-blue-600 shadow-sm border border-blue-100 dark:border-blue-900/50 hover:bg-white' : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50'}`}
                   >
                     Monthly
                   </Button>
@@ -948,7 +948,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                         }
                       }
                     }}
-                    className="h-7 w-[130px] text-xs border-0 bg-transparent focus:ring-0 cursor-pointer text-gray-600 font-medium"
+                    className="h-7 w-[130px] text-xs border-0 bg-transparent focus:ring-0 cursor-pointer text-gray-600 dark:text-gray-400 font-medium"
                   />
                 </div>
               </div>
@@ -956,12 +956,12 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
 
             <div className="overflow-x-auto">
               <Table className="w-full">
-                <TableHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
+                <TableHeader className="bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-cyan-50 dark:to-cyan-950/30 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
                   <TableRow>
-                    <TableHead className="w-[50px] font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-cyan-50 whitespace-nowrap">#</TableHead>
-                    <TableHead className="font-semibold text-gray-700 text-left bg-gradient-to-r from-blue-50 to-cyan-50 whitespace-nowrap">Machine Category</TableHead>
-                    <TableHead className="text-right font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-cyan-50 whitespace-nowrap">Total Sales (UGX)</TableHead>
-                    <TableHead className="text-right font-semibold text-gray-700 bg-gradient-to-r from-blue-50 to-cyan-50 whitespace-nowrap">Total Profit (UGX)</TableHead>
+                    <TableHead className="w-[50px] font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-cyan-50 dark:to-cyan-950/30 whitespace-nowrap">#</TableHead>
+                    <TableHead className="font-semibold text-gray-700 dark:text-gray-300 text-left bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-cyan-50 dark:to-cyan-950/30 whitespace-nowrap">Machine Category</TableHead>
+                    <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-cyan-50 dark:to-cyan-950/30 whitespace-nowrap">Total Sales (UGX)</TableHead>
+                    <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-cyan-50 dark:to-cyan-950/30 whitespace-nowrap">Total Profit (UGX)</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -992,8 +992,8 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                     if (totalSales === 0) return null;
 
                     return (
-                      <TableRow key={type} className="hover:bg-blue-50/50 transition-colors">
-                        <TableCell className="font-medium text-gray-500">
+                      <TableRow key={type} className="hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-colors">
+                        <TableCell className="font-medium text-gray-500 dark:text-gray-400">
                           {index + 1}
                         </TableCell>
                         <TableCell className="font-medium capitalize">
@@ -1009,8 +1009,8 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                   })}
 
                   {/* Grand Totals */}
-                  <TableRow className="bg-gradient-to-r from-blue-100 to-cyan-100 font-bold border-t-2 border-blue-300">
-                    <TableCell colSpan={2} className="text-gray-800">GRAND TOTAL</TableCell>
+                  <TableRow className="bg-gradient-to-r from-blue-100 dark:from-blue-900/30 to-cyan-100 font-bold border-t-2 border-blue-300">
+                    <TableCell colSpan={2} className="text-gray-800 dark:text-gray-200">GRAND TOTAL</TableCell>
                     <TableCell className="text-right text-blue-800">
                       {formatUGX(items
                         .filter(item => {

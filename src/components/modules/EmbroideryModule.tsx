@@ -403,17 +403,17 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
   return (
     <div className="space-y-8 p-6">
       <Tabs defaultValue="inventory" className="space-y-8">
-        <TabsList className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-1 shadow-lg">
+        <TabsList className="bg-gradient-to-r from-purple-50 dark:from-purple-950/30 to-pink-50 dark:to-pink-950/30 border border-purple-200 dark:border-purple-800 rounded-xl p-1 shadow-lg">
           <TabsTrigger
             value="inventory"
-            className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
+            className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <ShoppingCart className="h-4 w-4" />
             Inventory
           </TabsTrigger>
           <TabsTrigger
             value="daily-sales"
-            className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
+            className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <TrendingUp className="h-4 w-4" />
             Daily Sales
@@ -434,7 +434,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search jobs..."
-                  className="pl-9 border-purple-200 focus:border-purple-400 focus:ring-purple-200 transition-all duration-200"
+                  className="pl-9 border-purple-200 dark:border-purple-800 focus:border-purple-400 focus:ring-purple-200 transition-all duration-200"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -476,7 +476,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                     Add Job
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
+                <DialogContent className="max-w-md bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-0 shadow-2xl">
                   <DialogHeader>
                     <DialogTitle className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                       {editingId ? '✏️ Edit Embroidery Job' : '✨ Add New Embroidery Job'}
@@ -489,7 +489,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                         value={formData.job_description}
                         onChange={(e) => setFormData({ ...formData, job_description: e.target.value })}
                         required
-                        className={`border-purple-200 focus:border-purple-400 focus:ring-purple-200 transition-all duration-200 ${formErrors.job_description ? "border-red-500 focus:border-red-500" : ""}`}
+                        className={`border-purple-200 dark:border-purple-800 focus:border-purple-400 focus:ring-purple-200 transition-all duration-200 ${formErrors.job_description ? "border-red-500 focus:border-red-500" : ""}`}
                       />
                       {formErrors.job_description && <span className="text-red-500 text-sm flex items-center gap-1"><Search className="h-3 w-3" />{formErrors.job_description}</span>}
                     </div>
@@ -503,7 +503,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                           value={formData.quantity}
                           onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                           required
-                          className="border-purple-200 focus:border-purple-400 focus:ring-purple-200 transition-all duration-200"
+                          className="border-purple-200 dark:border-purple-800 focus:border-purple-400 focus:ring-purple-200 transition-all duration-200"
                         />
                       </div>
                       <div className="space-y-2">
@@ -515,7 +515,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                           value={formData.rate}
                           onChange={(e) => setFormData({ ...formData, rate: e.target.value })}
                           required
-                          className={`border-purple-200 focus:border-purple-400 focus:ring-purple-200 transition-all duration-200 ${formErrors.rate ? "border-red-500 focus:border-red-500" : ""}`}
+                          className={`border-purple-200 dark:border-purple-800 focus:border-purple-400 focus:ring-purple-200 transition-all duration-200 ${formErrors.rate ? "border-red-500 focus:border-red-500" : ""}`}
                         />
                         {formErrors.rate && <span className="text-red-500 text-sm flex items-center gap-1"><Search className="h-3 w-3" />{formErrors.rate}</span>}
                       </div>
@@ -531,7 +531,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                           value={formData.rate && formData.quantity ?
                             (parseFloat(formData.rate) * parseInt(formData.quantity)).toFixed(2) : "0"}
                           disabled
-                          className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 font-medium"
+                          className="bg-gradient-to-r from-green-50 dark:from-green-950/30 to-emerald-50 border-green-200 dark:border-green-800 font-medium"
                         />
                       </div>
                       <div className="space-y-2">
@@ -543,7 +543,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                           value={formData.expenditure}
                           onChange={(e) => setFormData({ ...formData, expenditure: e.target.value })}
                           required
-                          className={`border-purple-200 focus:border-purple-400 focus:ring-purple-200 transition-all duration-200 ${formErrors.expenditure ? "border-red-500 focus:border-red-500" : ""}`}
+                          className={`border-purple-200 dark:border-purple-800 focus:border-purple-400 focus:ring-purple-200 transition-all duration-200 ${formErrors.expenditure ? "border-red-500 focus:border-red-500" : ""}`}
                         />
                         {formErrors.expenditure && <span className="text-red-500 text-sm flex items-center gap-1"><Search className="h-3 w-3" />{formErrors.expenditure}</span>}
                       </div>
@@ -558,7 +558,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                         value={formData.rate && formData.quantity && formData.expenditure ?
                           (parseFloat(formData.rate) * parseInt(formData.quantity) - parseFloat(formData.expenditure)).toFixed(2) : "0"}
                         disabled
-                        className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 font-medium"
+                        className="bg-gradient-to-r from-green-50 dark:from-green-950/30 to-emerald-50 border-green-200 dark:border-green-800 font-medium"
                       />
                     </div>
 
@@ -610,7 +610,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                         value={formData.date}
                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                         required
-                        className="border-purple-200 focus:border-purple-400 focus:ring-purple-200 transition-all duration-200"
+                        className="border-purple-200 dark:border-purple-800 focus:border-purple-400 focus:ring-purple-200 transition-all duration-200"
                       />
                     </div>
 
@@ -636,8 +636,8 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
             </div>
           </div>
 
-          <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-purple-50 via-pink-50 to-rose-50 border-b border-purple-100">
+          <Card className="border-0 shadow-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-purple-50 dark:from-purple-950/30 via-pink-50 to-rose-50 dark:to-rose-950/30 border-b border-purple-100 dark:border-purple-900/50">
               <CardTitle className="text-2xl font-bold flex items-center gap-3">
                 <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg text-white">
                   <Scissors className="h-6 w-6" />
@@ -652,10 +652,10 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table className="w-full">
-                  <TableHeader className="bg-gradient-to-r from-gray-50 to-purple-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
-                    <TableRow className="border-b border-purple-100">
+                  <TableHeader className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-purple-50 dark:to-purple-950/30 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
+                    <TableRow className="border-b border-purple-100 dark:border-purple-900/50">
                       {isAdmin && (
-                        <TableHead className="w-[50px] bg-gradient-to-r from-gray-50 to-purple-50">
+                        <TableHead className="w-[50px] bg-gradient-to-r from-gray-50 dark:from-gray-800 to-purple-50 dark:to-purple-950/30">
                           <Checkbox
                             checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length}
                             onCheckedChange={toggleSelectAll}
@@ -664,16 +664,16 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                           />
                         </TableHead>
                       )}
-                      <TableHead className="w-[50px] font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-purple-50 whitespace-nowrap">#</TableHead>
-                      <TableHead className="font-semibold text-gray-700 text-left bg-gradient-to-r from-gray-50 to-purple-50 whitespace-nowrap">Job Description</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-purple-50 whitespace-nowrap">Quantity</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-purple-50 whitespace-nowrap">Rate</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-purple-50 whitespace-nowrap">Quotation</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-purple-50 whitespace-nowrap">Expenditure</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-purple-50 whitespace-nowrap">Profit</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-purple-50 whitespace-nowrap">Time</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-purple-50 whitespace-nowrap">Done by</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-purple-50 whitespace-nowrap">Actions</TableHead>
+                      <TableHead className="w-[50px] font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">#</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 text-left bg-gradient-to-r from-gray-50 dark:from-gray-800 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Job Description</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Quantity</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Rate</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Quotation</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Expenditure</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Profit</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Time</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Done by</TableHead>
+                      <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -684,7 +684,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                         return (
                           <TableRow
                             key={item.id}
-                            className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-purple-50 hover:to-pink-50`}
+                            className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-purple-50 dark:hover:from-purple-950/30 dark:from-purple-950/30 hover:to-pink-50`}
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
                             {isAdmin && (
@@ -697,10 +697,10 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                                 />
                               </TableCell>
                             )}
-                            <TableCell className="font-medium text-gray-500">
+                            <TableCell className="font-medium text-gray-500 dark:text-gray-400">
                               {index + 1}
                             </TableCell>
-                            <TableCell className="font-semibold text-gray-800 max-w-xs truncate text-left">{item.job_description}</TableCell>
+                            <TableCell className="font-semibold text-gray-800 dark:text-gray-200 max-w-xs truncate text-left">{item.job_description}</TableCell>
                             <TableCell className="font-medium">{item.quantity}</TableCell>
                             <TableCell className="font-medium text-blue-600">{formatUGX(item.rate)}</TableCell>
                             <TableCell className="font-medium text-purple-600">{formatUGX(quotation)}</TableCell>
@@ -711,10 +711,10 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                                 {formatUGX(profit)}
                               </div>
                             </TableCell>
-                            <TableCell className="text-gray-500 text-xs">
+                            <TableCell className="text-gray-500 dark:text-gray-400 text-xs">
                               {item.created_at ? new Date(item.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : "-"}
                             </TableCell>
-                            <TableCell className="text-gray-600">
+                            <TableCell className="text-gray-600 dark:text-gray-400">
                               {getPersonName(item.done_by)}
                             </TableCell>
                             <TableCell className="text-right">
@@ -722,7 +722,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 hover:bg-purple-100 hover:scale-110 transition-all duration-200"
+                                  className="h-8 w-8 hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:scale-110 transition-all duration-200"
                                   onClick={() => handleEdit(item)}
                                   disabled={!isAdmin}
                                   title={!isAdmin ? "Admin access required" : "Edit job"}
@@ -732,7 +732,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 hover:bg-red-100 hover:scale-110 transition-all duration-200"
+                                  className="h-8 w-8 hover:bg-red-100 dark:hover:bg-red-900/30 hover:scale-110 transition-all duration-200"
                                   onClick={() => handleDelete(item.id)}
                                   disabled={!isAdmin}
                                   title={!isAdmin ? "Admin access required" : "Delete job"}
@@ -751,13 +751,13 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                             {isLoading ? (
                               <div className="flex flex-col items-center gap-3">
                                 <CustomLoader size="lg" />
-                                <span className="text-lg text-gray-600 font-medium">Loading embroidery jobs...</span>
+                                <span className="text-lg text-gray-600 dark:text-gray-400 font-medium">Loading embroidery jobs...</span>
                               </div>
                             ) : (
                               <div className="flex flex-col items-center gap-3">
                                 <Scissors className="h-12 w-12 text-gray-400" />
-                                <span className="text-lg text-gray-600">No embroidery jobs found.</span>
-                                <span className="text-sm text-gray-500">Start by adding your first job!</span>
+                                <span className="text-lg text-gray-600 dark:text-gray-400">No embroidery jobs found.</span>
+                                <span className="text-sm text-gray-500 dark:text-gray-400">Start by adding your first job!</span>
                               </div>
                             )}
                           </div>
@@ -765,9 +765,9 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                       </TableRow>
                     )}
                   </TableBody>
-                  <TableFooter className="bg-purple-50/50">
+                  <TableFooter className="bg-purple-50/50 dark:bg-purple-950/20">
                     <TableRow>
-                      <TableCell colSpan={isAdmin ? 5 : 4} className="text-right font-bold text-gray-700">Totals</TableCell>
+                      <TableCell colSpan={isAdmin ? 5 : 4} className="text-right font-bold text-gray-700 dark:text-gray-300">Totals</TableCell>
                       <TableCell className="font-bold text-purple-600">{formatUGX(totalQuotation)}</TableCell>
                       <TableCell className="font-bold text-red-600">{formatUGX(totalExpenditure)}</TableCell>
                       <TableCell className={`font-bold ${totalProfit >= 0 ? "text-green-600" : "text-red-600"}`}>
@@ -786,20 +786,20 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
         </TabsContent>
 
         <TabsContent value="daily-sales" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden p-6">
+          <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden p-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
               <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-purple-600" />
                 Sales Report - {viewMode === 'daily' ? selectedDate.toLocaleDateString() : selectedDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
               </h3>
 
-              <div className="flex items-center gap-4 bg-white/50 p-1.5 rounded-lg border border-purple-100">
-                <div className="flex items-center gap-2 bg-purple-50/50 rounded-md p-1">
+              <div className="flex items-center gap-4 bg-white/50 dark:bg-gray-900/50 p-1.5 rounded-lg border border-purple-100 dark:border-purple-900/50">
+                <div className="flex items-center gap-2 bg-purple-50/50 dark:bg-purple-950/20 rounded-md p-1">
                   <Button
                     variant={viewMode === 'daily' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setViewMode('daily')}
-                    className={`h-7 px-3 text-xs ${viewMode === 'daily' ? 'bg-white text-purple-600 shadow-sm border border-purple-100 hover:bg-white' : 'text-gray-500 hover:text-purple-600 hover:bg-purple-50'}`}
+                    className={`h-7 px-3 text-xs ${viewMode === 'daily' ? 'bg-white dark:bg-gray-900 text-purple-600 shadow-sm border border-purple-100 dark:border-purple-900/50 hover:bg-white' : 'text-gray-500 dark:text-gray-400 hover:text-purple-600 hover:bg-purple-50'}`}
                   >
                     Daily
                   </Button>
@@ -807,7 +807,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                     variant={viewMode === 'monthly' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setViewMode('monthly')}
-                    className={`h-7 px-3 text-xs ${viewMode === 'monthly' ? 'bg-white text-purple-600 shadow-sm border border-purple-100 hover:bg-white' : 'text-gray-500 hover:text-purple-600 hover:bg-purple-50'}`}
+                    className={`h-7 px-3 text-xs ${viewMode === 'monthly' ? 'bg-white dark:bg-gray-900 text-purple-600 shadow-sm border border-purple-100 dark:border-purple-900/50 hover:bg-white' : 'text-gray-500 dark:text-gray-400 hover:text-purple-600 hover:bg-purple-50'}`}
                   >
                     Monthly
                   </Button>
@@ -833,22 +833,22 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                         }
                       }
                     }}
-                    className="h-7 w-[130px] text-xs border-0 bg-transparent focus:ring-0 cursor-pointer text-gray-600 font-medium"
+                    className="h-7 w-[130px] text-xs border-0 bg-transparent focus:ring-0 cursor-pointer text-gray-600 dark:text-gray-400 font-medium"
                   />
                 </div>
               </div>
             </div>
 
-            <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
+            <Card className="border-0 shadow-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm overflow-hidden">
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <Table className="w-full">
-                    <TableHeader className="bg-gradient-to-r from-gray-50 to-purple-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
-                      <TableRow className="border-b border-purple-100">
-                        <TableHead className="w-[50px] font-semibold text-gray-700 text-left bg-gradient-to-r from-gray-50 to-purple-50 whitespace-nowrap">#</TableHead>
-                        <TableHead className="font-semibold text-gray-700 text-left bg-gradient-to-r from-gray-50 to-purple-50 whitespace-nowrap">Job Description</TableHead>
-                        <TableHead className="font-semibold text-gray-700 text-right bg-gradient-to-r from-gray-50 to-purple-50 whitespace-nowrap">Total Sales (UGX)</TableHead>
-                        <TableHead className="font-semibold text-gray-700 text-right bg-gradient-to-r from-gray-50 to-purple-50 whitespace-nowrap">Total Profit (UGX)</TableHead>
+                    <TableHeader className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-purple-50 dark:to-purple-950/30 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
+                      <TableRow className="border-b border-purple-100 dark:border-purple-900/50">
+                        <TableHead className="w-[50px] font-semibold text-gray-700 dark:text-gray-300 text-left bg-gradient-to-r from-gray-50 dark:from-gray-800 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">#</TableHead>
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300 text-left bg-gradient-to-r from-gray-50 dark:from-gray-800 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Job Description</TableHead>
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300 text-right bg-gradient-to-r from-gray-50 dark:from-gray-800 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Total Sales (UGX)</TableHead>
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300 text-right bg-gradient-to-r from-gray-50 dark:from-gray-800 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Total Profit (UGX)</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -857,9 +857,9 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                           const quotation = (item.rate || 0) * item.quantity;
                           const profit = quotation - item.expenditure;
                           return (
-                            <TableRow key={item.id} className="hover:bg-purple-50/50 transition-colors">
-                              <TableCell className="font-medium text-gray-500 text-left">{index + 1}</TableCell>
-                              <TableCell className="font-medium text-gray-800 text-left">{item.job_description}</TableCell>
+                            <TableRow key={item.id} className="hover:bg-purple-50/50 dark:hover:bg-purple-950/20 transition-colors">
+                              <TableCell className="font-medium text-gray-500 dark:text-gray-400 text-left">{index + 1}</TableCell>
+                              <TableCell className="font-medium text-gray-800 dark:text-gray-200 text-left">{item.job_description}</TableCell>
                               <TableCell className="text-right text-purple-600 font-medium">{formatUGX(quotation)}</TableCell>
                               <TableCell className={`text-right font-bold ${profit >= 0 ? "text-green-600" : "text-red-600"}`}>
                                 {formatUGX(profit)}
@@ -876,8 +876,8 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                       )}
 
                       {/* Grand Totals */}
-                      <TableRow className="bg-gradient-to-r from-purple-100 to-pink-100 font-bold border-t-2 border-purple-300">
-                        <TableCell colSpan={2} className="text-gray-800">GRAND TOTAL</TableCell>
+                      <TableRow className="bg-gradient-to-r from-purple-100 dark:from-purple-900/30 to-pink-100 dark:to-pink-900/30 font-bold border-t-2 border-purple-300">
+                        <TableCell colSpan={2} className="text-gray-800 dark:text-gray-200">GRAND TOTAL</TableCell>
                         <TableCell className="text-right text-purple-800">
                           {formatUGX(dailyTotalSales)}
                         </TableCell>

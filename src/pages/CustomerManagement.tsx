@@ -304,15 +304,15 @@ const CustomerManagement = () => {
 
   const getCustomerTypeColor = (type: string) => {
     switch (type) {
-      case 'individual': return 'bg-blue-100 text-blue-800';
-      case 'business': return 'bg-green-100 text-green-800';
-      case 'wholesale': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'individual': return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800';
+      case 'business': return 'bg-green-100 dark:bg-green-900/30 text-green-800';
+      case 'wholesale': return 'bg-purple-100 dark:bg-purple-900/30 text-purple-800';
+      default: return 'bg-gray-100 dark:bg-gray-800 text-gray-800';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 dark:from-blue-950/30 via-purple-50 to-pink-50 dark:to-pink-950/30 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6">
@@ -320,7 +320,7 @@ const CustomerManagement = () => {
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Customer Management
             </h1>
-            <p className="text-gray-600 mt-2">Manage your customer relationships and track purchase history</p>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">Manage your customer relationships and track purchase history</p>
           </div>
           
           <Button 
@@ -388,14 +388,14 @@ const CustomerManagement = () => {
         </div>
 
         {/* Search and Filter */}
-        <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+        <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
           <CardContent className="p-6">
             <div className="flex flex-col lg:flex-row gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search customers by name, email, phone, or company..."
-                  className="pl-9 border-blue-200 focus:border-blue-400 focus:ring-blue-200"
+                  className="pl-9 border-blue-200 dark:border-blue-800 focus:border-blue-400 focus:ring-blue-200"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -415,7 +415,7 @@ const CustomerManagement = () => {
                   </SelectContent>
                 </Select>
                 
-                <Button variant="outline" className="border-green-200 hover:bg-green-50" onClick={exportCustomers}>
+                <Button variant="outline" className="border-green-200 dark:border-green-800 hover:bg-green-50 dark:hover:bg-green-950/20" onClick={exportCustomers}>
                   <Download className="h-4 w-4 mr-2" />
                   Export CSV
                 </Button>
@@ -425,7 +425,7 @@ const CustomerManagement = () => {
         </Card>
 
         {/* Customers Table */}
-        <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+        <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
@@ -436,12 +436,12 @@ const CustomerManagement = () => {
             {isLoading ? (
               <div className="text-center py-8">
                 <div className="animate-spin h-8 w-8 border-b-2 border-blue-600 rounded-full mx-auto"></div>
-                <p className="mt-4 text-gray-600">Loading customers...</p>
+                <p className="mt-4 text-gray-600 dark:text-gray-400">Loading customers...</p>
               </div>
             ) : filteredCustomers.length === 0 ? (
               <div className="text-center py-8">
                 <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No customers found matching your criteria</p>
+                <p className="text-gray-500 dark:text-gray-400">No customers found matching your criteria</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -459,12 +459,12 @@ const CustomerManagement = () => {
                   </TableHeader>
                   <TableBody>
                     {filteredCustomers.map((customer) => (
-                      <TableRow key={customer.id} className="hover:bg-blue-50/50 transition-colors">
+                      <TableRow key={customer.id} className="hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-colors">
                         <TableCell>
                           <div>
                             <p className="font-medium">{customer.full_name}</p>
                             {customer.company && (
-                              <p className="text-sm text-gray-500">{customer.company}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">{customer.company}</p>
                             )}
                           </div>
                         </TableCell>
@@ -509,7 +509,7 @@ const CustomerManagement = () => {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleEdit(customer)}
-                                  className="hover:bg-yellow-50"
+                                  className="hover:bg-yellow-50 dark:hover:bg-yellow-950/20"
                                 >
                                   <Edit className="h-3 w-3" />
                                 </Button>
@@ -517,7 +517,7 @@ const CustomerManagement = () => {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleDelete(customer.id)}
-                                  className="hover:bg-red-50 text-red-600"
+                                  className="hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600"
                                 >
                                   <Trash2 className="h-3 w-3" />
                                 </Button>

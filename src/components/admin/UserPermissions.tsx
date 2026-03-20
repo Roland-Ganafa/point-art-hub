@@ -187,7 +187,7 @@ const UserPermissions = () => {
   };
 
   return (
-    <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+    <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Shield className="h-5 w-5" />
@@ -199,8 +199,8 @@ const UserPermissions = () => {
         {message && (
           <div className={`mb-4 p-3 rounded-lg border ${
             message.type === 'success' 
-              ? 'bg-green-50 border-green-200 text-green-700' 
-              : 'bg-red-50 border-red-200 text-red-700'
+              ? 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800 text-green-700' 
+              : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-700'
           }`}>
             <div className="flex items-center gap-2">
               {message.type === 'success' ? (
@@ -233,7 +233,7 @@ const UserPermissions = () => {
               </SelectContent>
             </Select>
             
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
               <h4 className="font-medium text-blue-800 mb-2">Role Information</h4>
               <p className="text-sm text-blue-700">
                 {roleTemplates.find(r => r.id === selectedRole)?.description}
@@ -253,7 +253,7 @@ const UserPermissions = () => {
                   <div key={category} className="border rounded-lg overflow-hidden">
                     <button
                       onClick={() => toggleCategory(category)}
-                      className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                      className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                     >
                       <div className="flex items-center gap-2">
                         {getPermissionIcon(category)}
@@ -268,9 +268,9 @@ const UserPermissions = () => {
                     </button>
                     
                     {isExpanded && (
-                      <div className="p-4 space-y-4 bg-white">
+                      <div className="p-4 space-y-4 bg-white dark:bg-gray-900">
                         {perms.map(permission => (
-                          <div key={permission.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50">
+                          <div key={permission.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
                             <Checkbox
                               id={permission.id}
                               checked={permission.enabled}

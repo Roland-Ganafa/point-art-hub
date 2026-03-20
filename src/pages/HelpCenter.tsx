@@ -363,15 +363,15 @@ Advanced features for system administrators.
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'beginner': return 'bg-green-100 text-green-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'beginner': return 'bg-green-100 dark:bg-green-900/30 text-green-800';
+      case 'intermediate': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800';
+      case 'advanced': return 'bg-red-100 dark:bg-red-900/30 text-red-800';
+      default: return 'bg-gray-100 dark:bg-gray-800 text-gray-800';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 dark:from-blue-950/30 via-indigo-50 to-purple-50 dark:to-purple-950/30 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
@@ -389,7 +389,7 @@ Advanced features for system administrators.
         </div>
 
         {/* Search and Categories */}
-        <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+        <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
           <CardContent className="p-6">
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Search */}
@@ -407,11 +407,11 @@ Advanced features for system administrators.
               
               {/* Quick Actions */}
               <div className="flex gap-3">
-                <Button variant="outline" className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100">
+                <Button variant="outline" className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800 text-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/30">
                   <Video className="h-4 w-4 mr-2" />
                   Video Tutorials
                 </Button>
-                <Button variant="outline" className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100">
+                <Button variant="outline" className="bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800 text-green-700 hover:bg-green-100 dark:hover:bg-green-900/30">
                   <Download className="h-4 w-4 mr-2" />
                   Download Guides
                 </Button>
@@ -430,7 +430,7 @@ Advanced features for system administrators.
                     className={`h-auto p-3 flex flex-col items-center gap-2 ${
                       selectedCategory === category.id 
                         ? 'bg-gradient-to-r from-blue-500 to-purple-600' 
-                        : 'bg-white/50 hover:bg-white/80'
+                        : 'bg-white/50 dark:bg-gray-900/50 hover:bg-white/80'
                     }`}
                   >
                     <Icon className="h-5 w-5" />
@@ -444,7 +444,7 @@ Advanced features for system administrators.
 
         {/* Main Content */}
         <Tabs defaultValue="articles" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-white/70 backdrop-blur-sm border border-white/20 shadow-xl rounded-xl p-2">
+          <TabsList className="grid w-full grid-cols-4 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm border border-white/20 shadow-xl rounded-xl p-2">
             <TabsTrigger value="articles" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white">
               <FileText className="h-4 w-4 mr-2" />
               Articles
@@ -467,16 +467,16 @@ Advanced features for system administrators.
           <TabsContent value="articles" className="space-y-6">
             <div className="grid gap-6">
               {filteredArticles.length === 0 ? (
-                <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+                <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
                   <CardContent className="p-12 text-center">
                     <Search className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-600 mb-2">No articles found</h3>
-                    <p className="text-gray-500">Try adjusting your search terms or category filter.</p>
+                    <h3 className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-2">No articles found</h3>
+                    <p className="text-gray-500 dark:text-gray-400">Try adjusting your search terms or category filter.</p>
                   </CardContent>
                 </Card>
               ) : (
                 filteredArticles.map((article) => (
-                  <Card key={article.id} className="border-0 shadow-xl bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 group">
+                  <Card key={article.id} className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 group">
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -488,11 +488,11 @@ Advanced features for system administrators.
                               <Badge variant="outline" className={getDifficultyColor(article.difficulty)}>
                                 {article.difficulty}
                               </Badge>
-                              <span className="text-gray-500">
+                              <span className="text-gray-500 dark:text-gray-400">
                                 <Lightbulb className="h-3 w-3 inline mr-1" />
                                 {article.estimatedTime}
                               </span>
-                              <span className="text-gray-500">
+                              <span className="text-gray-500 dark:text-gray-400">
                                 Updated {article.lastUpdated}
                               </span>
                             </div>
@@ -503,7 +503,7 @@ Advanced features for system administrators.
                     </CardHeader>
                     <CardContent>
                       <div className="prose prose-sm max-w-none">
-                        <div className="text-gray-600 line-clamp-3">
+                        <div className="text-gray-600 dark:text-gray-400 line-clamp-3">
                           {article.content.split('\n').slice(2, 5).join(' ').substring(0, 200)}...
                         </div>
                       </div>
@@ -515,7 +515,7 @@ Advanced features for system administrators.
                             </Badge>
                           ))}
                         </div>
-                        <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50">
+                        <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20">
                           Read More
                           <ChevronRight className="h-4 w-4 ml-1" />
                         </Button>
@@ -531,9 +531,9 @@ Advanced features for system administrators.
           <TabsContent value="videos" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {videoTutorials.map((video) => (
-                <Card key={video.id} className="border-0 shadow-xl bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 group">
+                <Card key={video.id} className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 group">
                   <div className="relative">
-                    <div className="aspect-video bg-gradient-to-br from-blue-100 to-purple-100 rounded-t-lg flex items-center justify-center">
+                    <div className="aspect-video bg-gradient-to-br from-blue-100 dark:from-blue-900/30 to-purple-100 dark:to-purple-900/30 rounded-t-lg flex items-center justify-center">
                       <Play className="h-12 w-12 text-blue-600 group-hover:scale-110 transition-transform" />
                     </div>
                     <Badge className="absolute top-2 right-2 bg-black/70 text-white">
@@ -544,7 +544,7 @@ Advanced features for system administrators.
                     <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors">
                       {video.title}
                     </h3>
-                    <p className="text-gray-600 text-sm mb-3">
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">
                       {video.description}
                     </p>
                     <Button
@@ -562,7 +562,7 @@ Advanced features for system administrators.
 
           {/* FAQ */}
           <TabsContent value="faq" className="space-y-6">
-            <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+            <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <HelpCircle className="h-5 w-5" />
@@ -579,7 +579,7 @@ Advanced features for system administrators.
                       <AccordionTrigger className="text-left hover:text-blue-600">
                         {faq.question}
                       </AccordionTrigger>
-                      <AccordionContent className="text-gray-600">
+                      <AccordionContent className="text-gray-600 dark:text-gray-400">
                         {faq.answer}
                       </AccordionContent>
                     </AccordionItem>
@@ -592,7 +592,7 @@ Advanced features for system administrators.
           {/* Quick Start Guides */}
           <TabsContent value="guides" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="border-0 shadow-xl bg-gradient-to-br from-green-50 to-green-100">
+              <Card className="border-0 shadow-xl bg-gradient-to-br from-green-50 dark:from-green-950/30 to-green-100 dark:to-green-900/30">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 bg-green-500 text-white rounded-lg">
@@ -603,14 +603,14 @@ Advanced features for system administrators.
                   <p className="text-green-700 mb-4">
                     Get your inventory up and running in 5 minutes with this essential guide.
                   </p>
-                  <Button variant="outline" className="border-green-300 text-green-700 hover:bg-green-200" onClick={() => navigate('/')}>
+                  <Button variant="outline" className="border-green-300 text-green-700 hover:bg-green-200 dark:hover:bg-green-800" onClick={() => navigate('/')}>
                     Start Guide
                     <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-50 to-blue-100">
+              <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-50 dark:from-blue-950/30 to-blue-100 dark:to-blue-900/30">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 bg-blue-500 text-white rounded-lg">
@@ -621,14 +621,14 @@ Advanced features for system administrators.
                   <p className="text-blue-700 mb-4">
                     Learn to process sales efficiently and track performance metrics.
                   </p>
-                  <Button variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-200" onClick={() => navigate('/')}>
+                  <Button variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-200 dark:hover:bg-blue-800" onClick={() => navigate('/')}>
                     Start Guide
                     <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-xl bg-gradient-to-br from-purple-50 to-purple-100">
+              <Card className="border-0 shadow-xl bg-gradient-to-br from-purple-50 dark:from-purple-950/30 to-purple-100 dark:to-purple-900/30">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 bg-purple-500 text-white rounded-lg">
@@ -639,14 +639,14 @@ Advanced features for system administrators.
                   <p className="text-purple-700 mb-4">
                     Master reporting tools to gain valuable business insights.
                   </p>
-                  <Button variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-200" onClick={() => navigate('/reports')}>
+                  <Button variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-200 dark:hover:bg-purple-800" onClick={() => navigate('/reports')}>
                     Start Guide
                     <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-xl bg-gradient-to-br from-orange-50 to-orange-100">
+              <Card className="border-0 shadow-xl bg-gradient-to-br from-orange-50 dark:from-orange-950/30 to-orange-100 dark:to-orange-900/30">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 bg-orange-500 text-white rounded-lg">
@@ -657,7 +657,7 @@ Advanced features for system administrators.
                   <p className="text-orange-700 mb-4">
                     Configure your system settings for optimal performance.
                   </p>
-                  <Button variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-200" onClick={() => navigate('/settings')}>
+                  <Button variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-200 dark:hover:bg-orange-800" onClick={() => navigate('/settings')}>
                     Start Guide
                     <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>

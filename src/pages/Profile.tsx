@@ -41,7 +41,7 @@ const ProfilePage = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <CustomLoader size="lg" />
-          <span className="text-lg text-gray-600 font-medium">Loading profile...</span>
+          <span className="text-lg text-gray-600 dark:text-gray-400 font-medium">Loading profile...</span>
         </div>
       </div>
     );
@@ -123,16 +123,16 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-800">
       {/* Header Section */}
-      <div className="bg-white border-b">
+      <div className="bg-white dark:bg-gray-900 border-b">
         <div className="container mx-auto px-6 py-8">
           <div className="flex items-center space-x-6">
             {/* Back Button */}
             <Button
               variant="outline"
               onClick={handleBackToMain}
-              className="px-4 hover:bg-gray-50"
+              className="px-4 hover:bg-gray-50 dark:hover:bg-gray-800"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
@@ -148,10 +148,10 @@ const ProfilePage = () => {
             </div>
 
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 mb-1">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">
                 {profile?.full_name || 'User Profile'}
               </h1>
-              <p className="text-gray-600 mb-3">{user?.email}</p>
+              <p className="text-gray-600 dark:text-gray-400 mb-3">{user?.email}</p>
               <div className="flex items-center space-x-3">
                 {profile?.role && (
                   <Badge variant={profile.role === 'admin' ? 'default' : 'secondary'} className="text-xs px-3 py-1">
@@ -258,9 +258,9 @@ const ProfilePage = () => {
           {/* Left Column - Main Information */}
           <div className="lg:col-span-2 space-y-6">
             {/* Personal Information Card */}
-            <Card className="shadow-sm border-gray-200">
+            <Card className="shadow-sm border-gray-200 dark:border-gray-700">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-lg font-semibold text-gray-900">
+                <CardTitle className="flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
                   <User className="h-5 w-5 mr-3 text-blue-600" />
                   Personal Information
                 </CardTitle>
@@ -268,29 +268,29 @@ const ProfilePage = () => {
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Full Name</label>
-                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md">{profile?.full_name || 'Not provided'}</p>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+                    <p className="text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md">{profile?.full_name || 'Not provided'}</p>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Email Address</label>
-                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md">{user?.email}</p>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
+                    <p className="text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md">{user?.email}</p>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Sales Initials</label>
-                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md">{profile?.sales_initials || 'Not assigned'}</p>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Sales Initials</label>
+                    <p className="text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md">{profile?.sales_initials || 'Not assigned'}</p>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">User ID</label>
-                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md font-mono text-sm">{user?.id}</p>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">User ID</label>
+                    <p className="text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md font-mono text-sm">{user?.id}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Account Details Card */}
-            <Card className="shadow-sm border-gray-200">
+            <Card className="shadow-sm border-gray-200 dark:border-gray-700">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-lg font-semibold text-gray-900">
+                <CardTitle className="flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
                   <Shield className="h-5 w-5 mr-3 text-blue-600" />
                   Account Details
                 </CardTitle>
@@ -298,37 +298,37 @@ const ProfilePage = () => {
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Account Role</label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Role</label>
                     <div className="flex items-center space-x-2">
-                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md flex-1">{profile?.role || 'Not assigned'}</p>
+                      <p className="text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md flex-1">{profile?.role || 'Not assigned'}</p>
                       <Badge variant={profile?.role === 'admin' ? 'default' : 'secondary'}>
                         {profile?.role?.toUpperCase()}
                       </Badge>
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Account Status</label>
-                    <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Status</label>
+                    <div className="flex items-center space-x-2 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-gray-900">Active</span>
+                      <span className="text-gray-900 dark:text-gray-100">Active</span>
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Join Date</label>
-                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md">{formatDate(profile?.created_at)}</p>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Join Date</label>
+                    <p className="text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md">{formatDate(profile?.created_at)}</p>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Last Sign In</label>
-                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md">{formatDate(user?.last_sign_in_at)}</p>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Last Sign In</label>
+                    <p className="text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md">{formatDate(user?.last_sign_in_at)}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* System Information Card */}
-            <Card className="shadow-sm border-gray-200">
+            <Card className="shadow-sm border-gray-200 dark:border-gray-700">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-lg font-semibold text-gray-900">
+                <CardTitle className="flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
                   <Activity className="h-5 w-5 mr-3 text-blue-600" />
                   System Information
                 </CardTitle>
@@ -336,15 +336,15 @@ const ProfilePage = () => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Email Verified</label>
-                    <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Verified</label>
+                    <div className="flex items-center space-x-2 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md">
                       <div className={`w-2 h-2 rounded-full ${user?.email_confirmed_at ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                      <span className="text-gray-900">{user?.email_confirmed_at ? 'Verified' : 'Pending'}</span>
+                      <span className="text-gray-900 dark:text-gray-100">{user?.email_confirmed_at ? 'Verified' : 'Pending'}</span>
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Profile Updated</label>
-                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md">{formatDate(profile?.updated_at)}</p>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Profile Updated</label>
+                    <p className="text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md">{formatDate(profile?.updated_at)}</p>
                   </div>
                 </div>
               </CardContent>
@@ -354,9 +354,9 @@ const ProfilePage = () => {
           {/* Right Column - Sidebar */}
           <div className="space-y-6">
             {/* Quick Actions Card */}
-            <Card className="shadow-sm border-gray-200">
+            <Card className="shadow-sm border-gray-200 dark:border-gray-700">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-lg font-semibold text-gray-900">
+                <CardTitle className="flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
                   <Star className="h-5 w-5 mr-3 text-blue-600" />
                   Quick Actions
                 </CardTitle>
@@ -391,32 +391,32 @@ const ProfilePage = () => {
             </Card>
 
             {/* Account Summary Card */}
-            <Card className="shadow-sm border-gray-200">
+            <Card className="shadow-sm border-gray-200 dark:border-gray-700">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-lg font-semibold text-gray-900">
+                <CardTitle className="flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
                   <UserCheck className="h-5 w-5 mr-3 text-blue-600" />
                   Account Summary
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-sm text-gray-600">Profile Completion</span>
-                    <span className="text-sm font-medium text-gray-900">85%</span>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Profile Completion</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">85%</span>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-sm text-gray-600">Security Level</span>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Security Level</span>
                     <Badge variant="outline" className="text-xs">
                       {user?.email_confirmed_at ? 'High' : 'Medium'}
                     </Badge>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-sm text-gray-600">Account Type</span>
-                    <span className="text-sm font-medium text-gray-900">Standard</span>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Account Type</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Standard</span>
                   </div>
                   <div className="flex justify-between items-center py-2">
-                    <span className="text-sm text-gray-600">Active Since</span>
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Active Since</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'Unknown'}
                     </span>
                   </div>

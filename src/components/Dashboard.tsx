@@ -34,7 +34,7 @@ const ModuleLoading = () => (
 
 // Placeholder component for unloaded modules
 const ModulePlaceholder = ({ moduleName }: { moduleName: string }) => (
-  <div className="flex items-center justify-center h-64 bg-white/50 rounded-xl">
+  <div className="flex items-center justify-center h-64 bg-white/50 dark:bg-gray-900/50 rounded-xl">
     <div className="text-center">
       <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
       <h3 className="text-lg font-medium text-muted-foreground">Switch to the {moduleName} tab to load this module</h3>
@@ -710,10 +710,10 @@ const Dashboard = () => {
 
   if (dashboardError) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50">
-        <div className="max-w-md p-8 bg-white rounded-2xl shadow-2xl">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 dark:from-orange-950/30 via-pink-50 to-purple-50 dark:to-purple-950/30">
+        <div className="max-w-md p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl">
           <h2 className="text-xl font-bold text-red-500 mb-4">Connection Error</h2>
-          <p className="text-gray-700 mb-6">{dashboardError}</p>
+          <p className="text-gray-700 dark:text-gray-300 mb-6">{dashboardError}</p>
           <div className="space-y-3">
             <Button
               onClick={() => {
@@ -748,7 +748,7 @@ const Dashboard = () => {
             >
               Go to Login
             </Button>
-            <p className="text-sm text-gray-500 mt-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
               If the problem persists, please check your internet connection or contact support.
             </p>
           </div>
@@ -758,7 +758,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 relative">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 dark:from-orange-950/30 via-pink-50 to-purple-50 dark:to-purple-950/30 relative">
       {/* Background Decorative Elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-10 right-10 w-32 h-32 bg-orange-200/30 rounded-full blur-3xl animate-pulse"></div>
@@ -778,7 +778,7 @@ const Dashboard = () => {
                 <DashboardGreeting />
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600">
+            <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
               <div className="flex items-center gap-2">
                 <Activity className="h-4 w-4 text-orange-500 flex-shrink-0" />
                 <span className="font-medium">Live Updates</span>
@@ -797,7 +797,7 @@ const Dashboard = () => {
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className="order-2 sm:order-1 hover:scale-105 transition-all duration-200 hover:shadow-lg border-orange-200 hover:border-orange-400 bg-white/80 backdrop-blur-sm px-6 py-2.5"
+                  className="order-2 sm:order-1 hover:scale-105 transition-all duration-200 hover:shadow-lg border-orange-200 dark:border-orange-800 hover:border-orange-400 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm px-6 py-2.5"
                 >
                   <BarChart3 className="mr-2 h-4 w-4" />
                   Export Report
@@ -817,7 +817,7 @@ const Dashboard = () => {
                         className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
                           exportPreset === p
                             ? "bg-orange-500 text-white border-orange-500"
-                            : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"
+                            : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-orange-300"
                         }`}
                       >
                         {p === "today" ? "Today" : p === "week" ? "This Week" : p === "month" ? "This Month" : p === "all" ? "All Time" : "Custom"}
@@ -863,7 +863,7 @@ const Dashboard = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           {/* Navigation Tabs - Hide Overview for regular users */}
           <div className="relative flex justify-center">
-            <TabsList className="inline-flex h-12 items-center justify-center rounded-2xl bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl p-1.5 gap-1">
+            <TabsList className="inline-flex h-12 items-center justify-center rounded-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border border-white/20 shadow-xl p-1.5 gap-1">
               {/* Overview Tab - Only visible to admins */}
               {(isAdmin || profile?.role === 'admin') && (
                 <TabsTrigger
@@ -928,8 +928,8 @@ const Dashboard = () => {
             <TabsContent value="overview" className="space-y-10 animate-in fade-in-50 duration-500">
               {/* Quick Stats Summary */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <h3 className="text-2xl font-bold text-gray-900">Quick Stats</h3>
-                <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Quick Stats</h3>
+                <div className="flex items-center gap-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
                   <Button
                     variant={dateFilter === "today" ? "default" : "ghost"}
                     size="sm"
@@ -957,7 +957,7 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 hover:shadow-xl transition-all duration-300 hover:scale-105 group">
+                <Card className="bg-gradient-to-br from-green-50 dark:from-green-950/30 to-emerald-50 border-green-200 dark:border-green-800 hover:shadow-xl transition-all duration-300 hover:scale-105 group">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex-1">
@@ -975,7 +975,7 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-300 hover:scale-105 group">
+                <Card className="bg-gradient-to-br from-blue-50 dark:from-blue-950/30 to-blue-100 dark:to-blue-900/30 border-blue-200 dark:border-blue-800 hover:shadow-xl transition-all duration-300 hover:scale-105 group">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex-1">
@@ -993,7 +993,7 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-300 hover:scale-105 group">
+                <Card className="bg-gradient-to-br from-orange-50 dark:from-orange-950/30 to-orange-100 dark:to-orange-900/30 border-orange-200 dark:border-orange-800 hover:shadow-xl transition-all duration-300 hover:scale-105 group">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex-1">
@@ -1011,7 +1011,7 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 group">
+                <Card className="bg-gradient-to-br from-purple-50 dark:from-purple-950/30 to-purple-100 dark:to-purple-900/30 border-purple-200 dark:border-purple-800 hover:shadow-xl transition-all duration-300 hover:scale-105 group">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex-1">
@@ -1035,8 +1035,8 @@ const Dashboard = () => {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <Trophy className="h-6 w-6 text-amber-500" />
-                    <h3 className="text-2xl font-bold text-gray-900">Best Sellers</h3>
-                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Stock Intelligence</span>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Best Sellers</h3>
+                    <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 px-2 py-0.5 rounded-full font-medium">Stock Intelligence</span>
                   </div>
 
                   {bestSellersLoading ? (
@@ -1045,14 +1045,14 @@ const Dashboard = () => {
                     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                       {/* Top Products - takes 2/3 width */}
                       <div className="xl:col-span-2">
-                        <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm overflow-hidden">
-                          <CardHeader className="pb-3 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
+                        <Card className="border-0 shadow-xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm overflow-hidden">
+                          <CardHeader className="pb-3 bg-gradient-to-r from-amber-50 dark:from-amber-950/30 to-orange-50 dark:to-orange-950/30 border-b border-amber-100 dark:border-amber-900/50">
                             <div className="flex items-center justify-between">
-                              <CardTitle className="text-base font-bold text-gray-800 flex items-center gap-2">
+                              <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                                 <Star className="h-4 w-4 text-amber-500" />
                                 Top Selling Products
                               </CardTitle>
-                              <span className="text-xs text-gray-500">by quantity sold</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">by quantity sold</span>
                             </div>
                           </CardHeader>
                           <CardContent className="p-0">
@@ -1064,26 +1064,26 @@ const Dashboard = () => {
                             ) : (() => {
                               const maxQty = bestSellers[0]?.totalQty || 1;
                               return (
-                                <div className="divide-y divide-gray-50">
+                                <div className="divide-y divide-gray-50 dark:divide-gray-800">
                                   {bestSellers.map((item, i) => {
                                     const pct = (item.totalQty / maxQty) * 100;
                                     const isLow = item.currentStock !== null && item.currentStock <= 5;
                                     const isOut = item.currentStock !== null && item.currentStock <= 0;
                                     const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : null;
                                     return (
-                                      <div key={item.name} className={`px-4 py-3 hover:bg-amber-50/50 transition-colors ${i < 3 ? "bg-gradient-to-r from-amber-50/30 to-transparent" : ""}`}>
+                                      <div key={item.name} className={`px-4 py-3 hover:bg-amber-50/50 dark:hover:bg-amber-950/20 transition-colors ${i < 3 ? "bg-gradient-to-r from-amber-50/30 to-transparent" : ""}`}>
                                         <div className="flex items-center gap-3 mb-1.5">
                                           <div className="w-6 text-center flex-shrink-0">
                                             {medal ? <span className="text-base">{medal}</span> : <span className="text-xs font-bold text-gray-400">#{i + 1}</span>}
                                           </div>
                                           <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                              <span className="font-semibold text-gray-800 text-sm truncate">{item.name}</span>
-                                              <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${item.module === "Stationery" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"}`}>
+                                              <span className="font-semibold text-gray-800 dark:text-gray-200 text-sm truncate">{item.name}</span>
+                                              <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${item.module === "Stationery" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700" : "bg-green-100 dark:bg-green-900/30 text-green-700"}`}>
                                                 {item.module}
                                               </span>
                                               {item.currentStock !== null && (
-                                                <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 flex items-center gap-0.5 ${isOut ? "bg-red-100 text-red-700" : isLow ? "bg-yellow-100 text-yellow-700" : "bg-emerald-100 text-emerald-700"}`}>
+                                                <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 flex items-center gap-0.5 ${isOut ? "bg-red-100 dark:bg-red-900/30 text-red-700" : isLow ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700" : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700"}`}>
                                                   {isOut || isLow ? <AlertTriangle className="h-2.5 w-2.5" /> : null}
                                                   {isOut ? "Out of stock" : isLow ? `Low: ${item.currentStock}` : `Stock: ${item.currentStock}`}
                                                 </span>
@@ -1091,11 +1091,11 @@ const Dashboard = () => {
                                             </div>
                                           </div>
                                           <div className="text-right flex-shrink-0">
-                                            <div className="font-bold text-gray-800 text-sm">{item.totalQty} sold</div>
-                                            <div className="text-xs text-gray-500">UGX {item.totalRevenue.toLocaleString()}</div>
+                                            <div className="font-bold text-gray-800 dark:text-gray-200 text-sm">{item.totalQty} sold</div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">UGX {item.totalRevenue.toLocaleString()}</div>
                                           </div>
                                         </div>
-                                        <div className="ml-9 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                        <div className="ml-9 bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
                                           <div
                                             className={`h-full rounded-full transition-all duration-700 ${i === 0 ? "bg-amber-500" : i === 1 ? "bg-gray-400" : i === 2 ? "bg-orange-400" : "bg-blue-400"}`}
                                             style={{ width: `${pct}%` }}
@@ -1114,9 +1114,9 @@ const Dashboard = () => {
                       {/* Right column: Top Services + Low Stock Alerts */}
                       <div className="space-y-4">
                         {/* Top Services */}
-                        <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm overflow-hidden">
-                          <CardHeader className="pb-3 bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100">
-                            <CardTitle className="text-base font-bold text-gray-800 flex items-center gap-2">
+                        <Card className="border-0 shadow-xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm overflow-hidden">
+                          <CardHeader className="pb-3 bg-gradient-to-r from-purple-50 dark:from-purple-950/30 to-pink-50 dark:to-pink-950/30 border-b border-purple-100 dark:border-purple-900/50">
+                            <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                               <Activity className="h-4 w-4 text-purple-500" />
                               Most Requested Services
                             </CardTitle>
@@ -1128,23 +1128,23 @@ const Dashboard = () => {
                                 <p className="text-xs">No service data for this period</p>
                               </div>
                             ) : (
-                              <div className="divide-y divide-gray-50">
+                              <div className="divide-y divide-gray-50 dark:divide-gray-800">
                                 {topServices.map((svc, i) => {
                                   const modColor: Record<string, string> = {
-                                    "Embroidery": "bg-purple-100 text-purple-700",
-                                    "Machines": "bg-orange-100 text-orange-700",
-                                    "Art Services": "bg-red-100 text-red-700",
+                                    "Embroidery": "bg-purple-100 dark:bg-purple-900/30 text-purple-700",
+                                    "Machines": "bg-orange-100 dark:bg-orange-900/30 text-orange-700",
+                                    "Art Services": "bg-red-100 dark:bg-red-900/30 text-red-700",
                                   };
                                   return (
-                                    <div key={svc.name} className="px-4 py-3 flex items-center gap-3 hover:bg-purple-50/30 transition-colors">
+                                    <div key={svc.name} className="px-4 py-3 flex items-center gap-3 hover:bg-purple-50/30 dark:hover:bg-purple-950/10 transition-colors">
                                       <span className="text-sm font-bold text-gray-400 w-5 flex-shrink-0">#{i + 1}</span>
                                       <div className="flex-1 min-w-0">
-                                        <p className="font-semibold text-sm text-gray-800 truncate">{svc.name}</p>
-                                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${modColor[svc.module] || "bg-gray-100 text-gray-600"}`}>{svc.module}</span>
+                                        <p className="font-semibold text-sm text-gray-800 dark:text-gray-200 truncate">{svc.name}</p>
+                                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${modColor[svc.module] || "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"}`}>{svc.module}</span>
                                       </div>
                                       <div className="text-right flex-shrink-0">
-                                        <div className="font-bold text-sm text-gray-800">{svc.count}×</div>
-                                        <div className="text-xs text-gray-500">UGX {svc.totalRevenue.toLocaleString()}</div>
+                                        <div className="font-bold text-sm text-gray-800 dark:text-gray-200">{svc.count}×</div>
+                                        <div className="text-xs text-gray-500 dark:text-gray-400">UGX {svc.totalRevenue.toLocaleString()}</div>
                                       </div>
                                     </div>
                                   );
@@ -1156,22 +1156,22 @@ const Dashboard = () => {
 
                         {/* Low Stock Alert */}
                         {bestSellers.filter(p => p.currentStock !== null && p.currentStock <= 5).length > 0 && (
-                          <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm overflow-hidden border-l-4 border-l-red-400">
-                            <CardHeader className="pb-2 bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-100">
+                          <Card className="border-0 shadow-xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm overflow-hidden border-l-4 border-l-red-400">
+                            <CardHeader className="pb-2 bg-gradient-to-r from-red-50 dark:from-red-950/30 to-orange-50 dark:to-orange-950/30 border-b border-red-100 dark:border-red-900/50">
                               <CardTitle className="text-sm font-bold text-red-700 flex items-center gap-2">
                                 <AlertTriangle className="h-4 w-4" />
                                 Restock Needed
                               </CardTitle>
                             </CardHeader>
                             <CardContent className="p-0">
-                              <div className="divide-y divide-red-50">
+                              <div className="divide-y divide-red-50 dark:divide-red-900/30">
                                 {bestSellers.filter(p => p.currentStock !== null && p.currentStock <= 5).map(p => (
-                                  <div key={p.name} className="px-4 py-2.5 flex items-center justify-between hover:bg-red-50/50">
+                                  <div key={p.name} className="px-4 py-2.5 flex items-center justify-between hover:bg-red-50/50 dark:hover:bg-red-950/20">
                                     <div>
-                                      <p className="text-sm font-semibold text-gray-800 truncate max-w-[140px]">{p.name}</p>
-                                      <p className="text-xs text-gray-500">{p.module}</p>
+                                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate max-w-[140px]">{p.name}</p>
+                                      <p className="text-xs text-gray-500 dark:text-gray-400">{p.module}</p>
                                     </div>
-                                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${p.currentStock! <= 0 ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}>
+                                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${p.currentStock! <= 0 ? "bg-red-100 dark:bg-red-900/30 text-red-700" : "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700"}`}>
                                       {p.currentStock! <= 0 ? "OUT" : `${p.currentStock} left`}
                                     </span>
                                   </div>
@@ -1190,11 +1190,11 @@ const Dashboard = () => {
               <div className="space-y-8">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="space-y-2">
-                    <h3 className="text-2xl font-bold text-gray-900">Inventory Modules</h3>
-                    <p className="text-gray-600 font-medium">Manage different categories of your business</p>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventory Modules</h3>
+                    <p className="text-gray-600 dark:text-gray-400 font-medium">Manage different categories of your business</p>
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-gray-500">
-                    <div className="flex items-center gap-2 bg-white/80 px-3 py-1.5 rounded-full border border-gray-200">
+                  <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-2 bg-white/80 dark:bg-gray-900/80 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                       <span className="font-medium">Live</span>
                     </div>
@@ -1210,7 +1210,7 @@ const Dashboard = () => {
                     return (
                       <Card
                         key={module.id}
-                        className="group cursor-pointer hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2 border-0 bg-white/90 backdrop-blur-sm overflow-hidden relative animate-in slide-in-from-bottom-4 duration-700 hover:bg-white"
+                        className="group cursor-pointer hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2 border-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm overflow-hidden relative animate-in slide-in-from-bottom-4 duration-700 hover:bg-white"
                         style={{ animationDelay: `${index * 150}ms` }}
                         onClick={() => setActiveTab(module.id)}
                       >
@@ -1224,10 +1224,10 @@ const Dashboard = () => {
                             <div className="flex items-start justify-between">
                               <div className="flex-1 min-w-0">
                                 <CardTitle className="text-xl font-bold group-hover:text-blue-600 transition-colors duration-300 truncate">{module.name} Module</CardTitle>
-                                <CardDescription className="text-sm mt-1 group-hover:text-gray-600 transition-colors line-clamp-2">{module.description}</CardDescription>
+                                <CardDescription className="text-sm mt-1 group-hover:text-gray-600 dark:text-gray-400 transition-colors line-clamp-2">{module.description}</CardDescription>
                               </div>
                               <div className="ml-3 flex-shrink-0">
-                                <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${entryCount > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                                <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${entryCount > 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-700' : 'bg-gray-100 dark:bg-gray-800 text-gray-600'}`}>
                                   <div className={`w-1.5 h-1.5 rounded-full ${entryCount > 0 ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
                                   {entryCount > 0 ? 'Active' : 'Empty'}
                                 </div>
@@ -1242,20 +1242,20 @@ const Dashboard = () => {
                               <div className="text-3xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-500">
                                 {entryCount}
                               </div>
-                              <p className="text-sm text-muted-foreground group-hover:text-gray-600 transition-colors font-medium">Total entries</p>
+                              <p className="text-sm text-muted-foreground group-hover:text-gray-600 dark:text-gray-400 transition-colors font-medium">Total entries</p>
                             </div>
                             <div className="flex flex-col items-end gap-2">
                               <Activity className={`h-5 w-5 ${entryCount > 0 ? 'text-green-500 group-hover:animate-bounce' : 'text-gray-400'} transition-colors`} />
-                              <span className="text-xs text-gray-500 group-hover:text-gray-600 font-medium">Click to manage</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:text-gray-400 font-medium">Click to manage</span>
                             </div>
                           </div>
 
                           <div className="space-y-3">
                             <div className="flex justify-between text-sm">
-                              <span className="text-gray-600 font-medium">Capacity</span>
-                              <span className="font-semibold text-gray-800">{Math.min((entryCount / 50) * 100, 100).toFixed(0)}%</span>
+                              <span className="text-gray-600 dark:text-gray-400 font-medium">Capacity</span>
+                              <span className="font-semibold text-gray-800 dark:text-gray-200">{Math.min((entryCount / 50) * 100, 100).toFixed(0)}%</span>
                             </div>
-                            <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
+                            <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
                               <div
                                 className={`h-full bg-gradient-to-r ${module.color === 'bg-blue-500' ? 'from-blue-400 to-blue-600' : module.color === 'bg-green-500' ? 'from-green-400 to-green-600' : module.color === 'bg-purple-500' ? 'from-purple-400 to-purple-600' : module.color === 'bg-orange-500' ? 'from-orange-400 to-orange-600' : 'from-red-400 to-red-600'} transition-all duration-1000 ease-out shadow-sm`}
                                 style={{ width: `${Math.min((entryCount / 50) * 100, 100)}%` }}
@@ -1272,7 +1272,7 @@ const Dashboard = () => {
           )}
 
           <TabsContent value="stationery" className="animate-in fade-in-50 slide-in-from-right-4 duration-500">
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl">
+            <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl">
               <Suspense fallback={<ModuleLoading />}>
                 <StationeryModule openAddTrigger={addTriggers["stationery"]} />
               </Suspense>
@@ -1280,7 +1280,7 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="gift-store" className="animate-in fade-in-50 slide-in-from-right-4 duration-500">
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl">
+            <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl">
               <Suspense fallback={<ModuleLoading />}>
                 <GiftStoreModule openAddTrigger={addTriggers["gift-store"]} />
               </Suspense>
@@ -1288,7 +1288,7 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="embroidery" className="animate-in fade-in-50 slide-in-from-right-4 duration-500">
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl">
+            <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl">
               <Suspense fallback={<ModuleLoading />}>
                 <EmbroideryModule openAddTrigger={addTriggers["embroidery"]} />
               </Suspense>
@@ -1296,7 +1296,7 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="machines" className="animate-in fade-in-50 slide-in-from-right-4 duration-500">
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl">
+            <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl">
               <Suspense fallback={<ModuleLoading />}>
                 <MachinesModule openAddTrigger={addTriggers["machines"]} />
               </Suspense>
@@ -1304,7 +1304,7 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="art-services" className="animate-in fade-in-50 slide-in-from-right-4 duration-500">
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl">
+            <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl">
               <Suspense fallback={<ModuleLoading />}>
                 <ArtServicesModule openAddTrigger={addTriggers["art-services"]} />
               </Suspense>

@@ -33,7 +33,22 @@
       "Bash(head -10 grep -rn \"ExportDialog\\\\|exportData\\\\|generatePDF\\\\|export\" \"C:\\\\Users\\\\MSI\\\\CascadeProjects\\\\point-art-hub-main \\(1\\)\\\\.claude\\\\worktrees\\\\festive-nash\\\\src\\\\components\\\\modules\\\\MachinesModule.tsx\")",
       "Bash(head -10 grep -rn \"ExportDialog\\\\|exportData\\\\|generatePDF\\\\|export\" \"C:\\\\Users\\\\MSI\\\\CascadeProjects\\\\point-art-hub-main \\(1\\)\\\\.claude\\\\worktrees\\\\festive-nash\\\\src\\\\components\\\\modules\\\\ArtServicesModule.tsx\")",
       "Bash(head -10 grep -n \"getPersonName\\\\|salesProfiles\\\\|profiles\" \"C:\\\\Users\\\\MSI\\\\CascadeProjects\\\\point-art-hub-main \\(1\\)\\\\.claude\\\\worktrees\\\\festive-nash\\\\src\\\\components\\\\modules\\\\ArtServicesModule.tsx\")",
-      "Bash(find \"C:\\\\Users\\\\MSI\\\\CascadeProjects\\\\point-art-hub-main \\(1\\)\\\\.claude\\\\worktrees\\\\festive-nash\\\\src\" -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\))"
+      "Bash(find \"C:\\\\Users\\\\MSI\\\\CascadeProjects\\\\point-art-hub-main \\(1\\)\\\\.claude\\\\worktrees\\\\festive-nash\\\\src\" -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\))",
+      "Bash(sed -i 's/dark:hover:bg-blue-900\\\\/30 dark:bg-blue-900\\\\/30/dark:hover:bg-blue-900\\\\/30/g' src/components/modules/ArtServicesModule.tsx src/components/modules/GiftStoreModule.tsx src/components/modules/MachinesModule.tsx src/components/modules/StationeryDailySales.tsx)",
+      "Bash(sed -i 's/dark:hover:bg-red-900\\\\/30 dark:bg-red-900\\\\/30/dark:hover:bg-red-900\\\\/30/g' src/components/modules/ArtServicesModule.tsx src/components/modules/EmbroideryModule.tsx src/components/modules/GiftsDailySales.tsx src/components/modules/GiftStoreModule.tsx src/components/modules/MachinesModule.tsx src/components/modules/StationeryDailySales.tsx)",
+      "Bash(sed -i 's/dark:hover:bg-purple-900\\\\/30 dark:bg-purple-900\\\\/30/dark:hover:bg-purple-900\\\\/30/g' src/components/modules/EmbroideryModule.tsx)",
+      "Bash(sed -i 's/dark:hover:bg-green-900\\\\/30 dark:bg-green-900\\\\/30/dark:hover:bg-green-900\\\\/30/g' src/components/modules/GiftsDailySales.tsx)",
+      "Bash(sed -i 's/dark:hover:bg-blue-950\\\\/20 dark:bg-blue-950\\\\/20/dark:hover:bg-blue-950\\\\/20/g' src/components/modules/ArtServicesModule.tsx src/components/modules/MachinesModule.tsx)",
+      "Bash(sed -i 's/dark:hover:bg-purple-950\\\\/20 dark:bg-purple-950\\\\/20/dark:hover:bg-purple-950\\\\/20/g' src/components/modules/EmbroideryModule.tsx)",
+      "Bash(sed -i 's/dark:hover:bg-green-950\\\\/20 dark:bg-green-950\\\\/30/dark:hover:bg-green-950\\\\/20/g' src/components/modules/GiftsDailySales.tsx src/components/modules/StationeryModule.tsx)",
+      "Bash(sed -i 's/dark:hover:bg-blue-950\\\\/20 dark:bg-blue-950\\\\/30/dark:hover:bg-blue-950\\\\/20/g' src/components/modules/StationeryDailySales.tsx)",
+      "Bash(sed -i 's/dark:hover:bg-red-950\\\\/20 dark:bg-red-950\\\\/30/dark:hover:bg-red-950\\\\/20/g' src/components/modules/StationeryModule.tsx src/pages/AdminProfile.tsx)",
+      "Bash(sed -i 's/dark:hover:bg-green-950\\\\/20 dark:bg-green-950\\\\/30/dark:hover:bg-green-950\\\\/20/g' src/pages/CustomerManagement.tsx)",
+      "Bash(sed -i 's/dark:hover:bg-blue-950\\\\/20 dark:bg-blue-950\\\\/20/dark:hover:bg-blue-950\\\\/20/g' src/pages/CustomerManagement.tsx)",
+      "Bash(sed -i 's/dark:hover:bg-yellow-950\\\\/20 dark:bg-yellow-950\\\\/30/dark:hover:bg-yellow-950\\\\/20/g' src/pages/CustomerManagement.tsx)",
+      "Bash(sed -i 's/dark:hover:bg-red-950\\\\/20 dark:bg-red-950\\\\/30/dark:hover:bg-red-950\\\\/20/g' src/pages/CustomerManagement.tsx)",
+      "Bash(sed -i 's/dark:hover:bg-blue-900\\\\/30 dark:bg-blue-900\\\\/30/dark:hover:bg-blue-900\\\\/30/g' src/pages/HelpCenter.tsx)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

@@ -431,7 +431,7 @@ const GiftsDailySales = () => {
     <div className="space-y-8 p-6">
       {/* Offline status indicator */}
       {isOffline && (
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded">
+        <div className="bg-yellow-100 dark:bg-yellow-900/30 border-l-4 border-yellow-500 dark:border-yellow-600 p-4 rounded">
           <div className="flex items-center">
             <WifiOff className="h-5 w-5 text-yellow-600 mr-2" />
             <p className="text-yellow-700 font-medium">Offline Mode: Sales will be saved locally and synced when online</p>
@@ -440,17 +440,17 @@ const GiftsDailySales = () => {
       )}
 
       <Tabs defaultValue="daily-sales" className="space-y-8">
-        <TabsList className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-1 shadow-lg">
+        <TabsList className="bg-gradient-to-r from-green-50 dark:from-green-950/30 to-emerald-50 border border-green-200 dark:border-green-800 rounded-xl p-1 shadow-lg">
           <TabsTrigger
             value="daily-sales"
-            className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
+            className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <ShoppingCart className="h-4 w-4" />
             Daily Sales
           </TabsTrigger>
           <TabsTrigger
             value="inventory"
-            className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
+            className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <Gift className="h-4 w-4" />
             Inventory
@@ -477,7 +477,7 @@ const GiftsDailySales = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-9 w-9 border-green-200 hover:bg-green-50 hover:border-green-300 transition-all duration-200"
+                  className="h-9 w-9 border-green-200 dark:border-green-800 hover:bg-green-50 dark:hover:bg-green-950/20 hover:border-green-300 transition-all duration-200"
                   onClick={() => setSelectedDate(prev => subDays(prev, 1))}
                   title="Previous day"
                 >
@@ -488,8 +488,8 @@ const GiftsDailySales = () => {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className={`min-w-[200px] justify-start text-left font-medium border-green-200 hover:bg-green-50 hover:border-green-300 transition-all duration-200 ${isToday(selectedDate)
-                          ? "bg-gradient-to-r from-green-50 to-emerald-50 border-green-300 shadow-sm"
+                      className={`min-w-[200px] justify-start text-left font-medium border-green-200 dark:border-green-800 hover:bg-green-50 dark:hover:bg-green-950/20 hover:border-green-300 transition-all duration-200 ${isToday(selectedDate)
+                          ? "bg-gradient-to-r from-green-50 dark:from-green-950/30 to-emerald-50 border-green-300 shadow-sm"
                           : ""
                         }`}
                     >
@@ -500,12 +500,12 @@ const GiftsDailySales = () => {
                       }
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-white shadow-xl border-green-100" align="end">
-                    <div className="p-2 border-b border-green-100">
+                  <PopoverContent className="w-auto p-0 bg-white dark:bg-gray-900 shadow-xl border-green-100 dark:border-green-900/50" align="end">
+                    <div className="p-2 border-b border-green-100 dark:border-green-900/50">
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full text-green-600 hover:bg-green-50 font-medium"
+                        className="w-full text-green-600 hover:bg-green-50 dark:hover:bg-green-950/20 font-medium"
                         onClick={() => {
                           setSelectedDate(new Date());
                           setIsCalendarOpen(false);
@@ -532,7 +532,7 @@ const GiftsDailySales = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-9 w-9 border-green-200 hover:bg-green-50 hover:border-green-300 transition-all duration-200"
+                  className="h-9 w-9 border-green-200 dark:border-green-800 hover:bg-green-50 dark:hover:bg-green-950/20 hover:border-green-300 transition-all duration-200"
                   onClick={() => setSelectedDate(prev => addDays(prev, 1))}
                   title="Next day"
                 >
@@ -591,7 +591,7 @@ const GiftsDailySales = () => {
                     )}
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
+                <DialogContent className="max-w-md bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-0 shadow-2xl">
                   <DialogHeader>
                     <DialogTitle className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                       {editingId ? '✏️ Edit Sale' : '✨ Record New Sale'}
@@ -605,7 +605,7 @@ const GiftsDailySales = () => {
                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                         placeholder="e.g., Birthday"
                         required
-                        className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
+                        className="border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
                       />
                     </div>
 
@@ -616,7 +616,7 @@ const GiftsDailySales = () => {
                         onChange={(e) => setFormData({ ...formData, item: e.target.value })}
                         placeholder="e.g., Birthday Card"
                         required
-                        className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
+                        className="border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
                       />
                     </div>
 
@@ -626,7 +626,7 @@ const GiftsDailySales = () => {
                         value={formData.code}
                         onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                         placeholder="Item description"
-                        className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
+                        className="border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -639,7 +639,7 @@ const GiftsDailySales = () => {
                           value={formData.spx}
                           onChange={(e) => setFormData({ ...formData, spx: e.target.value })}
                           required
-                          className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
+                          className="border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
                         />
                       </div>
                       <div className="space-y-2">
@@ -650,7 +650,7 @@ const GiftsDailySales = () => {
                           value={formData.quantity}
                           onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                           required
-                          className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
+                          className="border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
                         />
                       </div>
                     </div>
@@ -663,7 +663,7 @@ const GiftsDailySales = () => {
                           value={formData.date}
                           onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                           required
-                          className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
+                          className="border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
                         />
                       </div>
                       <div className="space-y-2">
@@ -672,7 +672,7 @@ const GiftsDailySales = () => {
                           value={formData.unit}
                           onValueChange={(value) => setFormData({ ...formData, unit: value })}
                         >
-                          <SelectTrigger className="border-green-200 focus:border-green-400 focus:ring-green-200">
+                          <SelectTrigger className="border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200">
                             <SelectValue placeholder="Select unit" />
                           </SelectTrigger>
                           <SelectContent>
@@ -695,7 +695,7 @@ const GiftsDailySales = () => {
                           value={formData.bpx}
                           onChange={(e) => setFormData({ ...formData, bpx: e.target.value })}
                           required
-                          className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
+                          className="border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
                         />
                       </div>
                       <div className="space-y-2">
@@ -706,7 +706,7 @@ const GiftsDailySales = () => {
                         <Input
                           value={calculatedProfit.toFixed(2)}
                           disabled
-                          className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 font-medium"
+                          className="bg-gradient-to-r from-green-50 dark:from-green-950/30 to-emerald-50 border-green-200 dark:border-green-800 font-medium"
                         />
                       </div>
                     </div>
@@ -764,9 +764,9 @@ const GiftsDailySales = () => {
 
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <Card className="border-0 shadow-xl bg-gradient-to-r from-green-50 to-emerald-50 backdrop-blur-sm">
+            <Card className="border-0 shadow-xl bg-gradient-to-r from-green-50 dark:from-green-950/30 to-emerald-50 backdrop-blur-sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium text-gray-600 flex items-center gap-2">
+                <CardTitle className="text-lg font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
                   <ShoppingCart className="h-5 w-5 text-green-500" />
                   Total Sales
                 </CardTitle>
@@ -776,9 +776,9 @@ const GiftsDailySales = () => {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-xl bg-gradient-to-r from-blue-50 to-cyan-50 backdrop-blur-sm">
+            <Card className="border-0 shadow-xl bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-cyan-50 dark:to-cyan-950/30 backdrop-blur-sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium text-gray-600 flex items-center gap-2">
+                <CardTitle className="text-lg font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-blue-500" />
                   Total Profit
                 </CardTitle>
@@ -789,8 +789,8 @@ const GiftsDailySales = () => {
             </Card>
           </div>
 
-          <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 border-b border-green-100">
+          <Card className="border-0 shadow-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-green-50 dark:from-green-950/30 via-emerald-50 to-teal-50 border-b border-green-100 dark:border-green-900/50">
               <CardTitle className="text-2xl font-bold flex items-center gap-3">
                 <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg text-white">
                   <Gift className="h-6 w-6" />
@@ -805,19 +805,19 @@ const GiftsDailySales = () => {
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table className="w-full">
-                  <TableHeader className="bg-gradient-to-r from-gray-50 to-green-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
-                    <TableRow className="border-b border-green-100">
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Category</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Item</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Description</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Stock Buying Price</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Quantity</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Selling Price</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Total Value</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Profit</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Time</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Added By</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Actions</TableHead>
+                  <TableHeader className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
+                    <TableRow className="border-b border-green-100 dark:border-green-900/50">
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Category</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Item</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Description</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Stock Buying Price</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Quantity</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Selling Price</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Total Value</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Profit</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Time</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Added By</TableHead>
+                      <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -832,17 +832,17 @@ const GiftsDailySales = () => {
                       return (
                         <TableRow
                           key={sale.id}
-                          className="group hover:bg-gradient-to-r transition-all duration-300 bg-yellow-50 border-l-4 border-yellow-400"
+                          className="group hover:bg-gradient-to-r transition-all duration-300 bg-yellow-50 dark:bg-yellow-950/30 border-l-4 border-yellow-400"
                         >
                           <TableCell className="font-medium">{category || "-"}</TableCell>
-                          <TableCell className="font-semibold text-gray-800">{itemName || sale.item}</TableCell>
-                          <TableCell className="text-gray-600">{sale.code || "-"}</TableCell>
+                          <TableCell className="font-semibold text-gray-800 dark:text-gray-200">{itemName || sale.item}</TableCell>
+                          <TableCell className="text-gray-600 dark:text-gray-400">{sale.code || "-"}</TableCell>
                           <TableCell className="font-medium text-blue-600">UGX {formatUGX(sale.bpx)}</TableCell>
                           <TableCell className="font-medium">{sale.quantity}</TableCell>
                           <TableCell className="font-medium text-purple-600">UGX {formatUGX(sale.spx)}</TableCell>
                           <TableCell className="font-bold text-indigo-700">UGX {formatUGX(sale.spx * sale.quantity)}</TableCell>
                           <TableCell className="font-bold text-green-600">UGX {formatUGX((sale.spx - sale.bpx) * sale.quantity)}</TableCell>
-                          <TableCell className="text-gray-500 text-xs">-</TableCell>
+                          <TableCell className="text-gray-500 dark:text-gray-400 text-xs">-</TableCell>
                           <TableCell className="font-medium">
                             {sale.sold_by ? getSalesPersonName(sale.sold_by) : "Not specified"}
                           </TableCell>
@@ -865,18 +865,18 @@ const GiftsDailySales = () => {
                         return (
                           <TableRow
                             key={item.id}
-                            className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-green-50 hover:to-emerald-50`}
+                            className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 hover:from-green-50 dark:from-green-950/30 hover:to-emerald-50`}
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
-                            <TableCell className="font-medium text-gray-600">{category || "-"}</TableCell>
-                            <TableCell className="font-semibold text-gray-800 max-w-xs truncate">{itemName || item.item}</TableCell>
-                            <TableCell className="text-gray-600">{item.description || item.code || "-"}</TableCell>
+                            <TableCell className="font-medium text-gray-600 dark:text-gray-400">{category || "-"}</TableCell>
+                            <TableCell className="font-semibold text-gray-800 dark:text-gray-200 max-w-xs truncate">{itemName || item.item}</TableCell>
+                            <TableCell className="text-gray-600 dark:text-gray-400">{item.description || item.code || "-"}</TableCell>
                             <TableCell className="font-medium text-blue-600">UGX {formatUGX(item.bpx)}</TableCell>
                             <TableCell className="font-medium">{item.quantity}</TableCell>
                             <TableCell className="font-medium text-purple-600">UGX {formatUGX(item.spx)}</TableCell>
                             <TableCell className="font-bold text-indigo-700">UGX {formatUGX(item.spx * item.quantity)}</TableCell>
                             <TableCell className="font-bold text-green-600">UGX {formatUGX((item.spx - item.bpx) * item.quantity)}</TableCell>
-                            <TableCell className="text-gray-500 text-xs">
+                            <TableCell className="text-gray-500 dark:text-gray-400 text-xs">
                               {item.created_at ? new Date(item.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : "-"}
                             </TableCell>
                             <TableCell className="font-medium">
@@ -887,7 +887,7 @@ const GiftsDailySales = () => {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 hover:bg-green-100 hover:scale-110 transition-all duration-200"
+                                  className="h-8 w-8 hover:bg-green-100 dark:hover:bg-green-900/30 hover:scale-110 transition-all duration-200"
                                   onClick={() => handleEdit(item)}
                                 >
                                   <Edit className="h-4 w-4 text-green-600" />
@@ -895,7 +895,7 @@ const GiftsDailySales = () => {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 hover:bg-red-100 hover:scale-110 transition-all duration-200"
+                                  className="h-8 w-8 hover:bg-red-100 dark:hover:bg-red-900/30 hover:scale-110 transition-all duration-200"
                                   onClick={() => handleDelete(item.id)}
                                 >
                                   <Trash2 className="h-4 w-4 text-red-600" />
@@ -912,13 +912,13 @@ const GiftsDailySales = () => {
                             {loading ? (
                               <div className="flex items-center gap-3">
                                 <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
-                                <span className="text-lg text-gray-600">Loading sales records...</span>
+                                <span className="text-lg text-gray-600 dark:text-gray-400">Loading sales records...</span>
                               </div>
                             ) : (
                               <div className="flex flex-col items-center gap-3">
                                 <Gift className="h-12 w-12 text-gray-400" />
-                                <span className="text-lg text-gray-600">{isToday(selectedDate) ? "No sales recorded today." : `No sales recorded for ${format(selectedDate, "MMM d, yyyy")}.`}</span>
-                                <span className="text-sm text-gray-500">Start by recording your first sale!</span>
+                                <span className="text-lg text-gray-600 dark:text-gray-400">{isToday(selectedDate) ? "No sales recorded today." : `No sales recorded for ${format(selectedDate, "MMM d, yyyy")}.`}</span>
+                                <span className="text-sm text-gray-500 dark:text-gray-400">Start by recording your first sale!</span>
                               </div>
                             )}
                           </div>
@@ -950,21 +950,21 @@ const GiftsDailySales = () => {
               />
             </div>
 
-            <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
+            <Card className="border-0 shadow-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm overflow-hidden">
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <Table className="w-full">
-                    <TableHeader className="bg-gradient-to-r from-gray-50 to-green-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
-                      <TableRow className="border-b border-green-100">
-                        <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">#</TableHead>
-                        <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Category</TableHead>
-                        <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Item Name</TableHead>
-                        <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Description</TableHead>
-                        <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Qty</TableHead>
-                        <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Cost (UGX)</TableHead>
-                        <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Price (UGX)</TableHead>
-                        <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Profit/Unit</TableHead>
-                        <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Date Added</TableHead>
+                    <TableHeader className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
+                      <TableRow className="border-b border-green-100 dark:border-green-900/50">
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">#</TableHead>
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Category</TableHead>
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Item Name</TableHead>
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Description</TableHead>
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Qty</TableHead>
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Cost (UGX)</TableHead>
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Price (UGX)</TableHead>
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Profit/Unit</TableHead>
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Date Added</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -973,7 +973,7 @@ const GiftsDailySales = () => {
                           <TableCell colSpan={9} className="h-32 text-center">
                             <div className="flex items-center justify-center gap-3">
                               <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
-                              <span className="text-gray-600">Loading inventory...</span>
+                              <span className="text-gray-600 dark:text-gray-400">Loading inventory...</span>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -986,14 +986,14 @@ const GiftsDailySales = () => {
                           return (
                             <TableRow
                               key={item.id}
-                              className={`hover:bg-green-50 transition-colors ${
-                                isLowStock ? 'bg-red-50 border-l-4 border-red-400' : ''
+                              className={`hover:bg-green-50 dark:hover:bg-green-950/20 transition-colors ${
+                                isLowStock ? 'bg-red-50 dark:bg-red-950/30 border-l-4 border-red-400' : ''
                               }`}
                             >
-                              <TableCell className="text-gray-500">{index + 1}</TableCell>
+                              <TableCell className="text-gray-500 dark:text-gray-400">{index + 1}</TableCell>
                               <TableCell className="font-medium capitalize">{(item.custom_category || item.category).replace(/_/g, ' ')}</TableCell>
-                              <TableCell className="font-semibold text-gray-800">{item.item}</TableCell>
-                              <TableCell className="text-gray-500">{item.description || '-'}</TableCell>
+                              <TableCell className="font-semibold text-gray-800 dark:text-gray-200">{item.item}</TableCell>
+                              <TableCell className="text-gray-500 dark:text-gray-400">{item.description || '-'}</TableCell>
                               <TableCell className={`font-bold ${isLowStock ? 'text-red-600' : 'text-gray-800'}`}>
                                 {stock} {isLowStock && <span className="text-xs text-red-500 ml-1">(LOW)</span>}
                               </TableCell>
@@ -1002,7 +1002,7 @@ const GiftsDailySales = () => {
                               <TableCell className={`font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                 {formatUGX(profit)}
                               </TableCell>
-                              <TableCell className="text-gray-500 text-sm">
+                              <TableCell className="text-gray-500 dark:text-gray-400 text-sm">
                                 {item.created_at ? format(new Date(item.created_at), 'yyyy-MM-dd') : item.date}
                               </TableCell>
                             </TableRow>
@@ -1013,7 +1013,7 @@ const GiftsDailySales = () => {
                           <TableCell colSpan={9} className="h-32 text-center">
                             <div className="flex flex-col items-center gap-3">
                               <Gift className="h-12 w-12 text-gray-400" />
-                              <span className="text-lg text-gray-600">No inventory items found.</span>
+                              <span className="text-lg text-gray-600 dark:text-gray-400">No inventory items found.</span>
                             </div>
                           </TableCell>
                         </TableRow>

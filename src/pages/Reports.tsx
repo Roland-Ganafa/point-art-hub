@@ -458,7 +458,7 @@ const Reports = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 dark:from-indigo-950/30 via-purple-50 to-pink-50 dark:to-pink-950/30 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6">
@@ -466,8 +466,8 @@ const Reports = () => {
             <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               Reports & Analytics
             </h1>
-            <p className="text-gray-600 mt-2">Comprehensive business insights and performance metrics</p>
-            <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+            <p className="text-gray-600 dark:text-gray-400 mt-2">Comprehensive business insights and performance metrics</p>
+            <div className="flex items-center gap-2 mt-2 text-sm text-gray-500 dark:text-gray-400">
               <Activity className="h-4 w-4" />
               <span>Last updated: {lastUpdated.toLocaleTimeString()}</span>
             </div>
@@ -495,7 +495,7 @@ const Reports = () => {
                 variant="outline"
                 onClick={generateReport}
                 disabled={isLoading}
-                className="bg-white/80"
+                className="bg-white/80 dark:bg-gray-900/80"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                 Refresh
@@ -506,7 +506,7 @@ const Reports = () => {
                   <Button
                     variant="outline"
                     onClick={() => exportReport('csv')}
-                    className="bg-white/80"
+                    className="bg-white/80 dark:bg-gray-900/80"
                   >
                     <Download className="h-4 w-4 mr-2" />
                     CSV
@@ -514,7 +514,7 @@ const Reports = () => {
                   <Button
                     variant="outline"
                     onClick={() => exportReport('pdf')}
-                    className="bg-white/80"
+                    className="bg-white/80 dark:bg-gray-900/80"
                   >
                     <FileText className="h-4 w-4 mr-2" />
                     PDF
@@ -590,7 +590,7 @@ const Reports = () => {
 
         {/* Detailed Analytics */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-5 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="services">Services Summary</TabsTrigger>
             <TabsTrigger value="sales">Sales Analysis</TabsTrigger>
@@ -601,7 +601,7 @@ const Reports = () => {
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Sales by Category */}
-              <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+              <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <PieChart className="h-5 w-5" />
@@ -614,7 +614,7 @@ const Reports = () => {
                       <div key={category.category} className="space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">{category.category}</span>
-                          <span className="text-sm text-gray-600">{formatUGX(category.sales)}</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">{formatUGX(category.sales)}</span>
                         </div>
                         <Progress
                           value={reportData.totalSales > 0 ? (category.sales / reportData.totalSales) * 100 : 0}
@@ -627,7 +627,7 @@ const Reports = () => {
               </Card>
 
               {/* Top Selling Items */}
-              <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+              <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Award className="h-5 w-5" />
@@ -637,14 +637,14 @@ const Reports = () => {
                 <CardContent>
                   <div className="space-y-4">
                     {reportData.topSellingItems.map((item, index) => (
-                      <div key={item.item_name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div key={item.item_name} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
                             {index + 1}
                           </div>
                           <div>
                             <p className="font-medium">{item.item_name}</p>
-                            <p className="text-sm text-gray-500">{item.total_sold} units sold</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{item.total_sold} units sold</p>
                           </div>
                         </div>
                         <div className="text-right">
@@ -661,7 +661,7 @@ const Reports = () => {
           <TabsContent value="services" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Art Services Summary */}
-              <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+              <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5 text-blue-600" />
@@ -673,19 +673,19 @@ const Reports = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
+                    <div className="p-4 bg-gradient-to-br from-blue-50 dark:from-blue-950/30 to-blue-100 dark:to-blue-900/30 rounded-lg">
                       <p className="text-sm text-blue-600 font-medium">Total Sales</p>
                       <p className="text-2xl font-bold text-blue-900">{formatUGX(reportData.artServicesSummary.totalSales)}</p>
                     </div>
-                    <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
+                    <div className="p-4 bg-gradient-to-br from-green-50 dark:from-green-950/30 to-green-100 dark:to-green-900/30 rounded-lg">
                       <p className="text-sm text-green-600 font-medium">Total Profit</p>
                       <p className="text-2xl font-bold text-green-900">{formatUGX(reportData.artServicesSummary.totalProfit)}</p>
                     </div>
-                    <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
+                    <div className="p-4 bg-gradient-to-br from-purple-50 dark:from-purple-950/30 to-purple-100 dark:to-purple-900/30 rounded-lg">
                       <p className="text-sm text-purple-600 font-medium">Services Done</p>
                       <p className="text-2xl font-bold text-purple-900">{reportData.artServicesSummary.totalServices}</p>
                     </div>
-                    <div className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg">
+                    <div className="p-4 bg-gradient-to-br from-orange-50 dark:from-orange-950/30 to-orange-100 dark:to-orange-900/30 rounded-lg">
                       <p className="text-sm text-orange-600 font-medium">Profit Margin</p>
                       <p className={`text-2xl font-bold ${getProfitMarginColor(reportData.artServicesSummary.profitMargin)}`}>
                         {reportData.artServicesSummary.profitMargin.toFixed(1)}%
@@ -696,7 +696,7 @@ const Reports = () => {
               </Card>
 
               {/* Machines Summary */}
-              <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+              <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Target className="h-5 w-5 text-indigo-600" />
@@ -708,19 +708,19 @@ const Reports = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg">
+                    <div className="p-4 bg-gradient-to-br from-indigo-50 dark:from-indigo-950/30 to-indigo-100 dark:to-indigo-900/30 rounded-lg">
                       <p className="text-sm text-indigo-600 font-medium">Total Sales</p>
                       <p className="text-2xl font-bold text-indigo-900">{formatUGX(reportData.machinesSummary.totalSales)}</p>
                     </div>
-                    <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg">
+                    <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:to-emerald-900/30 rounded-lg">
                       <p className="text-sm text-emerald-600 font-medium">Total Profit</p>
                       <p className="text-2xl font-bold text-emerald-900">{formatUGX(reportData.machinesSummary.totalProfit)}</p>
                     </div>
-                    <div className="p-4 bg-gradient-to-br from-violet-50 to-violet-100 rounded-lg">
+                    <div className="p-4 bg-gradient-to-br from-violet-50 to-violet-100 dark:to-violet-900/30 rounded-lg">
                       <p className="text-sm text-violet-600 font-medium">Services Done</p>
                       <p className="text-2xl font-bold text-violet-900">{reportData.machinesSummary.totalServices}</p>
                     </div>
-                    <div className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg">
+                    <div className="p-4 bg-gradient-to-br from-amber-50 dark:from-amber-950/30 to-amber-100 dark:to-amber-900/30 rounded-lg">
                       <p className="text-sm text-amber-600 font-medium">Profit Margin</p>
                       <p className={`text-2xl font-bold ${getProfitMarginColor(reportData.machinesSummary.profitMargin)}`}>
                         {reportData.machinesSummary.profitMargin.toFixed(1)}%
@@ -733,7 +733,7 @@ const Reports = () => {
           </TabsContent>
 
           <TabsContent value="sales" className="space-y-6">
-            <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+            <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5" />
@@ -749,13 +749,13 @@ const Reports = () => {
                     <div key={day.date} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <p className="font-medium">{new Date(day.date).toLocaleDateString()}</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           {new Date(day.date).toLocaleDateString('en', { weekday: 'long' })}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="font-semibold">{formatUGX(day.sales)}</p>
-                        <p className="text-sm text-gray-500">Profit: {formatUGX(day.profit)}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Profit: {formatUGX(day.profit)}</p>
                       </div>
                     </div>
                   ))}
@@ -765,7 +765,7 @@ const Reports = () => {
           </TabsContent>
 
           <TabsContent value="profits" className="space-y-6">
-            <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+            <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5" />
@@ -795,46 +795,46 @@ const Reports = () => {
 
           <TabsContent value="performance" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+              <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle>Performance Metrics</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span>Revenue Growth</span>
-                    <Badge className="bg-green-100 text-green-800">+15.2%</Badge>
+                    <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800">+15.2%</Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Customer Satisfaction</span>
-                    <Badge className="bg-blue-100 text-blue-800">94.5%</Badge>
+                    <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-800">94.5%</Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Inventory Turnover</span>
-                    <Badge className="bg-purple-100 text-purple-800">8.3x</Badge>
+                    <Badge className="bg-purple-100 dark:bg-purple-900/30 text-purple-800">8.3x</Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Service Efficiency</span>
-                    <Badge className="bg-orange-100 text-orange-800">89.7%</Badge>
+                    <Badge className="bg-orange-100 dark:bg-orange-900/30 text-orange-800">89.7%</Badge>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+              <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle>Key Insights</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
                     <p className="text-sm text-green-800">
                       <strong>Best performing category:</strong> Stationery with highest profit margin
                     </p>
                   </div>
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
                     <p className="text-sm text-blue-800">
                       <strong>Growth opportunity:</strong> Art Services showing potential for expansion
                     </p>
                   </div>
-                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="p-3 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                     <p className="text-sm text-yellow-800">
                       <strong>Attention needed:</strong> Machine services profit margin could be improved
                     </p>

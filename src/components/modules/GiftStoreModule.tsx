@@ -510,24 +510,24 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
   return (
     <div className="space-y-8 p-6">
       <Tabs defaultValue="inventory" className="space-y-8">
-        <TabsList className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-1 shadow-lg">
+        <TabsList className="bg-gradient-to-r from-green-50 dark:from-green-950/30 to-emerald-50 border border-green-200 dark:border-green-800 rounded-xl p-1 shadow-lg">
           <TabsTrigger
             value="inventory"
-            className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
+            className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <ShoppingCart className="h-4 w-4" />
             Inventory
           </TabsTrigger>
           <TabsTrigger
             value="daily-sales"
-            className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
+            className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <TrendingUp className="h-4 w-4" />
             Daily Sales
           </TabsTrigger>
           <TabsTrigger
             value="low-stock"
-            className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
+            className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
           >
             <AlertTriangle className="h-4 w-4" />
             Low Stock
@@ -553,7 +553,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search items..."
-                  className="pl-9 border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
+                  className="pl-9 border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -583,7 +583,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                     Add Item
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
+                <DialogContent className="max-w-md bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-0 shadow-2xl">
                   <DialogHeader>
                     <DialogTitle className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                       {editingId ? '✏️ Edit Gift Store Item' : '✨ Add New Gift Store Item'}
@@ -597,7 +597,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                         onValueChange={(value) => setFormData({ ...formData, category: value })}
                         required
                       >
-                        <SelectTrigger className={`border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200 ${formErrors.category ? "border-red-500 focus:border-red-500" : ""}`}>
+                        <SelectTrigger className={`border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200 ${formErrors.category ? "border-red-500 focus:border-red-500" : ""}`}>
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
@@ -616,7 +616,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                           value={formData.custom_category}
                           onChange={(e) => setFormData({ ...formData, custom_category: e.target.value })}
                           required
-                          className={`border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200 ${formErrors.custom_category ? "border-red-500 focus:border-red-500" : ""}`}
+                          className={`border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200 ${formErrors.custom_category ? "border-red-500 focus:border-red-500" : ""}`}
                         />
                         {formErrors.custom_category && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{formErrors.custom_category}</span>}
                       </div>
@@ -628,7 +628,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                         value={formData.item}
                         onChange={(e) => setFormData({ ...formData, item: e.target.value })}
                         required
-                        className={`border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200 ${formErrors.item ? "border-red-500 focus:border-red-500" : ""}`}
+                        className={`border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200 ${formErrors.item ? "border-red-500 focus:border-red-500" : ""}`}
                       />
                       {formErrors.item && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{formErrors.item}</span>}
                     </div>
@@ -638,7 +638,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                       <Input
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
+                        className="border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
                       />
                     </div>
 
@@ -651,7 +651,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                           value={formData.quantity}
                           onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                           required
-                          className={`border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200 ${formErrors.quantity ? "border-red-500 focus:border-red-500" : ""}`}
+                          className={`border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200 ${formErrors.quantity ? "border-red-500 focus:border-red-500" : ""}`}
                         />
                         {formErrors.quantity && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{formErrors.quantity}</span>}
                       </div>
@@ -664,7 +664,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                           value={formData.rate}
                           onChange={(e) => setFormData({ ...formData, rate: e.target.value })}
                           required
-                          className={`border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200 ${formErrors.rate ? "border-red-500 focus:border-red-500" : ""}`}
+                          className={`border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200 ${formErrors.rate ? "border-red-500 focus:border-red-500" : ""}`}
                         />
                         {formErrors.rate && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{formErrors.rate}</span>}
                       </div>
@@ -680,7 +680,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                           value={formData.selling_price}
                           onChange={(e) => setFormData({ ...formData, selling_price: e.target.value })}
                           required
-                          className={`border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200 ${formErrors.selling_price ? "border-red-500 focus:border-red-500" : ""}`}
+                          className={`border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200 ${formErrors.selling_price ? "border-red-500 focus:border-red-500" : ""}`}
                         />
                         {formErrors.selling_price && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{formErrors.selling_price}</span>}
                       </div>
@@ -693,7 +693,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                           value={formData.selling_price && formData.rate ?
                             (parseFloat(formData.selling_price) - parseFloat(formData.rate)).toFixed(2) : "0"}
                           disabled
-                          className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 font-medium"
+                          className="bg-gradient-to-r from-green-50 dark:from-green-950/30 to-emerald-50 border-green-200 dark:border-green-800 font-medium"
                         />
                       </div>
                     </div>
@@ -705,7 +705,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                         min="0"
                         value={formData.low_stock_threshold}
                         onChange={(e) => setFormData({ ...formData, low_stock_threshold: e.target.value })}
-                        className={`border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200 ${formErrors.low_stock_threshold ? "border-red-500 focus:border-red-500" : ""}`}
+                        className={`border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200 ${formErrors.low_stock_threshold ? "border-red-500 focus:border-red-500" : ""}`}
                       />
                       {formErrors.low_stock_threshold && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{formErrors.low_stock_threshold}</span>}
                     </div>
@@ -717,7 +717,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                         value={formData.date}
                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                         required
-                        className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
+                        className="border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
                       />
                     </div>
 
@@ -743,8 +743,8 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
             </div>
           </div>
 
-          <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 border-b border-green-100">
+          <Card className="border-0 shadow-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-green-50 dark:from-green-950/30 via-emerald-50 to-teal-50 border-b border-green-100 dark:border-green-900/50">
               <CardTitle className="text-2xl font-bold flex items-center gap-3">
                 <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg text-white">
                   <Gift className="h-6 w-6" />
@@ -759,10 +759,10 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table className="w-full">
-                  <TableHeader className="bg-gradient-to-r from-gray-50 to-green-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
-                    <TableRow className="border-b border-green-100">
+                  <TableHeader className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
+                    <TableRow className="border-b border-green-100 dark:border-green-900/50">
                       {isAdmin && (
-                        <TableHead className="w-[50px] bg-gradient-to-r from-gray-50 to-green-50">
+                        <TableHead className="w-[50px] bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50">
                           <Checkbox
                             checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length}
                             onCheckedChange={toggleSelectAll}
@@ -771,18 +771,18 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                           />
                         </TableHead>
                       )}
-                      <TableHead className="w-[50px] font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">#</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Category</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Item</TableHead>
-                      <TableHead className="font-semibold text-gray-700 text-left bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Description</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Qty</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Rate (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Total Value (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Selling Price</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Profit/Unit</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Stock Date</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Stock Alert</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Actions</TableHead>
+                      <TableHead className="w-[50px] font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">#</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Category</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Item</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 text-left bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Description</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Qty</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Rate (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Total Value (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Selling Price</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Profit/Unit</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Stock Date</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Stock Alert</TableHead>
+                      <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -799,8 +799,8 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                           <TableRow
                             key={item.id}
                             className={`group hover:bg-gradient-to-r transition-all duration-300 animate-in slide-in-from-left-4 ${isLowStock
-                              ? "bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 border-l-4 border-red-400"
-                              : "hover:from-green-50 hover:to-emerald-50"
+                              ? "bg-gradient-to-r from-red-50 dark:from-red-950/30 to-pink-50 dark:to-pink-950/30 hover:from-red-100 hover:to-pink-100 dark:to-pink-900/30 border-l-4 border-red-400"
+                              : "hover:from-green-50 dark:from-green-950/30 hover:to-emerald-50"
                               }`}
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
@@ -814,7 +814,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                                 />
                               </TableCell>
                             )}
-                            <TableCell className="font-medium text-gray-500">
+                            <TableCell className="font-medium text-gray-500 dark:text-gray-400">
                               {index + 1}
                             </TableCell>
                             <TableCell className="font-medium">
@@ -823,8 +823,8 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                                 {item.category === "custom" ? item.custom_category : item.category.replace("_", " ")}
                               </div>
                             </TableCell>
-                            <TableCell className="font-semibold text-gray-800">{item.item}</TableCell>
-                            <TableCell className="text-gray-500 max-w-xs truncate text-left">{item.description || '-'}</TableCell>
+                            <TableCell className="font-semibold text-gray-800 dark:text-gray-200">{item.item}</TableCell>
+                            <TableCell className="text-gray-500 dark:text-gray-400 max-w-xs truncate text-left">{item.description || '-'}</TableCell>
                             <TableCell className="font-medium">{item.quantity}</TableCell>
                             <TableCell className="font-medium text-blue-600">{formatUGX(item.rate)}</TableCell>
                             <TableCell className="font-medium text-green-600">{formatUGX(item.quantity * item.rate)}</TableCell>
@@ -835,17 +835,17 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                                 {formatUGX(profit)}
                               </div>
                             </TableCell>
-                            <TableCell className="text-gray-600">
+                            <TableCell className="text-gray-600 dark:text-gray-400">
                               {new Date(item.date).toLocaleDateString()}
                             </TableCell>
                             <TableCell>
                               {isLowStock ? (
-                                <div className="flex items-center gap-2 text-red-600 font-semibold bg-red-100 px-3 py-1 rounded-full">
+                                <div className="flex items-center gap-2 text-red-600 font-semibold bg-red-100 dark:bg-red-900/30 px-3 py-1 rounded-full">
                                   <AlertTriangle className="h-4 w-4 animate-bounce" />
                                   <span>LOW: {stock} left (Min: {lowStockThreshold})</span>
                                 </div>
                               ) : (
-                                <div className="flex items-center gap-2 text-green-600 font-medium bg-green-100 px-3 py-1 rounded-full">
+                                <div className="flex items-center gap-2 text-green-600 font-medium bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-full">
                                   <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
                                   <span>Good: {stock} in stock</span>
                                 </div>
@@ -856,7 +856,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 hover:bg-blue-100 hover:scale-110 transition-all duration-200"
+                                  className="h-8 w-8 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:scale-110 transition-all duration-200"
                                   onClick={() => handleEdit(item)}
                                   disabled={!isAdmin}
                                   title={!isAdmin ? "Admin access required" : "Edit item"}
@@ -866,7 +866,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 hover:bg-red-100 hover:scale-110 transition-all duration-200"
+                                  className="h-8 w-8 hover:bg-red-100 dark:hover:bg-red-900/30 hover:scale-110 transition-all duration-200"
                                   onClick={() => handleDelete(item.id)}
                                   disabled={!isAdmin}
                                   title={!isAdmin ? "Admin access required" : "Delete item"}
@@ -885,13 +885,13 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                             {isLoading ? (
                               <div className="flex flex-col items-center gap-3">
                                 <CustomLoader size="lg" />
-                                <span className="text-lg text-gray-600 font-medium">Loading gift items...</span>
+                                <span className="text-lg text-gray-600 dark:text-gray-400 font-medium">Loading gift items...</span>
                               </div>
                             ) : (
                               <div className="flex flex-col items-center gap-3">
                                 <Gift className="h-12 w-12 text-gray-400" />
-                                <span className="text-lg text-gray-600">No items found.</span>
-                                <span className="text-sm text-gray-500">Start by adding your first item!</span>
+                                <span className="text-lg text-gray-600 dark:text-gray-400">No items found.</span>
+                                <span className="text-sm text-gray-500 dark:text-gray-400">Start by adding your first item!</span>
                               </div>
                             )}
                           </div>
@@ -900,9 +900,9 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                     )}
                     {/* Totals Row */}
                     {filteredItems.length > 0 && (
-                      <TableRow className="bg-gradient-to-r from-green-50 to-emerald-50 border-t-2 border-green-600 font-bold">
+                      <TableRow className="bg-gradient-to-r from-green-50 dark:from-green-950/30 to-emerald-50 border-t-2 border-green-600 font-bold">
                         {isAdmin && <TableCell></TableCell>}
-                        <TableCell colSpan={5} className="text-right text-lg font-bold text-gray-800">
+                        <TableCell colSpan={5} className="text-right text-lg font-bold text-gray-800 dark:text-gray-200">
                           TOTALS:
                         </TableCell>
                         <TableCell className="font-bold text-lg text-green-700">
@@ -928,14 +928,14 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
         </TabsContent>
 
         <TabsContent value="daily-sales" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden">
+          <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden">
             <GiftsDailySales />
           </div>
         </TabsContent>
 
         <TabsContent value="low-stock" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-          <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 border-b border-red-100">
+          <Card className="border-0 shadow-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-red-50 dark:from-red-950/30 via-orange-50 to-yellow-50 border-b border-red-100 dark:border-red-900/50">
               <CardTitle className="text-2xl font-bold flex items-center gap-3">
                 <div className="p-2 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg text-white">
                   <AlertTriangle className="h-6 w-6" />
@@ -953,17 +953,17 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table className="w-full">
-                  <TableHeader className="bg-gradient-to-r from-gray-50 to-red-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
-                    <TableRow className="border-b border-red-100">
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">#</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">Category</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">Item</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">Description</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">Current Stock</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">Min Threshold</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">Status</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">Rate (UGX)</TableHead>
-                      <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-red-50 whitespace-nowrap">Selling Price (UGX)</TableHead>
+                  <TableHeader className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
+                    <TableRow className="border-b border-red-100 dark:border-red-900/50">
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 whitespace-nowrap">#</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 whitespace-nowrap">Category</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 whitespace-nowrap">Item</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 whitespace-nowrap">Description</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 whitespace-nowrap">Current Stock</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 whitespace-nowrap">Min Threshold</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 whitespace-nowrap">Status</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 whitespace-nowrap">Rate (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-red-50 dark:to-red-950/30 whitespace-nowrap">Selling Price (UGX)</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -976,26 +976,26 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                           <TableRow
                             key={item.id}
                             className={`animate-in slide-in-from-left-4 ${isCritical
-                              ? "bg-gradient-to-r from-red-100 to-pink-100 border-l-4 border-red-600"
-                              : "bg-gradient-to-r from-orange-50 to-yellow-50 border-l-4 border-orange-400"
+                              ? "bg-gradient-to-r from-red-100 to-pink-100 dark:to-pink-900/30 border-l-4 border-red-600"
+                              : "bg-gradient-to-r from-orange-50 dark:from-orange-950/30 to-yellow-50 border-l-4 border-orange-400"
                             }`}
                             style={{ animationDelay: `${index * 50}ms` }}
                           >
-                            <TableCell className="font-medium text-gray-500">{index + 1}</TableCell>
+                            <TableCell className="font-medium text-gray-500 dark:text-gray-400">{index + 1}</TableCell>
                             <TableCell className="font-medium">
                               {item.category === "custom" ? item.custom_category : item.category.replace("_", " ")}
                             </TableCell>
-                            <TableCell className="font-semibold text-gray-800">{item.item}</TableCell>
-                            <TableCell className="text-gray-500 max-w-xs truncate">{item.description || '-'}</TableCell>
+                            <TableCell className="font-semibold text-gray-800 dark:text-gray-200">{item.item}</TableCell>
+                            <TableCell className="text-gray-500 dark:text-gray-400 max-w-xs truncate">{item.description || '-'}</TableCell>
                             <TableCell className={`font-bold text-lg ${isCritical ? "text-red-700" : "text-orange-600"}`}>
                               {stock}
                             </TableCell>
-                            <TableCell className="text-gray-600">{threshold}</TableCell>
+                            <TableCell className="text-gray-600 dark:text-gray-400">{threshold}</TableCell>
                             <TableCell>
                               {isCritical ? (
                                 <Badge variant="destructive" className="animate-pulse">Out of Stock</Badge>
                               ) : (
-                                <Badge className="bg-orange-100 text-orange-700 border border-orange-300">
+                                <Badge className="bg-orange-100 dark:bg-orange-900/30 text-orange-700 border border-orange-300">
                                   Low Stock
                                 </Badge>
                               )}
@@ -1011,7 +1011,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                           <div className="flex flex-col items-center gap-3">
                             <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
                             <span className="text-lg text-green-600 font-medium">All items are well-stocked!</span>
-                            <span className="text-sm text-gray-500">No items are below their minimum threshold</span>
+                            <span className="text-sm text-gray-500 dark:text-gray-400">No items are below their minimum threshold</span>
                           </div>
                         </TableCell>
                       </TableRow>

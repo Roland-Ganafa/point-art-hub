@@ -169,7 +169,7 @@ const AdminProfilePage = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <CustomLoader size="lg" />
-          <span className="text-lg text-gray-600 font-medium">Loading profile...</span>
+          <span className="text-lg text-gray-600 dark:text-gray-400 font-medium">Loading profile...</span>
         </div>
       </div>
     );
@@ -181,7 +181,7 @@ const AdminProfilePage = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <CustomLoader size="lg" />
-          <span className="text-lg text-gray-600 font-medium">Verifying admin access...</span>
+          <span className="text-lg text-gray-600 dark:text-gray-400 font-medium">Verifying admin access...</span>
         </div>
       </div>
     );
@@ -420,16 +420,16 @@ const AdminProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-800">
       {/* Header Section */}
-      <div className="bg-white border-b">
+      <div className="bg-white dark:bg-gray-900 border-b">
         <div className="container mx-auto px-6 py-8">
           <div className="flex items-center space-x-6">
             {/* Back Button */}
             <Button
               variant="outline"
               onClick={handleBackToMain}
-              className="px-4 hover:bg-gray-50"
+              className="px-4 hover:bg-gray-50 dark:hover:bg-gray-800"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
@@ -445,13 +445,13 @@ const AdminProfilePage = () => {
             </div>
 
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 mb-1 flex items-center">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center">
                 {profile?.full_name || 'Admin Profile'}
                 <Badge variant="default" className="ml-3 bg-red-500">
                   ADMIN
                 </Badge>
               </h1>
-              <p className="text-gray-600 mb-3">{user?.email}</p>
+              <p className="text-gray-600 dark:text-gray-400 mb-3">{user?.email}</p>
               <div className="flex items-center space-x-3">
                 <Badge variant="outline" className="text-xs px-3 py-1">
                   ID: {profile?.sales_initials || 'Not assigned'}
@@ -481,9 +481,9 @@ const AdminProfilePage = () => {
           {/* Left Column - Main Information */}
           <div className="lg:col-span-2 space-y-6">
             {/* Personal Information Card */}
-            <Card className="shadow-sm border-gray-200">
+            <Card className="shadow-sm border-gray-200 dark:border-gray-700">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-lg font-semibold text-gray-900">
+                <CardTitle className="flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
                   <User className="h-5 w-5 mr-3 text-red-600" />
                   Admin Information
                 </CardTitle>
@@ -494,27 +494,27 @@ const AdminProfilePage = () => {
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Full Name</label>
-                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md">{profile?.full_name || 'Not provided'}</p>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+                    <p className="text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md">{profile?.full_name || 'Not provided'}</p>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Email Address</label>
-                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md">{user?.email}</p>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
+                    <p className="text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md">{user?.email}</p>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Sales Initials</label>
-                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md">{profile?.sales_initials || 'Not assigned'}</p>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Sales Initials</label>
+                    <p className="text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md">{profile?.sales_initials || 'Not assigned'}</p>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Admin ID</label>
-                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md font-mono text-sm">{user?.id}</p>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Admin ID</label>
+                    <p className="text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md font-mono text-sm">{user?.id}</p>
                   </div>
                 </div>
 
                 <div className="pt-4">
                   <Button
                     variant="outline"
-                    className="px-6 border-red-200 hover:bg-red-50"
+                    className="px-6 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/20"
                     onClick={() => {
                       // Open edit dialog
                     }}
@@ -527,9 +527,9 @@ const AdminProfilePage = () => {
             </Card>
 
             {/* User Management Card */}
-            <Card className="shadow-sm border-gray-200">
+            <Card className="shadow-sm border-gray-200 dark:border-gray-700">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-lg font-semibold text-gray-900">
+                <CardTitle className="flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
                   <Users className="h-5 w-5 mr-3 text-red-600" />
                   User Management
                 </CardTitle>
@@ -567,47 +567,47 @@ const AdminProfilePage = () => {
                   <div className="flex items-center justify-center py-8">
                     <div className="flex items-center gap-3">
                       <CustomLoader size="sm" className="mr-2 text-red-500" />
-                      <span className="text-gray-600">Loading users...</span>
+                      <span className="text-gray-600 dark:text-gray-400">Loading users...</span>
                     </div>
                   </div>
                 ) : (
                   <div className="border rounded-lg overflow-hidden">
                     <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-800">
                           <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                               User
                             </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                               Role
                             </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                               Initials
                             </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                               Joined
                             </th>
-                            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                               Actions
                             </th>
                           </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                           {filteredUsers.map((user) => (
-                            <tr key={user.id} className="hover:bg-gray-50">
+                            <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
                                   <div className="flex-shrink-0 h-10 w-10">
-                                    <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                      <span className="text-sm font-medium text-gray-700">
+                                    <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                         {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
                                       </span>
                                     </div>
                                   </div>
                                   <div className="ml-4">
-                                    <div className="text-sm font-medium text-gray-900">{user.full_name || 'Unnamed User'}</div>
-                                    <div className="text-sm text-gray-500">User ID: {user.user_id.substring(0, 8)}...</div>
+                                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.full_name || 'Unnamed User'}</div>
+                                    <div className="text-sm text-gray-500 dark:text-gray-400">User ID: {user.user_id.substring(0, 8)}...</div>
                                   </div>
                                 </div>
                               </td>
@@ -616,10 +616,10 @@ const AdminProfilePage = () => {
                                   {user.role?.toUpperCase() || 'UNASSIGNED'}
                                 </Badge>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                 {user.sales_initials || 'N/A'}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                 {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -637,7 +637,7 @@ const AdminProfilePage = () => {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="text-xs px-2 py-1 h-8 border-red-200 text-red-700 hover:bg-red-50"
+                                      className="text-xs px-2 py-1 h-8 border-red-200 dark:border-red-800 text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
                                       onClick={() => handleRemoveAdmin(user.user_id)}
                                     >
                                       Remove Admin
@@ -672,9 +672,9 @@ const AdminProfilePage = () => {
             </Card>
 
             {/* System Information Card */}
-            <Card className="shadow-sm border-gray-200">
+            <Card className="shadow-sm border-gray-200 dark:border-gray-700">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-lg font-semibold text-gray-900">
+                <CardTitle className="flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
                   <Activity className="h-5 w-5 mr-3 text-red-600" />
                   System Information
                 </CardTitle>
@@ -685,26 +685,26 @@ const AdminProfilePage = () => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Account Status</label>
-                    <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Status</label>
+                    <div className="flex items-center space-x-2 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-gray-900">Active</span>
+                      <span className="text-gray-900 dark:text-gray-100">Active</span>
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Admin Since</label>
-                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md">{formatDate(profile?.created_at)}</p>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Admin Since</label>
+                    <p className="text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md">{formatDate(profile?.created_at)}</p>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Email Verified</label>
-                    <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Verified</label>
+                    <div className="flex items-center space-x-2 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md">
                       <div className={`w-2 h-2 rounded-full ${user?.email_confirmed_at ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                      <span className="text-gray-900">{user?.email_confirmed_at ? 'Verified' : 'Pending'}</span>
+                      <span className="text-gray-900 dark:text-gray-100">{user?.email_confirmed_at ? 'Verified' : 'Pending'}</span>
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700">Last Sign In</label>
-                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md">{formatDate(user?.last_sign_in_at)}</p>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Last Sign In</label>
+                    <p className="text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md">{formatDate(user?.last_sign_in_at)}</p>
                   </div>
                 </div>
               </CardContent>
@@ -714,9 +714,9 @@ const AdminProfilePage = () => {
           {/* Right Column - Sidebar */}
           <div className="space-y-6">
             {/* Quick Actions Card */}
-            <Card className="shadow-sm border-gray-200">
+            <Card className="shadow-sm border-gray-200 dark:border-gray-700">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-lg font-semibold text-gray-900">
+                <CardTitle className="flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
                   <Star className="h-5 w-5 mr-3 text-red-600" />
                   Admin Actions
                 </CardTitle>
@@ -745,9 +745,9 @@ const AdminProfilePage = () => {
             </Card>
 
             {/* System Status Card */}
-            <Card className="shadow-sm border-gray-200">
+            <Card className="shadow-sm border-gray-200 dark:border-gray-700">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-lg font-semibold text-gray-900">
+                <CardTitle className="flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
                   <Shield className="h-5 w-5 mr-3 text-red-600" />
                   System Status
                 </CardTitle>
@@ -757,45 +757,45 @@ const AdminProfilePage = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-sm text-gray-600">System Status</span>
-                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">System Status</span>
+                    <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-950/30 text-green-700 border-green-200 dark:border-green-800">
                       <Check className="h-3 w-3 mr-1" />
                       Operational
                     </Badge>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-sm text-gray-600">Database</span>
-                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Database</span>
+                    <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-950/30 text-green-700 border-green-200 dark:border-green-800">
                       <Check className="h-3 w-3 mr-1" />
                       Connected
                     </Badge>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-sm text-gray-600">Authentication</span>
-                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Authentication</span>
+                    <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-950/30 text-green-700 border-green-200 dark:border-green-800">
                       <Check className="h-3 w-3 mr-1" />
                       Active
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center py-2">
-                    <span className="text-sm text-gray-600">Admins Online</span>
-                    <span className="text-sm font-medium text-gray-900">1</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Admins Online</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">1</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Admin Tips Card */}
-            <Card className="shadow-sm border-gray-200">
+            <Card className="shadow-sm border-gray-200 dark:border-gray-700">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-lg font-semibold text-gray-900">
+                <CardTitle className="flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
                   <AlertTriangle className="h-5 w-5 mr-3 text-red-600" />
                   Admin Tips
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="text-sm text-gray-600 space-y-2">
+                <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
                   <p>• Only admins can manage users and system settings</p>
                   <p>• Use emergency admin access if locked out</p>
                   <p>• Regular backups are recommended</p>
@@ -818,7 +818,7 @@ const AdminProfilePage = () => {
           </DialogHeader>
 
           <div className="py-4 space-y-4">
-            <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
+            <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-md border border-blue-200 dark:border-blue-800">
               <h4 className="font-semibold text-blue-900 mb-2">How to add a user:</h4>
               <ol className="list-decimal list-inside space-y-2 text-blue-800 text-sm">
                 <li>Logout of your admin account</li>
@@ -830,7 +830,7 @@ const AdminProfilePage = () => {
               </ol>
             </div>
 
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               This process ensures that user passwords are securely handled by Supabase Auth and never exposed.
             </div>
           </div>
@@ -868,7 +868,7 @@ const AdminProfilePage = () => {
                 id="edit_role"
                 value={userEditForm.role}
                 onChange={(e) => setUserEditForm(prev => ({ ...prev, role: e.target.value as 'admin' | 'user' }))}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md"
               >
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
