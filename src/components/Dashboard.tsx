@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { PlusCircle, Package, Gift, Scissors, Printer, Palette, TrendingUp, TrendingDown, Activity, BarChart3, ShieldAlert, RefreshCw, Download, FileText, ChevronDown, Calendar } from "lucide-react";
+import { PlusCircle, Package, Gift, Scissors, Printer, Palette, TrendingUp, TrendingDown, Activity, BarChart3, ShieldAlert, RefreshCw, Download, FileText, ChevronDown, Calendar, Trophy, AlertTriangle, Star } from "lucide-react";
 import CustomLoader from "@/components/ui/CustomLoader";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,6 +66,12 @@ const Dashboard = () => {
   const [exportPreset, setExportPreset] = useState<"today" | "week" | "month" | "all" | "custom">("all");
   const [exportFrom, setExportFrom] = useState("");
   const [exportTo, setExportTo] = useState("");
+
+  interface BestSeller { name: string; category: string; module: string; totalQty: number; totalRevenue: number; currentStock: number | null; }
+  interface TopService { name: string; module: string; count: number; totalRevenue: number; }
+  const [bestSellers, setBestSellers] = useState<BestSeller[]>([]);
+  const [topServices, setTopServices] = useState<TopService[]>([]);
+  const [bestSellersLoading, setBestSellersLoading] = useState(false);
   const [addTriggers, setAddTriggers] = useState<Record<string, number>>({
     stationery: 0,
     "gift-store": 0,
@@ -591,6 +597,87 @@ const Dashboard = () => {
     toast({ title: "PDF exported", description: "Report downloaded successfully." });
   }, [activeTab, moduleIds, exportTableMap, getExportDates, toCSV, toast]);
 
+  const fetchBestSellers = useCallback(async () => {
+    if (loading) return;
+    setBestSellersLoading(true);
+    try {
+      const now = new Date();
+      let startDate: string | null = null;
+      let endDate: string | null = null;
+      if (dateFilter === "today") {
+        const s = new Date(now); s.setHours(0, 0, 0, 0);
+        const e = new Date(now); e.setHours(23, 59, 59, 999);
+        startDate = s.toISOString(); endDate = e.toISOString();
+      } else if (dateFilter === "month") {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
+      }
+
+      let statQ = (supabase as any).from("stationery_sales").select("item_id, quantity, total_amount, stationery!item_id(item, category, quantity)");
+      let giftQ = (supabase as any).from("gift_daily_sales").select("item, quantity, spx");
+      let embQ  = (supabase as any).from("embroidery").select("item_name, quantity, total_amount, date");
+      let machQ = (supabase as any).from("machines").select("machine_name, quantity, sales, date");
+      let artQ  = (supabase as any).from("art_services").select("service_name, quantity, sales, date");
+
+      if (startDate && endDate) {
+        statQ = statQ.gte("created_at", startDate).lte("created_at", endDate);
+        giftQ = giftQ.gte("created_at", startDate).lte("created_at", endDate);
+        const ds = startDate.split("T")[0], de = endDate.split("T")[0];
+        embQ  = embQ.gte("date", ds).lte("date", de);
+        machQ = machQ.gte("date", ds).lte("date", de);
+        artQ  = artQ.gte("date", ds).lte("date", de);
+      }
+
+      const [statRes, giftRes, giftStoreRes, embRes, machRes, artRes] = await Promise.all([
+        statQ, giftQ,
+        (supabase as any).from("gift_store").select("item, quantity"),
+        embQ, machQ, artQ,
+      ]);
+
+      // Aggregate products
+      const prodMap: Record<string, BestSeller> = {};
+      (statRes.data || []).forEach((s: any) => {
+        const info = s.stationery;
+        const name = info?.item || "Unknown";
+        if (!prodMap[name]) prodMap[name] = { name, category: info?.category || "Stationery", module: "Stationery", totalQty: 0, totalRevenue: 0, currentStock: info?.quantity ?? null };
+        prodMap[name].totalQty += s.quantity || 0;
+        prodMap[name].totalRevenue += s.total_amount || 0;
+      });
+      const giftStock = giftStoreRes.data || [];
+      (giftRes.data || []).forEach((s: any) => {
+        const name = s.item || "Unknown";
+        if (!prodMap[name]) {
+          const st = giftStock.find((g: any) => g.item === name);
+          prodMap[name] = { name, category: "Gift Store", module: "Gift Store", totalQty: 0, totalRevenue: 0, currentStock: st?.quantity ?? null };
+        }
+        prodMap[name].totalQty += s.quantity || 0;
+        prodMap[name].totalRevenue += (s.quantity || 0) * (s.spx || 0);
+      });
+      setBestSellers(Object.values(prodMap).filter(p => p.totalQty > 0).sort((a, b) => b.totalQty - a.totalQty).slice(0, 10));
+
+      // Aggregate services
+      const svcMap: Record<string, TopService> = {};
+      const addSvc = (name: string, mod: string, rev: number) => {
+        if (!name) return;
+        if (!svcMap[name]) svcMap[name] = { name, module: mod, count: 0, totalRevenue: 0 };
+        svcMap[name].count++;
+        svcMap[name].totalRevenue += rev;
+      };
+      (embRes.data || []).forEach((s: any) => addSvc(s.item_name, "Embroidery", s.total_amount || 0));
+      (machRes.data || []).forEach((s: any) => addSvc(s.machine_name, "Machines", s.sales || 0));
+      (artRes.data || []).forEach((s: any) => addSvc(s.service_name, "Art Services", s.sales || 0));
+      setTopServices(Object.values(svcMap).filter(s => s.count > 0).sort((a, b) => b.count - a.count).slice(0, 6));
+    } catch (e) {
+      console.error("Error fetching best sellers:", e);
+    } finally {
+      setBestSellersLoading(false);
+    }
+  }, [loading, dateFilter]);
+
+  useEffect(() => {
+    if (!loading) fetchBestSellers();
+  }, [fetchBestSellers, loading]);
+
   // Preload frequently used modules after initial load
   useEffect(() => {
     // After 2 seconds of initial load, preload the first module (stationery)
@@ -942,6 +1029,162 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Best Sellers Section */}
+              {(isAdmin || profile?.role === 'admin') && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Trophy className="h-6 w-6 text-amber-500" />
+                    <h3 className="text-2xl font-bold text-gray-900">Best Sellers</h3>
+                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Stock Intelligence</span>
+                  </div>
+
+                  {bestSellersLoading ? (
+                    <div className="flex justify-center py-8"><CustomLoader size="md" /></div>
+                  ) : (
+                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                      {/* Top Products - takes 2/3 width */}
+                      <div className="xl:col-span-2">
+                        <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm overflow-hidden">
+                          <CardHeader className="pb-3 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-base font-bold text-gray-800 flex items-center gap-2">
+                                <Star className="h-4 w-4 text-amber-500" />
+                                Top Selling Products
+                              </CardTitle>
+                              <span className="text-xs text-gray-500">by quantity sold</span>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="p-0">
+                            {bestSellers.length === 0 ? (
+                              <div className="py-10 text-center text-gray-400">
+                                <Package className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                                <p className="text-sm">No sales data for this period</p>
+                              </div>
+                            ) : (() => {
+                              const maxQty = bestSellers[0]?.totalQty || 1;
+                              return (
+                                <div className="divide-y divide-gray-50">
+                                  {bestSellers.map((item, i) => {
+                                    const pct = (item.totalQty / maxQty) * 100;
+                                    const isLow = item.currentStock !== null && item.currentStock <= 5;
+                                    const isOut = item.currentStock !== null && item.currentStock <= 0;
+                                    const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : null;
+                                    return (
+                                      <div key={item.name} className={`px-4 py-3 hover:bg-amber-50/50 transition-colors ${i < 3 ? "bg-gradient-to-r from-amber-50/30 to-transparent" : ""}`}>
+                                        <div className="flex items-center gap-3 mb-1.5">
+                                          <div className="w-6 text-center flex-shrink-0">
+                                            {medal ? <span className="text-base">{medal}</span> : <span className="text-xs font-bold text-gray-400">#{i + 1}</span>}
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                              <span className="font-semibold text-gray-800 text-sm truncate">{item.name}</span>
+                                              <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${item.module === "Stationery" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"}`}>
+                                                {item.module}
+                                              </span>
+                                              {item.currentStock !== null && (
+                                                <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 flex items-center gap-0.5 ${isOut ? "bg-red-100 text-red-700" : isLow ? "bg-yellow-100 text-yellow-700" : "bg-emerald-100 text-emerald-700"}`}>
+                                                  {isOut || isLow ? <AlertTriangle className="h-2.5 w-2.5" /> : null}
+                                                  {isOut ? "Out of stock" : isLow ? `Low: ${item.currentStock}` : `Stock: ${item.currentStock}`}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </div>
+                                          <div className="text-right flex-shrink-0">
+                                            <div className="font-bold text-gray-800 text-sm">{item.totalQty} sold</div>
+                                            <div className="text-xs text-gray-500">UGX {item.totalRevenue.toLocaleString()}</div>
+                                          </div>
+                                        </div>
+                                        <div className="ml-9 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                          <div
+                                            className={`h-full rounded-full transition-all duration-700 ${i === 0 ? "bg-amber-500" : i === 1 ? "bg-gray-400" : i === 2 ? "bg-orange-400" : "bg-blue-400"}`}
+                                            style={{ width: `${pct}%` }}
+                                          />
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            })()}
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      {/* Right column: Top Services + Low Stock Alerts */}
+                      <div className="space-y-4">
+                        {/* Top Services */}
+                        <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm overflow-hidden">
+                          <CardHeader className="pb-3 bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100">
+                            <CardTitle className="text-base font-bold text-gray-800 flex items-center gap-2">
+                              <Activity className="h-4 w-4 text-purple-500" />
+                              Most Requested Services
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="p-0">
+                            {topServices.length === 0 ? (
+                              <div className="py-8 text-center text-gray-400">
+                                <Scissors className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                                <p className="text-xs">No service data for this period</p>
+                              </div>
+                            ) : (
+                              <div className="divide-y divide-gray-50">
+                                {topServices.map((svc, i) => {
+                                  const modColor: Record<string, string> = {
+                                    "Embroidery": "bg-purple-100 text-purple-700",
+                                    "Machines": "bg-orange-100 text-orange-700",
+                                    "Art Services": "bg-red-100 text-red-700",
+                                  };
+                                  return (
+                                    <div key={svc.name} className="px-4 py-3 flex items-center gap-3 hover:bg-purple-50/30 transition-colors">
+                                      <span className="text-sm font-bold text-gray-400 w-5 flex-shrink-0">#{i + 1}</span>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-semibold text-sm text-gray-800 truncate">{svc.name}</p>
+                                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${modColor[svc.module] || "bg-gray-100 text-gray-600"}`}>{svc.module}</span>
+                                      </div>
+                                      <div className="text-right flex-shrink-0">
+                                        <div className="font-bold text-sm text-gray-800">{svc.count}×</div>
+                                        <div className="text-xs text-gray-500">UGX {svc.totalRevenue.toLocaleString()}</div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+
+                        {/* Low Stock Alert */}
+                        {bestSellers.filter(p => p.currentStock !== null && p.currentStock <= 5).length > 0 && (
+                          <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm overflow-hidden border-l-4 border-l-red-400">
+                            <CardHeader className="pb-2 bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-100">
+                              <CardTitle className="text-sm font-bold text-red-700 flex items-center gap-2">
+                                <AlertTriangle className="h-4 w-4" />
+                                Restock Needed
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                              <div className="divide-y divide-red-50">
+                                {bestSellers.filter(p => p.currentStock !== null && p.currentStock <= 5).map(p => (
+                                  <div key={p.name} className="px-4 py-2.5 flex items-center justify-between hover:bg-red-50/50">
+                                    <div>
+                                      <p className="text-sm font-semibold text-gray-800 truncate max-w-[140px]">{p.name}</p>
+                                      <p className="text-xs text-gray-500">{p.module}</p>
+                                    </div>
+                                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${p.currentStock! <= 0 ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}>
+                                      {p.currentStock! <= 0 ? "OUT" : `${p.currentStock} left`}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Inventory Modules Section */}
               <div className="space-y-8">
