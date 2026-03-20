@@ -55,19 +55,6 @@ const EnhancedAuthDiagnostic = () => {
     }
   };
 
-  const enableDevelopmentMode = () => {
-    localStorage.setItem('mock_auth_active', 'true');
-    window.location.reload();
-  };
-
-  const disableDevelopmentMode = () => {
-    localStorage.removeItem('mock_auth_active');
-    localStorage.removeItem('mock_user');
-    window.location.reload();
-  };
-
-  const isDevelopmentMode = localStorage.getItem('mock_auth_active') === 'true';
-
   const getSeverityBadge = (severity: string) => {
     switch (severity) {
       case 'error':
@@ -183,23 +170,6 @@ const EnhancedAuthDiagnostic = () => {
                 {recovering ? "Attempting Recovery..." : "Attempt Recovery"}
               </Button>
               
-              {!isDevelopmentMode ? (
-                <Button 
-                  onClick={enableDevelopmentMode} 
-                  variant="secondary"
-                  className="bg-amber-100 hover:bg-amber-200 text-amber-800"
-                >
-                  Enable Development Mode
-                </Button>
-              ) : (
-                <Button 
-                  onClick={disableDevelopmentMode} 
-                  variant="secondary"
-                  className="bg-green-100 hover:bg-green-200 text-green-800"
-                >
-                  Disable Development Mode
-                </Button>
-              )}
             </div>
           </div>
 
@@ -214,16 +184,6 @@ const EnhancedAuthDiagnostic = () => {
             </ul>
           </div>
 
-          {/* Development Mode Warning */}
-          {isDevelopmentMode && (
-            <Alert className="border-amber-300 bg-amber-50 text-amber-800">
-              <AlertTitle>Development Mode Active</AlertTitle>
-              <AlertDescription>
-                You are currently using mock authentication. This mode should only be used for development 
-                and testing purposes. Data operations will be performed using mock data.
-              </AlertDescription>
-            </Alert>
-          )}
         </div>
       </CardContent>
     </Card>

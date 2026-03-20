@@ -58,17 +58,6 @@ const Layout = ({ children }: LayoutProps) => {
     });
   };
 
-  // Debug: Log admin status for troubleshooting
-  React.useEffect(() => {
-    if (user && profile) {
-      console.log('🔍 Admin Status Check:', {
-        email: user.email,
-        profileRole: profile.role,
-        isAdmin: isAdmin,
-        shouldShowAdmin: isAdmin || profile?.role === 'admin'
-      });
-    }
-  }, [user, profile, isAdmin]);
 
   // Handle redirect for non-authenticated users
   const shouldRedirect = !user && !loading;

@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(cmd /c \"taskkill /F /IM node.exe\")",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(where npm:*)",
+      "Bash(where node:*)",
+      "Bash(ls \"C:\\\\Users\\\\MSI\\\\CascadeProjects\\\\point-art-hub-main \\(1\\)\\\\.claude\\\\worktrees\\\\festive-nash\\\\node_modules\")",
+      "Bash(ls \"C:\\\\Users\\\\MSI\\\\CascadeProjects\\\\point-art-hub-main \\(1\\)\\\\node_modules\\\\.bin\\\\vite\")",
+      "Bash(ls \"C:\\\\Users\\\\MSI\\\\CascadeProjects\\\\point-art-hub-main \\(1\\)\\\\node_modules\\\\.bin\" \")",
+      "Bash(cmd /c \"dir \"\"C:\\\\Users\\\\MSI\\\\CascadeProjects\\\\point-art-hub-main \\(1\\)\\\\node_modules\\\\.bin\\\\vite*\"\"\")",
+      "Bash(cmd /c \"dir \"\"C:\\\\Users\\\\MSI\\\\CascadeProjects\\\\point-art-hub-main \\(1\\)\\\\node_modules\\\\.bin\"\"\")",
+      "Bash(findstr /i vite)",
+      "Bash(node ../../../node_modules/vite/bin/vite.js build)",
+      "Bash(npx vite:*)",
+      "Bash(find \"/c/Users/MSI/CascadeProjects/point-art-hub-main \\(1\\)/.claude/worktrees/festive-nash\" -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" -o -name \"*.jsx\" -o -name \"*.js\" \\\\\\) ! -path \"*/node_modules/*\" ! -path \"*/dist/*\")",
+      "Bash(grep -r \"logAuditEvent\\\\|logUserAction\\\\|logProfileChange\\\\|logUserCreation\\\\|logRoleChange\\\\|logUserDeletion\" '/c/Users/MSI/CascadeProjects/point-art-hub-main \\(1\\)/.claude/worktrees/festive-nash/src' --include=*.ts --include=*.tsx --include=*.js --include=*.jsx)",
+      "Bash(grep -r \"logUserAction\\\\|logProfileChange\\\\|logUserCreation\\\\|logRoleChange\\\\|logUserDeletion\" '/c/Users/MSI/CascadeProjects/point-art-hub-main \\(1\\)/.claude/worktrees/festive-nash/src' --include=*.ts --include=*.tsx --include=*.js --include=*.jsx)",
+      "Bash(find \"/c/Users/MSI/CascadeProjects/point-art-hub-main \\(1\\)/.claude/worktrees/festive-nash/src\" -type f \\\\\\( -name \"*admin*\" -o -name \"*Admin*\" \\\\\\) ! -path \"*/node_modules/*\")",
+      "Bash(grep -r \"audit_log\\\\|auditLog\\\\|audit log\" '/c/Users/MSI/CascadeProjects/point-art-hub-main \\(1\\)/.claude/worktrees/festive-nash/src' --include=*.ts --include=*.tsx)",
+      "Bash(find \"/c/Users/MSI/CascadeProjects/point-art-hub-main \\(1\\)/.claude/worktrees/festive-nash/src/components/admin\" -type f -name \"*.tsx\" -o -name \"*.ts\")",
+      "Bash(find \"/c/Users/MSI/CascadeProjects/point-art-hub-main \\(1\\)/.claude/worktrees/festive-nash\" -type f -name \"*.sql\" ! -path \"*/node_modules/*\")",
+      "Bash(head -50 \"/c/Users/MSI/CascadeProjects/point-art-hub-main \\(1\\)/.claude/worktrees/festive-nash/supabase/migrations/20250828100000_create_audit_log_table.sql\")",
+      "Bash(find \"/c/Users/MSI/CascadeProjects/point-art-hub-main \\(1\\)/.claude/worktrees/festive-nash/src/pages\" -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" \\\\\\))",
+      "Bash(xargs grep:*)",
+      "Bash(ls -la '/c/Users/MSI/CascadeProjects/point-art-hub-main \\(1\\)/.claude/worktrees/festive-nash/src/pages')",
+      "Bash(find \"C:/Users/MSI/CascadeProjects/point-art-hub-main \\(1\\)/.claude/worktrees/festive-nash/src\" -name \"ActivityLog.tsx\" -o -name \"Reports.tsx\" -o -name \"EmbroideryModule.tsx\" -o -name \"MachinesModule.tsx\" -o -name \"ArtServicesModule.tsx\")",
+      "Bash(find \"C:/Users/MSI/CascadeProjects/point-art-hub-main \\(1\\)/.claude/worktrees/festive-nash/src\" -name \"*.ts\" -o -name \"*.tsx\")",
+      "Bash(find '/c/Users/MSI/CascadeProjects/point-art-hub-main \\(1\\)/.claude/worktrees/festive-nash/src/integrations/supabase' -name types.ts)",
+      "Bash(head -40 grep -n \"done_by\\\\|updated_by\\\\|sold_by\\\\|salesProfiles\\\\|getSalesPerson\\\\|profiles\" \"C:\\\\Users\\\\MSI\\\\CascadeProjects\\\\point-art-hub-main \\(1\\)\\\\.claude\\\\worktrees\\\\festive-nash\\\\src\\\\components\\\\modules\\\\ArtServicesModule.tsx\")",
+      "Bash(head -10 grep -rn \"ExportDialog\\\\|exportData\\\\|generatePDF\\\\|export\" \"C:\\\\Users\\\\MSI\\\\CascadeProjects\\\\point-art-hub-main \\(1\\)\\\\.claude\\\\worktrees\\\\festive-nash\\\\src\\\\components\\\\modules\\\\MachinesModule.tsx\")",
+      "Bash(head -10 grep -rn \"ExportDialog\\\\|exportData\\\\|generatePDF\\\\|export\" \"C:\\\\Users\\\\MSI\\\\CascadeProjects\\\\point-art-hub-main \\(1\\)\\\\.claude\\\\worktrees\\\\festive-nash\\\\src\\\\components\\\\modules\\\\ArtServicesModule.tsx\")",
+      "Bash(head -10 grep -n \"getPersonName\\\\|salesProfiles\\\\|profiles\" \"C:\\\\Users\\\\MSI\\\\CascadeProjects\\\\point-art-hub-main \\(1\\)\\\\.claude\\\\worktrees\\\\festive-nash\\\\src\\\\components\\\\modules\\\\ArtServicesModule.tsx\")",
+      "Bash(find \"C:\\\\Users\\\\MSI\\\\CascadeProjects\\\\point-art-hub-main \\(1\\)\\\\.claude\\\\worktrees\\\\festive-nash\\\\src\" -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\))"
+    ]
+  }
+}

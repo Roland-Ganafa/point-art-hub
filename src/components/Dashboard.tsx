@@ -47,7 +47,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const { toast } = useToast();
-  const { isAdmin, profile, loading, grantEmergencyAdmin } = useUser(); // Add grantEmergencyAdmin
+  const { isAdmin, profile, loading } = useUser();
   const [dashboardStats, setDashboardStats] = useState({
     totalSales: 0,
     totalProfit: 0,
@@ -374,36 +374,6 @@ const Dashboard = () => {
     "machines": "machines",
     "art-services": "art_services",
   }), []);
-
-  // Handle emergency admin access
-  const handleEmergencyAdminAccess = useCallback(async () => {
-    try {
-      const success = await grantEmergencyAdmin();
-      if (success) {
-        toast({
-          title: "Success",
-          description: "You now have admin access. The page will refresh to apply changes.",
-        });
-        // Refresh the page to update the UI
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to grant admin access. Please try again.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Check console for details.",
-        variant: "destructive",
-      });
-      console.error("Emergency admin access error:", error);
-    }
-  }, [grantEmergencyAdmin, toast]);
 
   // Memoize handleAddEntry to prevent recreation
   const handleAddEntry = useCallback(() => {
@@ -822,16 +792,6 @@ const Dashboard = () => {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 xl:flex-shrink-0">
-            {/* Emergency Admin Button - Only visible to non-admins when profile is loaded */}
-            {(!loading && !isAdmin && profile) && (
-              <Button
-                onClick={handleEmergencyAdminAccess}
-                className="order-0 sm:order-0 bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl px-6 py-2.5 font-semibold"
-              >
-                <ShieldAlert className="mr-2 h-4 w-4" />
-                Emergency Admin Access
-              </Button>
-            )}
 
             <Popover open={exportPopoverOpen} onOpenChange={setExportPopoverOpen}>
               <PopoverTrigger asChild>

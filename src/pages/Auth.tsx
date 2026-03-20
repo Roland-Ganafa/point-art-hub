@@ -84,6 +84,12 @@ const Auth = () => {
     );
   }
 
+  const getSignInErrorMessage = (message: string): string => {
+    if (message.toLowerCase().includes('invalid login credentials')) return 'Invalid email or password.';
+    if (message.toLowerCase().includes('email not confirmed')) return 'Please verify your email before signing in.';
+    return 'Sign in failed. Please try again.';
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -93,7 +99,8 @@ const Auth = () => {
         options: { data: { full_name: fullName } },
       });
       if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
+        console.error('Sign up error');
+        toast({ title: "Error", description: "Sign up failed. Please try again.", variant: "destructive" });
       } else {
         setSignupEmail(email);
         setShowEmailConfirmation(true);
@@ -101,7 +108,8 @@ const Auth = () => {
         setEmail(""); setPassword(""); setFullName("");
       }
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      console.error('Sign up error');
+      toast({ title: "Error", description: "Sign up failed. Please try again.", variant: "destructive" });
     } finally { setLoading(false); }
   };
 
@@ -111,13 +119,15 @@ const Auth = () => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
+        console.error('Sign in error');
+        toast({ title: "Error", description: getSignInErrorMessage(error.message), variant: "destructive" });
       } else if (data?.session) {
         toast({ title: "Welcome back!", description: "Signed in successfully." });
         setTimeout(() => navigate("/", { replace: true }), 300);
       }
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      console.error('Sign in error');
+      toast({ title: "Error", description: "Sign in failed. Please try again.", variant: "destructive" });
     } finally { setLoading(false); }
   };
 

@@ -1,44 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useUser } from '@/contexts/UserContext';
 import AdminOnly from '@/components/admin/AdminOnly';
-import { useToast } from '@/hooks/use-toast';
 import { Shield, Lock, Unlock } from 'lucide-react';
 
 const AdminProtectedContent = () => {
-  const { isAdmin, grantEmergencyAdmin, user } = useUser();
-  const { toast } = useToast();
-  const [isRequestingAccess, setIsRequestingAccess] = useState(false);
-
-  const handleRequestEmergencyAccess = async () => {
-    setIsRequestingAccess(true);
-    try {
-      const success = await grantEmergencyAdmin();
-      if (success) {
-        toast({
-          title: "Emergency Access Granted",
-          description: "You now have admin privileges. Refresh the page to see changes.",
-        });
-      } else {
-        toast({
-          title: "Access Request Failed",
-          description: "Unable to grant emergency admin access. Check console for details.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An error occurred while requesting emergency access.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsRequestingAccess(false);
-    }
-  };
+  const { isAdmin } = useUser();
 
   return (
     <div className="space-y-6">
@@ -97,43 +67,6 @@ const AdminProtectedContent = () => {
             </Card>
           </AdminOnly>
 
-          {/* Emergency Access Request for Non-Admins */}
-          {!isAdmin && (
-            <Card className="border-yellow-200 bg-yellow-50 mt-4">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-yellow-800">
-                  <Shield className="h-5 w-5" />
-                  Emergency Admin Access
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-yellow-700 mb-4">
-                  In case of emergencies, you can request temporary admin access. 
-                  This should only be used when normal admin access is unavailable.
-                </p>
-                
-                <div className="flex items-center gap-2">
-                  <Button 
-                    onClick={handleRequestEmergencyAccess}
-                    disabled={isRequestingAccess}
-                    className="bg-yellow-600 hover:bg-yellow-700"
-                  >
-                    {isRequestingAccess ? "Requesting Access..." : "Request Emergency Admin Access"}
-                  </Button>
-                  
-                  {isRequestingAccess && (
-                    <div className="w-4 h-4 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin" />
-                  )}
-                </div>
-                
-                <p className="text-sm text-yellow-600 mt-3">
-                  <strong>Note:</strong> This feature is for development and emergency use only. 
-                  In production environments, contact your system administrator for legitimate 
-                  admin access requests.
-                </p>
-              </CardContent>
-            </Card>
-          )}
         </CardContent>
       </Card>
     </div>

@@ -79,18 +79,11 @@ const createWrapper = () => {
 
 // Test component to access user context
 const TestComponent = () => {
-  const { grantEmergencyAdmin, isAdmin, loading } = useUser()
+  const { isAdmin, loading } = useUser()
   return (
     <div>
       <span data-testid="is-admin">{isAdmin ? 'true' : 'false'}</span>
       <span data-testid="loading">{loading ? 'true' : 'false'}</span>
-      <button 
-        data-testid="grant-admin-btn" 
-        onClick={() => grantEmergencyAdmin()}
-        disabled={loading}
-      >
-        Grant Admin
-      </button>
     </div>
   )
 }
@@ -175,13 +168,12 @@ describe('Admin Functionality', () => {
     vi.clearAllMocks()
   })
 
-  it('should have grantEmergencyAdmin function available in UserContext', async () => {
+  it('should render TestComponent with isAdmin and loading state', async () => {
     render(<TestComponent />, { wrapper: createWrapper() })
-    
+
     await waitFor(() => {
-      const grantAdminBtn = screen.getByTestId('grant-admin-btn')
-      expect(grantAdminBtn).toBeInTheDocument()
-      expect(grantAdminBtn).not.toBeDisabled()
+      expect(screen.getByTestId('is-admin')).toBeInTheDocument()
+      expect(screen.getByTestId('loading')).toBeInTheDocument()
     })
   })
 
@@ -192,7 +184,7 @@ describe('Admin Functionality', () => {
     expect(loadingElement).toHaveTextContent('true')
   })
 
-  it('should render emergency admin button for non-admin users', async () => {
+  it('should render dashboard for non-admin users without emergency admin button', async () => {
     // Mock a non-admin user session
     const mockSession = {
       user: {
@@ -201,32 +193,30 @@ describe('Admin Functionality', () => {
         user_metadata: { full_name: 'Test User' }
       }
     }
-    
+
     const mockProfile = {
       user_id: 'test-user-id',
       full_name: 'Test User',
       role: 'user',
       created_at: new Date().toISOString()
     }
-    
-    mockGetSession.mockResolvedValue({ 
-      data: { session: mockSession }, 
-      error: null 
+
+    mockGetSession.mockResolvedValue({
+      data: { session: mockSession },
+      error: null
     })
-    
-    mockSingle.mockResolvedValue({ 
-      data: mockProfile, 
-      error: null 
+
+    mockSingle.mockResolvedValue({
+      data: mockProfile,
+      error: null
     })
-    
+
     render(<Dashboard />, { wrapper: createWrapper() })
-    
-    // Wait for loading to complete
+
+    // Emergency admin button must not be present
     await waitFor(() => {
-      // Look for emergency admin button (text might vary based on implementation)
-      const emergencyButton = screen.queryByText(/emergency.*admin/i) || 
-                             screen.queryByText(/grant.*admin/i)
-      expect(emergencyButton).toBeInTheDocument()
+      const emergencyButton = screen.queryByText(/emergency.*admin/i)
+      expect(emergencyButton).not.toBeInTheDocument()
     }, { timeout: 3000 })
   })
 
@@ -272,7 +262,7 @@ describe('Admin Functionality', () => {
     expect(emergencyButton).not.toBeInTheDocument()
   })
 
-  it('should successfully grant emergency admin access', async () => {
+  it('should show isAdmin as false for non-admin users', async () => {
     // Mock a non-admin session
     const mockSession = {
       user: {
@@ -281,119 +271,28 @@ describe('Admin Functionality', () => {
         user_metadata: { full_name: 'Test User' }
       }
     }
-    
-    mockGetSession.mockResolvedValue({ 
-      data: { session: mockSession }, 
-      error: null 
-    })
-    
-    mockSingle.mockResolvedValue({ 
-      data: {
-        user_id: 'test-user-id',
-        full_name: 'Test User',
-        role: 'user'
-      }, 
-      error: null 
-    })
-    
-    // Mock successful admin grant
-    const mockUpdateEq = vi.fn(() => ({
-      select: vi.fn(() => ({
-        single: vi.fn(() => Promise.resolve({
-          data: { role: 'admin', user_id: 'test-user-id' },
-          error: null
-        }))
-      }))
-    }))
-    
-    mockUpdate.mockReturnValue({
-      eq: mockUpdateEq
-    })
-    
-    render(<TestComponent />, { wrapper: createWrapper() })
-    
-    await waitFor(() => {
-      expect(screen.getByTestId('loading')).toHaveTextContent('false')
-    })
-    
-    const grantAdminBtn = screen.getByTestId('grant-admin-btn')
-    fireEvent.click(grantAdminBtn)
-    
-    // Wait for the update to be called
-    await waitFor(() => {
-      expect(mockSupabase.from).toHaveBeenCalledWith('profiles')
-      expect(mockUpdate).toHaveBeenCalled()
-      expect(mockToast).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: expect.stringMatching(/success/i)
-        })
-      )
-    })
-    
-    // Should trigger page reload
-    await waitFor(() => {
-      expect(mockReload).toHaveBeenCalled()
-    }, { timeout: 5000 })
-  })
 
-  it('should handle grantEmergencyAdmin errors gracefully', async () => {
-    // Mock a session
-    const mockSession = {
-      user: {
-        id: 'test-user-id',
-        email: 'test@example.com'
-      }
-    }
-    
-    mockGetSession.mockResolvedValue({ 
-      data: { session: mockSession }, 
-      error: null 
+    mockGetSession.mockResolvedValue({
+      data: { session: mockSession },
+      error: null
     })
-    
-    mockSingle.mockResolvedValue({ 
+
+    mockSingle.mockResolvedValue({
       data: {
         user_id: 'test-user-id',
         full_name: 'Test User',
         role: 'user'
-      }, 
-      error: null 
+      },
+      error: null
     })
-    
-    // Mock failed admin grant
-    const mockUpdateEq = vi.fn(() => ({
-      select: vi.fn(() => ({
-        single: vi.fn(() => Promise.resolve({
-          data: null,
-          error: { message: 'Failed to update profile', code: '42501' }
-        }))
-      }))
-    }))
-    
-    mockUpdate.mockReturnValue({
-      eq: mockUpdateEq
-    })
-    
+
     render(<TestComponent />, { wrapper: createWrapper() })
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('loading')).toHaveTextContent('false')
     })
-    
-    const grantAdminBtn = screen.getByTestId('grant-admin-btn')
-    fireEvent.click(grantAdminBtn)
-    
-    // Wait for error handling
-    await waitFor(() => {
-      expect(mockToast).toHaveBeenCalledWith(
-        expect.objectContaining({
-          variant: 'destructive',
-          title: expect.stringMatching(/error|fail/i)
-        })
-      )
-    })
-    
-    // Should NOT trigger page reload on error
-    expect(mockReload).not.toHaveBeenCalled()
+
+    expect(screen.getByTestId('is-admin')).toHaveTextContent('false')
   })
 
   it('should handle no session gracefully', async () => {

@@ -67,7 +67,6 @@ vi.mock('@/contexts/UserContext', () => {
     isAdmin: true,
     signOut: vi.fn(async () => {}),
     refreshProfile: vi.fn(async () => {}),
-    grantEmergencyAdmin: vi.fn(async () => true),
     authError: null,
   });
 

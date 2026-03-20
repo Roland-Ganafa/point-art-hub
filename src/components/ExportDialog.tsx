@@ -38,6 +38,9 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
   const { toast } = useToast();
   const { isAdmin } = useUser();
 
+  const sanitizeFilename = (name: string) =>
+    name.replace(/[^a-zA-Z0-9\-_]/g, '').slice(0, 100);
+
   const handleExport = async () => {
     if (!isAdmin) {
       toast({
@@ -264,12 +267,12 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
                   <Input
                     id="filename"
                     value={customFilename}
-                    onChange={(e) => setCustomFilename(e.target.value)}
+                    onChange={(e) => setCustomFilename(sanitizeFilename(e.target.value))}
                     placeholder={`${type.replace('_', '-')}-export`}
                     className="text-sm mt-1"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Leave empty for auto-generated filename
+                    Only letters, numbers, hyphens (-), and underscores (_) are allowed. Max 100 characters.
                   </p>
                 </div>
 
