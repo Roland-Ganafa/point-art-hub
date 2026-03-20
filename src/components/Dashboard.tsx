@@ -3,11 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Package, Gift, Scissors, Printer, Palette, TrendingUp, TrendingDown, Activity, BarChart3, ShieldAlert, RefreshCw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { PlusCircle, Package, Gift, Scissors, Printer, Palette, TrendingUp, TrendingDown, Activity, BarChart3, ShieldAlert, RefreshCw, Download, FileText, ChevronDown, Calendar } from "lucide-react";
 import CustomLoader from "@/components/ui/CustomLoader";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 // Lazy load module components
 const StationeryModule = lazy(() => import("@/components/modules/StationeryModule"));
@@ -57,6 +62,10 @@ const Dashboard = () => {
     }
   });
   const [dateFilter, setDateFilter] = useState<"today" | "month" | "all">("today");
+  const [exportPopoverOpen, setExportPopoverOpen] = useState(false);
+  const [exportPreset, setExportPreset] = useState<"today" | "week" | "month" | "all" | "custom">("all");
+  const [exportFrom, setExportFrom] = useState("");
+  const [exportTo, setExportTo] = useState("");
   const [addTriggers, setAddTriggers] = useState<Record<string, number>>({
     stationery: 0,
     "gift-store": 0,
@@ -432,27 +441,155 @@ const Dashboard = () => {
     return [headers.join(","), ...rows.map(r => headers.map(h => escape(r[h])).join(","))].join("\n");
   }, []);
 
-  const handleExportReport = async () => {
-    if (!moduleIds.includes(activeTab as ModuleId)) {
-      toast({ title: "Select a module", description: "Go to a module tab to export its report." });
+  // Map each module tab to its sales/service table and date field
+  const exportTableMap: Record<string, { table: string; dateField: string; label: string }> = useMemo(() => ({
+    "stationery":   { table: "stationery_sales", dateField: "created_at", label: "Stationery Sales" },
+    "gift-store":   { table: "gift_daily_sales", dateField: "created_at", label: "Gift Store Sales" },
+    "embroidery":   { table: "embroidery",        dateField: "date",       label: "Embroidery Services" },
+    "machines":     { table: "machines",          dateField: "date",       label: "Machine Services" },
+    "art-services": { table: "art_services",      dateField: "date",       label: "Art Services" },
+  }), []);
+
+  const getExportDates = useCallback(() => {
+    const now = new Date();
+    const toStr = (d: Date) => d.toISOString().split("T")[0];
+    switch (exportPreset) {
+      case "today":  return { from: toStr(now), to: toStr(now) };
+      case "week":   { const d = new Date(now); d.setDate(d.getDate() - 7); return { from: toStr(d), to: toStr(now) }; }
+      case "month":  return { from: toStr(new Date(now.getFullYear(), now.getMonth(), 1)), to: toStr(now) };
+      case "custom": return { from: exportFrom, to: exportTo };
+      default:       return { from: null, to: null };
+    }
+  }, [exportPreset, exportFrom, exportTo]);
+
+  const handleExport = useCallback(async (format: "csv" | "pdf") => {
+    setExportPopoverOpen(false);
+    const { from, to } = getExportDates();
+    const today = new Date().toISOString().slice(0, 10);
+    const dateLabel = from && to ? `${from}_to_${to}` : "all-time";
+
+    // Fetch data for one module or all
+    const fetchTable = async (tabKey: string) => {
+      const cfg = exportTableMap[tabKey];
+      if (!cfg) return [];
+      let q = (supabase as any).from(cfg.table).select("*").order(cfg.dateField, { ascending: false });
+      if (from && to) {
+        q = q.gte(cfg.dateField, from).lte(cfg.dateField, cfg.dateField === "date" ? to : `${to}T23:59:59`);
+      }
+      const { data, error } = await q;
+      if (error) { console.error(error); return []; }
+      return data || [];
+    };
+
+    const isModule = moduleIds.includes(activeTab as ModuleId);
+    const tabsToExport = isModule ? [activeTab] : (moduleIds as unknown as string[]);
+
+    toast({ title: "Preparing export…", description: "Fetching data, please wait." });
+
+    if (format === "csv") {
+      const rows: any[] = [];
+      for (const tab of tabsToExport) {
+        const data = await fetchTable(tab);
+        const label = exportTableMap[tab]?.label || tab;
+        data.forEach((r: any) => rows.push({ Module: label, ...r }));
+      }
+      if (!rows.length) { toast({ title: "No data", description: "No records found for the selected date range." }); return; }
+      const csv = toCSV(rows);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `point-art-report-${isModule ? activeTab : "all"}-${dateLabel}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: "CSV exported", description: `${rows.length} rows downloaded.` });
       return;
     }
-    const table = tableMap[activeTab as ModuleId];
-    const { data, error } = await supabase.from(table).select("*").order("created_at", { ascending: false });
-    if (error) {
-      toast({ title: "Export failed", description: error.message, variant: "destructive" });
-      return;
+
+    // PDF export
+    const doc = new jsPDF({ orientation: "landscape" });
+    const todayStr = new Date().toLocaleDateString("en-GB");
+    const rangeStr = from && to ? `${from} to ${to}` : "All Time";
+
+    // Header banner
+    doc.setFillColor(234, 88, 12);
+    doc.rect(0, 0, 297, 22, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Point Art Hub — Sales Report", 12, 10);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Period: ${rangeStr} | Generated: ${todayStr}`, 12, 18);
+
+    let yPos = 30;
+
+    for (const tab of tabsToExport) {
+      const data = await fetchTable(tab);
+      const cfg = exportTableMap[tab];
+      if (!cfg) continue;
+
+      if (data.length === 0) continue;
+
+      // Section title
+      if (yPos > 170) { doc.addPage(); yPos = 15; }
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text(cfg.label, 12, yPos);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(120, 120, 120);
+      doc.text(`${data.length} records`, 12, yPos + 5);
+      yPos += 10;
+
+      // Build columns from first row keys, skip internal IDs
+      const skip = new Set(["id", "item_id", "user_id"]);
+      const keys = Object.keys(data[0]).filter(k => !skip.has(k));
+      const headers = keys.map(k => k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()));
+      const rows = data.map((r: any) => keys.map(k => {
+        const v = r[k];
+        if (v === null || v === undefined) return "-";
+        if (typeof v === "number") return v.toLocaleString();
+        if (typeof v === "string" && v.match(/^\d{4}-\d{2}-\d{2}T/)) return v.slice(0, 16).replace("T", " ");
+        return String(v);
+      }));
+
+      const moduleColors: Record<string, [number, number, number]> = {
+        "stationery":   [37, 99, 235],
+        "gift-store":   [168, 85, 247],
+        "embroidery":   [16, 185, 129],
+        "machines":     [234, 88, 12],
+        "art-services": [239, 68, 68],
+      };
+      const color = moduleColors[tab] || [100, 100, 100];
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [headers],
+        body: rows,
+        headStyles: { fillColor: color, fontSize: 8 },
+        bodyStyles: { fontSize: 7 },
+        alternateRowStyles: { fillColor: [250, 250, 250] },
+        margin: { left: 12, right: 12 },
+        tableWidth: "auto",
+        didDrawPage: (d: any) => { yPos = d.cursor?.y ?? yPos; },
+      });
+      yPos = (doc as any).lastAutoTable.finalY + 12;
     }
-    const csv = toCSV(data || []);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${activeTab}-report-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast({ title: "Export started", description: "Your CSV report has been downloaded." });
-  };
+
+    // Footer page numbers
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(7);
+      doc.setTextColor(160);
+      doc.text(`Point Art Hub | Page ${i} of ${pageCount}`, 12, 205);
+    }
+
+    doc.save(`point-art-report-${isModule ? activeTab : "all"}-${dateLabel}.pdf`);
+    toast({ title: "PDF exported", description: "Report downloaded successfully." });
+  }, [activeTab, moduleIds, exportTableMap, getExportDates, toCSV, toast]);
 
   // Preload frequently used modules after initial load
   useEffect(() => {
@@ -569,14 +706,63 @@ const Dashboard = () => {
               </Button>
             )}
 
-            <Button
-              variant="outline"
-              onClick={handleExportReport}
-              className="order-2 sm:order-1 hover:scale-105 transition-all duration-200 hover:shadow-lg border-orange-200 hover:border-orange-400 bg-white/80 backdrop-blur-sm px-6 py-2.5"
-            >
-              <BarChart3 className="mr-2 h-4 w-4" />
-              Export Report
-            </Button>
+            <Popover open={exportPopoverOpen} onOpenChange={setExportPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="order-2 sm:order-1 hover:scale-105 transition-all duration-200 hover:shadow-lg border-orange-200 hover:border-orange-400 bg-white/80 backdrop-blur-sm px-6 py-2.5"
+                >
+                  <BarChart3 className="mr-2 h-4 w-4" />
+                  Export Report
+                  <ChevronDown className="ml-2 h-3 w-3 opacity-60" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-4 space-y-4" align="end">
+                <div>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 block">
+                    <Calendar className="inline h-3 w-3 mr-1" />Date Range
+                  </Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(["today", "week", "month", "all", "custom"] as const).map(p => (
+                      <button
+                        key={p}
+                        onClick={() => setExportPreset(p)}
+                        className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+                          exportPreset === p
+                            ? "bg-orange-500 text-white border-orange-500"
+                            : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"
+                        }`}
+                      >
+                        {p === "today" ? "Today" : p === "week" ? "This Week" : p === "month" ? "This Month" : p === "all" ? "All Time" : "Custom"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {exportPreset === "custom" && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-1 block">From</Label>
+                      <Input type="date" value={exportFrom} onChange={e => setExportFrom(e.target.value)} className="h-8 text-xs" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-1 block">To</Label>
+                      <Input type="date" value={exportTo} onChange={e => setExportTo(e.target.value)} className="h-8 text-xs" />
+                    </div>
+                  </div>
+                )}
+                <div className="border-t pt-3 grid grid-cols-2 gap-2">
+                  <Button size="sm" variant="outline" onClick={() => handleExport("csv")} className="w-full text-xs">
+                    <Download className="mr-1.5 h-3 w-3" />Export CSV
+                  </Button>
+                  <Button size="sm" onClick={() => handleExport("pdf")} className="w-full text-xs bg-orange-500 hover:bg-orange-600 text-white">
+                    <FileText className="mr-1.5 h-3 w-3" />Export PDF
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Exporting: <span className="font-medium">{moduleIds.includes(activeTab as any) ? exportTableMap[activeTab]?.label : "All Modules"}</span>
+                </p>
+              </PopoverContent>
+            </Popover>
             <Button
               onClick={handleAddEntry}
               className="order-1 sm:order-2 bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl px-6 py-2.5 font-semibold"
