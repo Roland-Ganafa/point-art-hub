@@ -20,6 +20,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import HelpCenter from './pages/HelpCenter';
 import InvoiceManagement from './pages/InvoiceManagement';
 import Settings from './pages/Settings';
+import ActivityLog from './pages/ActivityLog';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -111,6 +112,14 @@ function App() {
                   element={
                     <Layout>
                       <Settings />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/activity-log"
+                  element={
+                    <Layout>
+                      <ActivityLog />
                     </Layout>
                   }
                 />

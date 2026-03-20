@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings, User, Shield, Users, BarChart3, FileText, TrendingUp, Home, Sun, Moon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Settings, User, Shield, Users, BarChart3, FileText, TrendingUp, Home, Sun, Moon, ChevronLeft, ChevronRight, Activity } from "lucide-react";
 import Logo from "@/components/ui/Logo";
 import NotificationBell from "@/components/NotificationBell";
 import { useUser } from "@/contexts/UserContext";
@@ -313,6 +313,9 @@ const Layout = ({ children }: LayoutProps) => {
             )}
             {(isAdmin || profile?.role === 'admin') && (
               <NavItem icon={FileText} label="Invoices" onClick={() => navigate('/invoices')} collapsed={collapsed} />
+            )}
+            {(isAdmin || profile?.role === 'admin') && (
+              <NavItem icon={Activity} label="Activity Log" onClick={() => navigate('/activity-log')} collapsed={collapsed} />
             )}
           </div>
         </nav>

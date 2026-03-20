@@ -733,9 +733,9 @@ const AdminProfilePage = () => {
                   <Settings className="h-4 w-4 mr-2" />
                   System Settings
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full" onClick={() => navigate("/activity-log")}>
                   <Activity className="h-4 w-4 mr-2" />
-                  View Audit Logs
+                  View Activity Log
                 </Button>
                 <Button variant="outline" className="w-full" onClick={handleBackToMain}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
