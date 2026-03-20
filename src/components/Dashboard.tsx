@@ -532,7 +532,7 @@ const Dashboard = () => {
         <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-purple-200/30 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="relative z-10 w-full px-2 sm:px-4 py-6 space-y-6">
         {/* Header Section */}
         <div className="flex flex-col xl:flex-row xl:justify-between xl:items-start gap-6 mb-10">
           <div className="flex-1 space-y-4">

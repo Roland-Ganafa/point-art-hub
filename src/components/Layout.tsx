@@ -362,7 +362,7 @@ const Layout = ({ children }: LayoutProps) => {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 bg-background transition-colors duration-200 overflow-auto">
+        <main className="flex-1 p-4 bg-background transition-colors duration-200 overflow-auto">
           {children}
         </main>
       </div>

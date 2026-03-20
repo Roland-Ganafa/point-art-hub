@@ -587,64 +587,27 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
         </TabsList>
 
         <TabsContent value="inventory" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-          <div className="flex justify-between items-center mb-8">
-            <div className="space-y-2">
-              <h3 className="text-3xl font-bold text-foreground flex items-center gap-3">
-                <Package2 className="h-8 w-8 text-blue-600" />
-                Stationery Management
-              </h3>
-              <p className="text-muted-foreground">Manage your stationery inventory with smart tracking</p>
-            </div>
-            <div className="flex items-center gap-4">
-              {/* Total Stock Value Card */}
-              <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg shrink-0">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-600 rounded-lg">
-                      <TrendingUp className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-green-700">Total Stock Value</p>
-                      <p className="text-2xl font-bold text-green-900">
-                        {formatUGX(items.reduce((sum, item) => sum + ((item.stock || 0) * item.rate), 0))}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Category Breakdown Summary */}
-              <div className="flex gap-3 overflow-x-auto pb-2 max-w-[500px] no-scrollbar">
-                {Object.entries(categoryTotals).map(([category, total]) => (
-                  <Card key={category} className="border border-blue-100 bg-white/50 shadow-sm min-w-[150px] shrink-0">
-                    <CardContent className="p-3">
-                      <p className="text-[10px] uppercase tracking-wider font-bold text-blue-600 truncate">{category}</p>
-                      <p className="text-sm font-bold text-gray-800">{formatUGX(total as number)}</p>
-                    </CardContent>
-                  </Card>
-                ))}
+          <div className="space-y-4 mb-6">
+            {/* Row 1: Title + Add button */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <h3 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                  <Package2 className="h-6 w-6 text-blue-600" />
+                  Stationery Management
+                </h3>
+                <p className="text-sm text-muted-foreground">Manage your stationery inventory with smart tracking</p>
               </div>
-
-              <div className="relative w-full max-w-md">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search items..."
-                  className="pl-9 border-input focus:border-primary focus:ring-primary transition-all duration-200 bg-background"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-
-              {isAdmin && selectedIds.size > 0 && (
-                <Button
-                  variant="destructive"
-                  onClick={handleBulkDelete}
-                  className="animate-in fade-in zoom-in duration-200 shadow-lg"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Selected ({selectedIds.size})
-                </Button>
-              )}
+              <div className="flex items-center gap-2 shrink-0">
+                {isAdmin && selectedIds.size > 0 && (
+                  <Button
+                    variant="destructive"
+                    onClick={handleBulkDelete}
+                    className="animate-in fade-in zoom-in duration-200 shadow-lg"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete ({selectedIds.size})
+                  </Button>
+                )}
 
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 setIsDialogOpen(open);
@@ -827,6 +790,45 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
             </div>
           </div>
 
+          {/* Row 2: Stats + Search */}
+          <div className="flex flex-wrap items-center gap-3">
+            <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 shadow-sm shrink-0">
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-green-600 rounded-md">
+                    <TrendingUp className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium text-green-700">Total Stock Value</p>
+                    <p className="text-base font-bold text-green-900">
+                      {formatUGX(items.reduce((sum, item) => sum + ((item.stock || 0) * item.rate), 0))}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex gap-2 flex-wrap">
+              {Object.entries(categoryTotals).map(([category, total]) => (
+                <div key={category} className="border border-blue-100 bg-white/80 shadow-sm rounded-lg px-3 py-1.5 shrink-0">
+                  <p className="text-[10px] uppercase tracking-wider font-bold text-blue-600 truncate max-w-[120px]">{category}</p>
+                  <p className="text-xs font-bold text-gray-800">{formatUGX(total as number)}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search items..."
+                className="pl-9 border-input focus:border-primary focus:ring-primary transition-all duration-200 bg-background"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+          </div>
+
           <Card className="border-border shadow-2xl bg-card overflow-hidden">
             <CardHeader className="bg-muted/50 border-b border-border">
               <CardTitle className="text-2xl font-bold flex items-center gap-3 text-foreground">
@@ -841,8 +843,8 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="rounded-b-xl">
-                <Table>
+              <div className="overflow-x-auto rounded-b-xl">
+                <Table className="w-full">
                   <TableHeader className="bg-gradient-to-r from-blue-50 to-purple-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
                     <TableRow className="border-b-2 border-blue-100 hover:bg-transparent">
                       {isAdmin && (

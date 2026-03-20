@@ -636,8 +636,8 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="">
-                <Table>
+              <div className="overflow-x-auto">
+                <Table className="w-full">
                   <TableHeader className="bg-gradient-to-r from-gray-50 to-purple-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
                     <TableRow className="border-b border-purple-100">
                       {isAdmin && (
@@ -827,8 +827,8 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
 
             <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
               <CardContent className="p-0">
-                <div className="">
-                  <Table>
+                <div className="overflow-x-auto">
+                  <Table className="w-full">
                     <TableHeader className="bg-gradient-to-r from-gray-50 to-purple-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
                       <TableRow className="border-b border-purple-100">
                         <TableHead className="w-[50px] font-semibold text-gray-700 text-left bg-gradient-to-r from-gray-50 to-purple-50 whitespace-nowrap">#</TableHead>

@@ -803,8 +803,8 @@ const GiftsDailySales = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="">
-                <Table>
+              <div className="overflow-x-auto">
+                <Table className="w-full">
                   <TableHeader className="bg-gradient-to-r from-gray-50 to-green-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
                     <TableRow className="border-b border-green-100">
                       <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">Category</TableHead>
@@ -952,8 +952,8 @@ const GiftsDailySales = () => {
 
             <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
               <CardContent className="p-0">
-                <div className="">
-                  <Table>
+                <div className="overflow-x-auto">
+                  <Table className="w-full">
                     <TableHeader className="bg-gradient-to-r from-gray-50 to-green-50 [&_th]:sticky [&_th]:top-0 [&_th]:z-10">
                       <TableRow className="border-b border-green-100">
                         <TableHead className="font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-green-50 whitespace-nowrap">#</TableHead>
