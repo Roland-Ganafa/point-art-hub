@@ -364,16 +364,17 @@ export const prepareSalesData = (data: any[]) => {
   };
 
   const processedData = data.map(item => {
-    // Determine item name, handling possible joined string format "Category: Item"
-    let itemName = item.item;
+    // Resolve item name: stationery sales join returns item.stationery.item
+    let itemName = item.stationery?.item || item.item || '-';
 
     // For gift store sales which might be stored as "Category: Item"
-    if (item.current_stock === undefined && item.item && item.item.includes(': ')) {
-      const parts = item.item.split(': ');
-      if (parts.length > 1) {
-        itemName = parts.slice(1).join(': ');
-      }
+    if (itemName && itemName.includes(': ')) {
+      const parts = itemName.split(': ');
+      if (parts.length > 1) itemName = parts.slice(1).join(': ');
     }
+
+    // Resolve sold_by: JOIN returns item.profiles.full_name
+    const soldBy = item.profiles?.full_name || item.profiles?.sales_initials || item.sold_by_name || '-';
 
     return {
       item: itemName,
@@ -385,7 +386,7 @@ export const prepareSalesData = (data: any[]) => {
       profit: ((item.selling_price || item.spx || 0) - (item.rate || item.bpx || 0)) * item.quantity,
       date: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : '-',
       time_recorded: item.created_at ? format(new Date(item.created_at), 'HH:mm') : '-',
-      sold_by: item.sold_by_name || item.sold_by || '-'
+      sold_by: soldBy
     };
   });
 

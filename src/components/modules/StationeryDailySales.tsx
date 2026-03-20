@@ -129,7 +129,7 @@ const StationeryDailySales = () => {
     try {
       const { data, error } = await (supabase as any)
         .from("stationery_sales")
-        .select("*")
+        .select("*, stationery!item_id(item, category), profiles!sold_by(full_name, sales_initials)")
         .order("date", { ascending: false });
 
       if (error) {

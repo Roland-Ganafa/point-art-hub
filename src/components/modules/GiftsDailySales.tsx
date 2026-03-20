@@ -131,9 +131,9 @@ const GiftsDailySales = () => {
       const endOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999).toISOString();
 
       // Fetch sales data for the selected date
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("gift_daily_sales")
-        .select("*")
+        .select("*, profiles!sold_by(full_name, sales_initials)")
         .gte("date", startOfDay)
         .lte("date", endOfDay)
         .order("date", { ascending: false });
