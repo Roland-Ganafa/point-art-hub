@@ -84,8 +84,33 @@ const Layout = ({ children }: LayoutProps) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-pink-50 to-purple-50">
+        <div className="flex flex-col items-center gap-6 animate-in fade-in duration-500">
+          {/* Logo */}
+          <div className="flex flex-col items-center gap-2">
+            <img
+              src="/point-art-logo.svg"
+              alt="Point Art Hub"
+              className="w-20 h-20 object-contain drop-shadow-md"
+            />
+            <div className="text-center leading-tight">
+              <div className="text-3xl font-bold tracking-tight">
+                <span className="text-gray-800">Point</span>
+                <span className="text-pink-600 ml-1">Art</span>
+              </div>
+              <div className="text-xs font-semibold tracking-widest uppercase text-gray-400 mt-0.5">Hub</div>
+            </div>
+          </div>
+
+          {/* Animated loader */}
+          <div className="flex flex-col items-center gap-3">
+            <div className="relative w-12 h-12">
+              <div className="absolute inset-0 rounded-full border-4 border-pink-100" />
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-pink-500 animate-spin" />
+            </div>
+            <p className="text-sm text-gray-400 font-medium tracking-wide animate-pulse">Loading...</p>
+          </div>
+        </div>
       </div>
     );
   }
