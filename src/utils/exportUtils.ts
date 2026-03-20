@@ -218,13 +218,12 @@ export const prepareEmbroideryData = (data: any[], profilesMap?: Record<string, 
   };
 
   const processedData = data.map(item => {
-    // Resolve done_by to name if profiles map is provided
-    let doneBy = '-';
-    if (item.done_by) {
-      doneBy = profilesMap?.[item.done_by] || item.done_by_name || item.done_by;
-    }
+    // Resolve name: JOIN returns item.profiles.full_name, fallback to profilesMap or raw value
+    const doneBy = item.profiles?.full_name || item.profiles?.sales_initials
+      || (item.done_by ? (profilesMap?.[item.done_by] || item.done_by_name) : null)
+      || '-';
     return {
-      description: item.job_description,
+      description: item.job_description || item.item_name || '-',
       cost: item.expenditure || 0,
       sales: item.sales || item.quotation || 0,
       profit: item.profit || 0,
@@ -268,8 +267,8 @@ export const prepareMachinesData = (data: any[]) => {
   };
 
   const processedData = data.map(item => ({
-    machine_name: item.machine_name,
-    service_description: item.service_description,
+    machine_name: item.machine_name || item.machine_type || '-',
+    service_description: item.service_description || item.description || '-',
     quantity: item.quantity,
     rate: item.rate,
     sales: (item.quantity * item.rate) || 0,
@@ -277,7 +276,7 @@ export const prepareMachinesData = (data: any[]) => {
     profit: ((item.quantity * item.rate) - (item.expenditure || 0)) || 0,
     date: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : '-',
     time_recorded: item.created_at ? format(new Date(item.created_at), 'HH:mm') : '-',
-    done_by: item.done_by_name || item.done_by || '-'
+    done_by: item.profiles?.full_name || item.profiles?.sales_initials || item.done_by_name || item.done_by || '-'
   }));
 
   // Add Totals Row
@@ -317,7 +316,7 @@ export const prepareArtServicesData = (data: any[]) => {
   };
 
   const processedData = data.map(item => ({
-    item: item.service_name,
+    item: item.service_name || '-',
     description: item.description || '-',
     quantity: item.quantity,
     rate: item.rate,
@@ -325,7 +324,7 @@ export const prepareArtServicesData = (data: any[]) => {
     profit: item.profit || ((item.quantity * item.rate) - (item.expenditure || 0)) || 0,
     date: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : '-',
     time_recorded: item.created_at ? format(new Date(item.created_at), 'HH:mm') : '-',
-    done_by: item.done_by_name || item.done_by || '-'
+    done_by: item.profiles?.full_name || item.profiles?.sales_initials || item.done_by_name || item.done_by || '-'
   }));
 
   // Add Totals Row

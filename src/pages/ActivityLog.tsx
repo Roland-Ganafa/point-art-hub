@@ -52,14 +52,17 @@ export default function ActivityLog() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch profiles for manual UUID → name resolution (done_by has no FK in some tables)
+      // Fetch profiles — index by BOTH profiles.id and profiles.user_id (auth uid)
+      // so lookups work regardless of which UUID done_by/updated_by stores
       const { data: profileRows } = await supabase
         .from("profiles")
-        .select("id, full_name, sales_initials");
+        .select("id, user_id, full_name, sales_initials");
       const profileMap: Record<string, string> = {};
       (profileRows || []).forEach((p: any) => {
-        profileMap[p.id] = [p.full_name, p.sales_initials ? `(${p.sales_initials})` : ""]
+        const label = [p.full_name, p.sales_initials ? `(${p.sales_initials})` : ""]
           .filter(Boolean).join(" ").trim();
+        if (p.id) profileMap[p.id] = label;
+        if (p.user_id) profileMap[p.user_id] = label;
       });
       const resolveEmployee = (id: string | null): string =>
         id ? (profileMap[id] || "Unknown") : "Unknown";
@@ -86,17 +89,17 @@ export default function ActivityLog() {
           .order("updated_at", { ascending: false })
           .limit(500),
 
-        // Machines — done_by has no FK, fetch it raw for manual resolution
+        // Machines — updated_by has FK to profiles.id
         (supabase as any)
           .from("machines")
-          .select("id, created_at, machine_type, quantity, total_amount, customer_name, done_by, profiles!updated_by(full_name, sales_initials)")
+          .select("id, created_at, machine_type, quantity, total_amount, customer_name, updated_by, profiles!updated_by(full_name, sales_initials)")
           .order("created_at", { ascending: false })
           .limit(500),
 
-        // Art Services — done_by has no FK, fetch it raw for manual resolution
+        // Art Services — updated_by has FK; done_by is raw text (may store profiles.id or user_id)
         (supabase as any)
           .from("art_services")
-          .select("id, created_at, service_name, quantity, sales, description, done_by, profiles!updated_by(full_name, sales_initials)")
+          .select("id, created_at, service_name, quantity, sales, description, done_by, updated_by, profiles!updated_by(full_name, sales_initials)")
           .order("created_at", { ascending: false })
           .limit(500),
       ]);
@@ -148,13 +151,11 @@ export default function ActivityLog() {
         });
       });
 
-      // Machines — prefer done_by (who entered), fall back to updated_by profile
+      // Machines — use updated_by FK JOIN, fallback to manual profileMap lookup
       (machRes.data || []).forEach((r: any) => {
         const profile = r.profiles;
         const profileName = profile ? `${profile.full_name || ""}${profile.sales_initials ? ` (${profile.sales_initials})` : ""}`.trim() : "";
-        const emp = resolveEmployee(r.done_by) !== "Unknown"
-          ? resolveEmployee(r.done_by)
-          : (profileName || "Unknown");
+        const emp = profileName || resolveEmployee(r.updated_by) || "Unknown";
         combined.push({
           id: `mach-${r.id}`,
           created_at: r.created_at || "",
@@ -166,13 +167,11 @@ export default function ActivityLog() {
         });
       });
 
-      // Art Services — prefer done_by (who entered), fall back to updated_by profile
+      // Art Services — updated_by FK JOIN is primary; done_by raw text is fallback
       (artRes.data || []).forEach((r: any) => {
         const profile = r.profiles;
         const profileName = profile ? `${profile.full_name || ""}${profile.sales_initials ? ` (${profile.sales_initials})` : ""}`.trim() : "";
-        const emp = resolveEmployee(r.done_by) !== "Unknown"
-          ? resolveEmployee(r.done_by)
-          : (profileName || "Unknown");
+        const emp = profileName || resolveEmployee(r.done_by) || resolveEmployee(r.updated_by) || "Unknown";
         combined.push({
           id: `art-${r.id}`,
           created_at: r.created_at || "",

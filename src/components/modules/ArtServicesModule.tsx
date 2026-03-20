@@ -128,9 +128,9 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
   const fetchItems = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("art_services")
-        .select("*")
+        .select("*, profiles!updated_by(full_name, sales_initials)")
         .order("created_at", { ascending: false });
 
       if (error) {
