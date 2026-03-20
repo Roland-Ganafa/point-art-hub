@@ -474,17 +474,57 @@ const Dashboard = () => {
     const today = new Date().toISOString().slice(0, 10);
     const dateLabel = from && to ? `${from}_to_${to}` : "all-time";
 
+    // Build a profiles map: uuid → full name (for resolving sold_by / done_by)
+    const { data: profileRows } = await (supabase as any)
+      .from("profiles")
+      .select("id, full_name, sales_initials");
+    const profileMap: Record<string, string> = {};
+    (profileRows || []).forEach((p: any) => {
+      profileMap[p.id] = p.full_name || p.sales_initials || p.id;
+    });
+
+    // Resolve a UUID field to a name, leaving non-UUIDs (already a name) unchanged
+    const resolveName = (val: string | null | undefined): string => {
+      if (!val) return "-";
+      return profileMap[val] || val;
+    };
+
+    // Post-process rows: replace sold_by / done_by / updated_by UUIDs with names
+    const resolveNames = (rows: any[]): any[] =>
+      rows.map(r => {
+        const out = { ...r };
+        if ("sold_by" in out)   out.sold_by   = resolveName(out.sold_by);
+        if ("done_by" in out)   out.done_by   = resolveName(out.done_by);
+        if ("updated_by" in out) delete out.updated_by; // internal, not useful in export
+        // Flatten nested profile join if present (stationery_sales / gift_daily_sales)
+        if (out.profiles && typeof out.profiles === "object") {
+          if ("sold_by" in out) out.sold_by = out.profiles.full_name || out.profiles.sales_initials || out.sold_by;
+          delete out.profiles;
+        }
+        // Flatten nested stationery join if present
+        if (out.stationery && typeof out.stationery === "object") {
+          out.item_name = out.stationery.item || out.item_name;
+          delete out.stationery;
+        }
+        return out;
+      });
+
     // Fetch data for one module or all
     const fetchTable = async (tabKey: string) => {
       const cfg = exportTableMap[tabKey];
       if (!cfg) return [];
-      let q = (supabase as any).from(cfg.table).select("*").order(cfg.dateField, { ascending: false });
+      // Use JOIN for tables with FK on sold_by → profiles
+      const selectClause =
+        cfg.table === "stationery_sales"  ? "*, stationery!item_id(item), profiles!sold_by(full_name, sales_initials)" :
+        cfg.table === "gift_daily_sales"   ? "*, profiles!sold_by(full_name, sales_initials)" :
+        "*";
+      let q = (supabase as any).from(cfg.table).select(selectClause).order(cfg.dateField, { ascending: false });
       if (from && to) {
         q = q.gte(cfg.dateField, from).lte(cfg.dateField, cfg.dateField === "date" ? to : `${to}T23:59:59`);
       }
       const { data, error } = await q;
       if (error) { console.error(error); return []; }
-      return data || [];
+      return resolveNames(data || []);
     };
 
     const isModule = moduleIds.includes(activeTab as ModuleId);

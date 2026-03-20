@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import { Checkbox } from "@/components/ui/checkbox";
 import CustomLoader from "@/components/ui/CustomLoader";
+import ExportDialog from "@/components/ExportDialog";
 
 const formatUGX = (amount: number | null | undefined): string => {
   if (amount === null || amount === undefined) return "UGX 0";
@@ -492,6 +493,13 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+
+              <ExportDialog
+                data={items.map(item => ({ ...item, done_by: getPersonName(item.done_by) }))}
+                type="machines"
+                moduleTitle="Machine Services"
+                disabled={items.length === 0 || isLoading}
+              />
 
               {selectedIds.size > 0 && (
                 <Button

@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import CustomLoader from "@/components/ui/CustomLoader";
+import ExportDialog from "@/components/ExportDialog";
 import { Plus, Edit, Trash2, Search, Lock, Palette, TrendingUp, ShoppingCart, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -434,6 +435,13 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+
+              <ExportDialog
+                data={items.map(item => ({ ...item, done_by: getPersonName(item.done_by) }))}
+                type="art_services"
+                moduleTitle="Art Services"
+                disabled={items.length === 0 || isLoading}
+              />
 
               {isAdmin && selectedIds.size > 0 && (
                 <Button
