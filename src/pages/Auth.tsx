@@ -443,7 +443,7 @@ const Auth = () => {
 
             {/* Footer */}
             <p className="text-center mt-8 text-[10px]" style={{ color:'rgba(255,255,255,.15)' }}>
-              © 2025 Point Art Solutions •{" "}
+              © 2026 Point Art Solutions •{" "}
               <a href="#" className="hover:text-white/40 transition-colors">Terms</a> •{" "}
               <a href="#" className="hover:text-white/40 transition-colors">Privacy</a>
             </p>
