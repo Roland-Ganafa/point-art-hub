@@ -635,13 +635,6 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                 />
               </div>
 
-              <ExportDialog
-                data={items}
-                type="stationery"
-                moduleTitle="Stationery Inventory"
-                disabled={items.length === 0}
-              />
-
               {isAdmin && selectedIds.size > 0 && (
                 <Button
                   variant="destructive"

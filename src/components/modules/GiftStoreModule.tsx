@@ -8,12 +8,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Search, AlertTriangle, Lock, Gift, TrendingUp, ShoppingCart, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import GiftsDailySales from "./GiftsDailySales";
-import ExportDialog from "@/components/ExportDialog";
 import CustomLoader from "@/components/ui/CustomLoader";
 
 const formatUGX = (amount: number | null | undefined): string => {
@@ -56,6 +56,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
     rate: "",
     selling_price: "",
     low_stock_threshold: "",
+    date: new Date().toISOString().split('T')[0],
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
@@ -67,6 +68,12 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
     item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.custom_category && item.custom_category.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // Low stock items
+  const lowStockItems = items.filter(item => {
+    const stock = item.stock !== undefined ? item.stock : item.quantity;
+    return stock <= (item.low_stock_threshold || 5);
+  });
 
   // Calculate profit when rate or selling price changes
   useEffect(() => {
@@ -202,6 +209,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
       rate: item.rate.toString(),
       selling_price: item.selling_price !== undefined ? item.selling_price.toString() : "",
       low_stock_threshold: item.low_stock_threshold !== undefined ? item.low_stock_threshold.toString() : "",
+      date: item.date || new Date().toISOString().split('T')[0],
     });
     setIsDialogOpen(true);
   };
@@ -331,7 +339,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
         // Always include stock field with default value
         stock: parseInt(formData.quantity),
         // Include date field
-        date: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD format
+        date: formData.date || new Date().toISOString().split('T')[0],
         // Set default sales value
         sales: 0,
       };
@@ -378,13 +386,9 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
           profit_per_unit: itemData.profit_per_unit
         });
       } else {
-        // Set default values for selling_price and profit_per_unit when not provided
-        itemData.selling_price = 0;
-        itemData.profit_per_unit = 0 - parseFloat(formData.rate);
-        console.log("Set default selling price and profit:", {
-          selling_price: 0,
-          profit_per_unit: itemData.profit_per_unit
-        });
+        itemData.selling_price = null;
+        itemData.profit_per_unit = null;
+        console.log("No selling price provided, setting to null");
       }
 
       // Handle low_stock_threshold - set to default 5 if not provided
@@ -469,6 +473,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
         rate: "",
         selling_price: "",
         low_stock_threshold: "",
+        date: new Date().toISOString().split('T')[0],
       });
       setEditingId(null);
       setFormErrors({});
@@ -494,7 +499,8 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
       quantity: "",
       rate: "",
       selling_price: "",
-      low_stock_threshold: "", // Changed from "5" to "" to match the form's initial state
+      low_stock_threshold: "",
+      date: new Date().toISOString().split('T')[0],
     });
     setEditingId(null);
     setFormErrors({});
@@ -518,6 +524,18 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
           >
             <TrendingUp className="h-4 w-4" />
             Daily Sales
+          </TabsTrigger>
+          <TabsTrigger
+            value="low-stock"
+            className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300 hover:scale-105 rounded-lg flex items-center gap-2"
+          >
+            <AlertTriangle className="h-4 w-4" />
+            Low Stock
+            {lowStockItems.length > 0 && (
+              <Badge variant="destructive" className="ml-1 text-xs px-1.5 py-0.5 min-w-[20px] h-5">
+                {lowStockItems.length}
+              </Badge>
+            )}
           </TabsTrigger>
         </TabsList>
 
@@ -551,13 +569,6 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                   Delete Selected ({selectedIds.size})
                 </Button>
               )}
-
-              <ExportDialog
-                data={items}
-                type="gift_store"
-                moduleTitle="Gift Store Inventory"
-                disabled={items.length === 0}
-              />
 
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 setIsDialogOpen(open);
@@ -655,7 +666,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                           required
                           className={`border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200 ${formErrors.rate ? "border-red-500 focus:border-red-500" : ""}`}
                         />
-                        {formErrors.rate && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-33 w-3" />{formErrors.rate}</span>}
+                        {formErrors.rate && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{formErrors.rate}</span>}
                       </div>
                     </div>
 
@@ -697,6 +708,17 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                         className={`border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200 ${formErrors.low_stock_threshold ? "border-red-500 focus:border-red-500" : ""}`}
                       />
                       {formErrors.low_stock_threshold && <span className="text-red-500 text-sm flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{formErrors.low_stock_threshold}</span>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="font-medium">Date *</Label>
+                      <Input
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                        required
+                        className="border-green-200 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
+                      />
                     </div>
 
                     <Button
@@ -892,7 +914,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                             filteredItems.reduce((sum, item) => {
                               const profit = item.selling_price && item.rate ? item.selling_price - item.rate : 0;
                               return sum + profit;
-                            }, 0) / filteredItems.length
+                            }, 0)
                           )}
                         </TableCell>
                         <TableCell colSpan={3}></TableCell>
@@ -909,6 +931,96 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden">
             <GiftsDailySales />
           </div>
+        </TabsContent>
+
+        <TabsContent value="low-stock" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+          <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 border-b border-red-100">
+              <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg text-white">
+                  <AlertTriangle className="h-6 w-6" />
+                </div>
+                Low Stock Alert
+                <div className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
+                  {lowStockItems.length > 0 ? (
+                    <Badge variant="destructive">{lowStockItems.length} items need restocking</Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-green-600 border-green-300">All items well-stocked</Badge>
+                  )}
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table className="min-w-[900px]">
+                  <TableHeader className="bg-gradient-to-r from-gray-50 to-red-50">
+                    <TableRow className="border-b border-red-100">
+                      <TableHead className="font-semibold text-gray-700">#</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Category</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Item</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Description</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Current Stock</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Min Threshold</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Status</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Rate (UGX)</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Selling Price (UGX)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {lowStockItems.length > 0 ? (
+                      lowStockItems.map((item, index) => {
+                        const stock = item.stock !== undefined ? item.stock : item.quantity;
+                        const threshold = item.low_stock_threshold || 5;
+                        const isCritical = stock === 0;
+                        return (
+                          <TableRow
+                            key={item.id}
+                            className={`animate-in slide-in-from-left-4 ${isCritical
+                              ? "bg-gradient-to-r from-red-100 to-pink-100 border-l-4 border-red-600"
+                              : "bg-gradient-to-r from-orange-50 to-yellow-50 border-l-4 border-orange-400"
+                            }`}
+                            style={{ animationDelay: `${index * 50}ms` }}
+                          >
+                            <TableCell className="font-medium text-gray-500">{index + 1}</TableCell>
+                            <TableCell className="font-medium">
+                              {item.category === "custom" ? item.custom_category : item.category.replace("_", " ")}
+                            </TableCell>
+                            <TableCell className="font-semibold text-gray-800">{item.item}</TableCell>
+                            <TableCell className="text-gray-500 max-w-xs truncate">{item.description || '-'}</TableCell>
+                            <TableCell className={`font-bold text-lg ${isCritical ? "text-red-700" : "text-orange-600"}`}>
+                              {stock}
+                            </TableCell>
+                            <TableCell className="text-gray-600">{threshold}</TableCell>
+                            <TableCell>
+                              {isCritical ? (
+                                <Badge variant="destructive" className="animate-pulse">Out of Stock</Badge>
+                              ) : (
+                                <Badge className="bg-orange-100 text-orange-700 border border-orange-300">
+                                  Low Stock
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-blue-600 font-medium">{formatUGX(item.rate)}</TableCell>
+                            <TableCell className="text-purple-600 font-medium">{formatUGX(item.selling_price)}</TableCell>
+                          </TableRow>
+                        );
+                      })
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={9} className="h-32 text-center">
+                          <div className="flex flex-col items-center gap-3">
+                            <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <span className="text-lg text-green-600 font-medium">All items are well-stocked!</span>
+                            <span className="text-sm text-gray-500">No items are below their minimum threshold</span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -12,7 +12,6 @@ import { Plus, Edit, Trash2, Search, Lock, Scissors, TrendingUp, ShoppingCart, S
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
-import ExportDialog from "@/components/ExportDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import CustomLoader from "@/components/ui/CustomLoader";
 import { Database } from "@/integrations/supabase/types";
@@ -58,7 +57,8 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
     quantity: "1",
     rate: "",
     expenditure: "",
-    done_by: ""
+    done_by: "",
+    date: new Date().toISOString().split('T')[0],
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
@@ -71,7 +71,8 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
       quantity: "1",
       rate: "",
       expenditure: "",
-      done_by: ""
+      done_by: "",
+      date: new Date().toISOString().split('T')[0],
     });
     setEditingId(null);
     setFormErrors({});
@@ -203,7 +204,8 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
       quantity: item.quantity.toString(),
       rate: item.rate?.toString() || "",
       expenditure: item.expenditure.toString(),
-      done_by: item.done_by || ""
+      done_by: item.done_by || "",
+      date: item.date || new Date().toISOString().split('T')[0],
     });
     setIsDialogOpen(true);
   };
@@ -317,7 +319,8 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
       setIsLoading(true);
 
       // Parse values safely - handle NaN values
-      const quantity = parseInt(formData.quantity) || 1;
+      const parsedQty = parseInt(formData.quantity);
+      const quantity = !isNaN(parsedQty) && parsedQty > 0 ? parsedQty : 1;
       const rate = parseFloat(formData.rate) || 0;
       const expenditure = parseFloat(formData.expenditure) || 0;
       const deposit = 0; // Default deposit value
@@ -334,7 +337,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
         deposit: deposit,
         quotation: quotation,
         done_by: formData.done_by === "not_specified" ? null : (formData.done_by || (profile?.id || null)),
-        date: new Date().toISOString().split('T')[0]
+        date: formData.date || new Date().toISOString().split('T')[0]
       };
 
       console.log("Submitting embroidery job data:", jobData);
@@ -440,13 +443,6 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                   Delete Selected ({selectedIds.size})
                 </Button>
               )}
-
-              <ExportDialog
-                data={items}
-                type="embroidery"
-                moduleTitle="Embroidery Services"
-                disabled={items.length === 0}
-              />
 
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 if (open === false) {
@@ -593,6 +589,17 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                       )}
                     </div>
 
+                    <div className="space-y-2">
+                      <Label className="font-medium">Date *</Label>
+                      <Input
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                        required
+                        className="border-purple-200 focus:border-purple-400 focus:ring-purple-200 transition-all duration-200"
+                      />
+                    </div>
+
                     <Button
                       type="submit"
                       className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl"
@@ -616,7 +623,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
           </div>
 
           <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-purple-5 via-pink-5 to-rose-50 border-b border-purple-100">
+            <CardHeader className="bg-gradient-to-r from-purple-50 via-pink-50 to-rose-50 border-b border-purple-100">
               <CardTitle className="text-2xl font-bold flex items-center gap-3">
                 <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg text-white">
                   <Scissors className="h-6 w-6" />
@@ -650,6 +657,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                       <TableHead className="font-semibold text-gray-700">Quotation</TableHead>
                       <TableHead className="font-semibold text-gray-700">Expenditure</TableHead>
                       <TableHead className="font-semibold text-gray-700">Profit</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Time</TableHead>
                       <TableHead className="font-semibold text-gray-700">Done by</TableHead>
                       <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
                     </TableRow>
@@ -689,6 +697,9 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                                 {formatUGX(profit)}
                               </div>
                             </TableCell>
+                            <TableCell className="text-gray-500 text-xs">
+                              {item.created_at ? new Date(item.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : "-"}
+                            </TableCell>
                             <TableCell className="text-gray-600">
                               {item.done_by ? salesProfiles.find(p => p.id === item.done_by)?.sales_initials || item.done_by : "-"}
                             </TableCell>
@@ -721,7 +732,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={isAdmin ? 10 : 9} className="h-32 text-center">
+                        <TableCell colSpan={isAdmin ? 11 : 10} className="h-32 text-center">
                           <div className="flex flex-col items-center gap-4">
                             {isLoading ? (
                               <div className="flex flex-col items-center gap-3">
@@ -751,7 +762,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
                           {formatUGX(totalProfit)}
                         </div>
                       </TableCell>
-                      <TableCell colSpan={2} />
+                      <TableCell colSpan={3} />
                     </TableRow>
                   </TableFooter>
                 </Table>

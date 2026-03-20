@@ -771,6 +771,7 @@ const StationeryDailySales = () => {
                   <TableHead className="font-semibold text-gray-700">Selling Price</TableHead>
                   <TableHead className="font-semibold text-gray-700">Total Value</TableHead>
                   <TableHead className="font-semibold text-gray-700">Profit</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Time</TableHead>
                   <TableHead className="font-semibold text-gray-700">Added By</TableHead>
                   <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
                 </TableRow>
@@ -792,6 +793,9 @@ const StationeryDailySales = () => {
                         <TableCell className="font-medium text-purple-600">UGX {formatUGX(item.selling_price)}</TableCell>
                         <TableCell className="font-bold text-indigo-700">UGX {formatUGX(item.selling_price * item.quantity)}</TableCell>
                         <TableCell className="font-bold text-green-600">UGX {formatUGX((item.selling_price - (item.rate || 0)) * item.quantity)}</TableCell>
+                        <TableCell className="text-gray-500 text-xs">
+                          {item.created_at ? new Date(item.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : "-"}
+                        </TableCell>
                         <TableCell className="text-gray-600">
                           {item.sold_by ? getSalesPersonName(item.sold_by) : "-"}
                         </TableCell>
@@ -822,7 +826,7 @@ const StationeryDailySales = () => {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={10} className="h-32 text-center">
+                    <TableCell colSpan={11} className="h-32 text-center">
                       <div className="flex flex-col items-center gap-4">
                         {isLoading ? ( // Use isLoading
                           <div className="flex flex-col items-center gap-3">

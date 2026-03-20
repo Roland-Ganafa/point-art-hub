@@ -213,14 +213,15 @@ export const prepareEmbroideryData = (data: any[], profilesMap?: Record<string, 
     sales: 'Sales',
     profit: 'Profit',
     done_by: 'Done By',
-    date_received: 'Received'
+    date_received: 'Received',
+    time_recorded: 'Time Recorded'
   };
 
   const processedData = data.map(item => {
     // Resolve done_by to name if profiles map is provided
     let doneBy = '-';
     if (item.done_by) {
-      doneBy = profilesMap?.[item.done_by] || item.done_by;
+      doneBy = profilesMap?.[item.done_by] || item.done_by_name || item.done_by;
     }
     return {
       description: item.job_description,
@@ -228,7 +229,8 @@ export const prepareEmbroideryData = (data: any[], profilesMap?: Record<string, 
       sales: item.sales || item.quotation || 0,
       profit: item.profit || 0,
       done_by: doneBy,
-      date_received: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : '-'
+      date_received: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : '-',
+      time_recorded: item.created_at ? format(new Date(item.created_at), 'HH:mm dd/MM/yyyy') : '-'
     };
   });
 
@@ -243,7 +245,8 @@ export const prepareEmbroideryData = (data: any[], profilesMap?: Record<string, 
     sales: totalSales,
     profit: totalProfit,
     done_by: '',
-    date_received: ''
+    date_received: '',
+    time_recorded: ''
   });
 
   return { headers, processedData };
@@ -260,6 +263,7 @@ export const prepareMachinesData = (data: any[]) => {
     expenditure: 'Exp',
     profit: 'Profit',
     date: 'Date',
+    time_recorded: 'Time',
     done_by: 'Done By'
   };
 
@@ -272,7 +276,8 @@ export const prepareMachinesData = (data: any[]) => {
     expenditure: item.expenditure || 0,
     profit: ((item.quantity * item.rate) - (item.expenditure || 0)) || 0,
     date: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : '-',
-    done_by: item.done_by || '-'
+    time_recorded: item.created_at ? format(new Date(item.created_at), 'HH:mm') : '-',
+    done_by: item.done_by_name || item.done_by || '-'
   }));
 
   // Add Totals Row
@@ -290,6 +295,7 @@ export const prepareMachinesData = (data: any[]) => {
     expenditure: totalExpenditure,
     profit: totalProfit,
     date: '',
+    time_recorded: '',
     done_by: ''
   });
 
@@ -302,20 +308,24 @@ export const prepareArtServicesData = (data: any[]) => {
     item: 'Item',
     description: 'Description',
     quantity: 'Qty',
-    rate: 'rate',
+    rate: 'Rate',
     amount: 'Amount',
     profit: 'Profit',
-    date: 'Date'
+    date: 'Date',
+    time_recorded: 'Time',
+    done_by: 'Done By'
   };
 
   const processedData = data.map(item => ({
     item: item.service_name,
-    description: item.description,
+    description: item.description || '-',
     quantity: item.quantity,
     rate: item.rate,
-    amount: item.sales,
-    profit: item.profit,
-    date: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : '-'
+    amount: item.sales || (item.quantity * item.rate) || 0,
+    profit: item.profit || ((item.quantity * item.rate) - (item.expenditure || 0)) || 0,
+    date: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : '-',
+    time_recorded: item.created_at ? format(new Date(item.created_at), 'HH:mm') : '-',
+    done_by: item.done_by_name || item.done_by || '-'
   }));
 
   // Add Totals Row
@@ -330,7 +340,9 @@ export const prepareArtServicesData = (data: any[]) => {
     rate: '',
     amount: totalAmount,
     profit: totalProfit,
-    date: ''
+    date: '',
+    time_recorded: '',
+    done_by: ''
   });
 
   return { headers, processedData };
@@ -339,41 +351,41 @@ export const prepareArtServicesData = (data: any[]) => {
 // Prepare sales data
 export const prepareSalesData = (data: any[]) => {
   const headers = {
-    category: 'Category',
     item: 'Item',
+    description: 'Description',
     quantity: 'Qty',
-    rate: 'rate',
-    selling_price: 'Price',
+    rate: 'Buying Price',
+    selling_price: 'Selling Price',
     total: 'Total',
     profit: 'Profit',
     date: 'Date',
+    time_recorded: 'Time',
     sold_by: 'Added By'
   };
 
   const processedData = data.map(item => {
     // Determine item name, handling possible joined string format "Category: Item"
     let itemName = item.item;
-    let categoryName = item.category || '-';
 
     // For gift store sales which might be stored as "Category: Item"
     if (item.current_stock === undefined && item.item && item.item.includes(': ')) {
       const parts = item.item.split(': ');
       if (parts.length > 1) {
-        categoryName = parts[0];
         itemName = parts.slice(1).join(': ');
       }
     }
 
     return {
-      category: categoryName,
       item: itemName,
+      description: item.description || '-',
       quantity: item.quantity,
       rate: item.rate || item.bpx || 0,
       selling_price: item.selling_price || item.spx || 0,
       total: (item.selling_price || item.spx || 0) * item.quantity,
       profit: ((item.selling_price || item.spx || 0) - (item.rate || item.bpx || 0)) * item.quantity,
       date: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : '-',
-      sold_by: item.sold_by || '-'
+      time_recorded: item.created_at ? format(new Date(item.created_at), 'HH:mm') : '-',
+      sold_by: item.sold_by_name || item.sold_by || '-'
     };
   });
 
@@ -383,14 +395,15 @@ export const prepareSalesData = (data: any[]) => {
   const totalProfit = processedData.reduce((sum, item) => sum + (Number(item.profit) || 0), 0);
 
   processedData.push({
-    category: '',
     item: 'TOTALS',
+    description: '',
     quantity: totalQuantity,
     rate: '',
     selling_price: '',
     total: grandTotal,
     profit: totalProfit,
     date: '',
+    time_recorded: '',
     sold_by: ''
   });
 

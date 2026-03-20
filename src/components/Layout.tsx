@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings, User, Shield, Users, BarChart3, FileText, TrendingUp, Home, Sun, Moon } from "lucide-react";
+import { Settings, User, Shield, Users, BarChart3, FileText, TrendingUp, Home, Sun, Moon, ChevronLeft, ChevronRight } from "lucide-react";
 import Logo from "@/components/ui/Logo";
 import NotificationBell from "@/components/NotificationBell";
 import { useUser } from "@/contexts/UserContext";
@@ -13,12 +13,50 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
+const NavItem = ({
+  icon: Icon,
+  label,
+  onClick,
+  collapsed,
+  title,
+}: {
+  icon: React.ElementType;
+  label: string;
+  onClick: () => void;
+  collapsed: boolean;
+  title?: string;
+}) => (
+  <Button
+    variant="ghost"
+    onClick={onClick}
+    title={collapsed ? label : title}
+    className={`w-full text-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200 ${
+      collapsed ? "justify-center px-0" : "justify-start"
+    }`}
+  >
+    <Icon className={`w-4 h-4 flex-shrink-0 ${collapsed ? "" : "mr-3"}`} />
+    {!collapsed && <span className="truncate">{label}</span>}
+  </Button>
+);
+
 const Layout = ({ children }: LayoutProps) => {
   const { user, profile, loading, signOut, isAdmin, authError } = useUser();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [redirectTimer, setRedirectTimer] = useState<number | null>(null);
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return localStorage.getItem("sidebar-collapsed") === "true"; }
+    catch { return false; }
+  });
+
+  const toggleSidebar = () => {
+    setCollapsed(prev => {
+      const next = !prev;
+      try { localStorage.setItem("sidebar-collapsed", String(next)); } catch {}
+      return next;
+    });
+  };
 
   // Debug: Log admin status for troubleshooting
   React.useEffect(() => {
@@ -148,145 +186,114 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <div className="min-h-screen bg-background flex transition-colors duration-200">
       {/* Sidebar Navigation */}
-      <aside className="w-64 bg-card border-r border-border flex flex-col transition-colors duration-200">
+      <aside
+        className={`relative bg-card border-r border-border flex flex-col transition-all duration-300 ease-in-out flex-shrink-0 ${
+          collapsed ? "w-16" : "w-64"
+        }`}
+      >
+        {/* Collapse Toggle Button */}
+        <button
+          onClick={toggleSidebar}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="absolute -right-3 top-6 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card shadow-md hover:bg-accent transition-colors duration-200"
+        >
+          {collapsed
+            ? <ChevronRight className="w-3 h-3 text-muted-foreground" />
+            : <ChevronLeft className="w-3 h-3 text-muted-foreground" />
+          }
+        </button>
+
         {/* Logo Section */}
-        <div className="p-6 border-b border-border">
-          <Logo />
+        <div className={`border-b border-border flex items-center ${collapsed ? "p-3 justify-center" : "p-6"}`}>
+          {collapsed ? (
+            <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-pink-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xs">PA</span>
+            </div>
+          ) : (
+            <Logo />
+          )}
         </div>
 
         {/* User Info Section */}
-        <div className="p-4 border-b border-border">
-          <div className="text-sm text-muted-foreground">
-            <div className="mb-2">
-              <span className="block font-medium text-foreground">
-                {profile?.full_name || user.email}
-                {(isAdmin || profile?.role === 'admin') && (
-                  <span className="ml-1 text-yellow-600 dark:text-yellow-400 font-semibold">(Admin)</span>
+        {!collapsed && (
+          <div className="p-4 border-b border-border">
+            <div className="text-sm text-muted-foreground">
+              <div className="mb-2">
+                <span className="block font-medium text-foreground truncate">
+                  {profile?.full_name || user.email}
+                  {(isAdmin || profile?.role === 'admin') && (
+                    <span className="ml-1 text-yellow-600 dark:text-yellow-400 font-semibold">(Admin)</span>
+                  )}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {profile?.role && (
+                  <Badge variant={profile.role === 'admin' ? 'default' : 'secondary'} className="text-xs">
+                    {profile.role.toUpperCase()}
+                  </Badge>
                 )}
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {profile?.role && (
-                <Badge variant={profile.role === 'admin' ? 'default' : 'secondary'} className="text-xs">
-                  {profile.role.toUpperCase()}
-                </Badge>
-              )}
-              {profile?.sales_initials && (
-                <Badge variant="outline" className="text-xs">
-                  {profile.sales_initials}
-                </Badge>
-              )}
+                {profile?.sales_initials && (
+                  <Badge variant="outline" className="text-xs">
+                    {profile.sales_initials}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* User avatar when collapsed */}
+        {collapsed && (
+          <div className="p-3 border-b border-border flex justify-center">
+            <div
+              className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center"
+              title={profile?.full_name || user.email}
+            >
+              <span className="text-white text-xs font-bold">
+                {(profile?.full_name || user.email || "U")[0].toUpperCase()}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Theme Toggle */}
-        <div className="p-4 border-b border-border">
-          <Button
-            variant="ghost"
+        <div className={`border-b border-border ${collapsed ? "p-2" : "p-4"}`}>
+          <NavItem
+            icon={theme === 'light' ? Moon : Sun}
+            label={theme === 'light' ? 'Dark Mode' : 'Light Mode'}
             onClick={toggleTheme}
-            className="w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground"
-          >
-            {theme === 'light' ? (
-              <Moon className="w-4 h-4 mr-3" />
-            ) : (
-              <Sun className="w-4 h-4 mr-3" />
-            )}
-            {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
-          </Button>
+            collapsed={collapsed}
+          />
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 p-4">
-          <div className="space-y-2">
-            {/* Home Button */}
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/')}
-              className="w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground"
-            >
-              <Home className="w-4 h-4 mr-3" />
-              Home
-            </Button>
+        <nav className={`flex-1 ${collapsed ? "p-2" : "p-4"}`}>
+          <div className="space-y-1">
+            <NavItem icon={Home} label="Home" onClick={() => navigate('/')} collapsed={collapsed} />
 
-            {/* Dashboard - Hide for regular users */}
             {(isAdmin || profile?.role === 'admin') && (
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/')}
-                className="w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground"
-              >
-                <BarChart3 className="w-4 h-4 mr-3" />
-                Dashboard
-              </Button>
+              <NavItem icon={BarChart3} label="Dashboard" onClick={() => navigate('/')} collapsed={collapsed} />
             )}
-
-            {/* Admin Panel - Only visible to admins */}
             {(isAdmin || profile?.role === 'admin') && (
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/admin')}
-                className="w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground"
-                title="Admin Panel - Manage users and system settings"
-              >
-                <Shield className="w-4 h-4 mr-3" />
-                Admin Panel
-              </Button>
+              <NavItem icon={Shield} label="Admin Panel" onClick={() => navigate('/admin')} collapsed={collapsed} title="Admin Panel - Manage users and system settings" />
             )}
-
-            {/* Customers - Only visible to admins */}
             {(isAdmin || profile?.role === 'admin') && (
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/customers')}
-                className="w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground"
-              >
-                <Users className="w-4 h-4 mr-3" />
-                Customers
-              </Button>
+              <NavItem icon={Users} label="Customers" onClick={() => navigate('/customers')} collapsed={collapsed} />
             )}
-
-            {/* Reports - Only visible to admins */}
             {(isAdmin || profile?.role === 'admin') && (
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/reports')}
-                className="w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground"
-              >
-                <FileText className="w-4 h-4 mr-3" />
-                Reports
-              </Button>
+              <NavItem icon={FileText} label="Reports" onClick={() => navigate('/reports')} collapsed={collapsed} />
             )}
-
-            {/* Analytics - Only visible to admins */}
             {(isAdmin || profile?.role === 'admin') && (
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/analytics')}
-                className="w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground"
-              >
-                <TrendingUp className="w-4 h-4 mr-3" />
-                Analytics
-              </Button>
+              <NavItem icon={TrendingUp} label="Analytics" onClick={() => navigate('/analytics')} collapsed={collapsed} />
             )}
-
-            {/* Invoices - Only visible to admins */}
             {(isAdmin || profile?.role === 'admin') && (
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/invoices')}
-                className="w-full justify-start text-foreground hover:bg-accent hover:text-accent-foreground"
-              >
-                <FileText className="w-4 h-4 mr-3" />
-                Invoices
-              </Button>
+              <NavItem icon={FileText} label="Invoices" onClick={() => navigate('/invoices')} collapsed={collapsed} />
             )}
           </div>
         </nav>
 
         {/* Bottom Section with Notification */}
-        <div className="p-4 border-t border-border">
-          {/* Notification Bell */}
+        <div className={`border-t border-border ${collapsed ? "p-2" : "p-4"}`}>
           <div className="flex justify-center">
             <NotificationBell />
           </div>
@@ -294,7 +301,7 @@ const Layout = ({ children }: LayoutProps) => {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header */}
         <header className="bg-card border-b border-border px-6 py-4 transition-colors duration-200">
           <div className="flex justify-between items-center">
@@ -302,7 +309,6 @@ const Layout = ({ children }: LayoutProps) => {
 
             {/* Top Right Navigation */}
             <div className="flex items-center gap-3">
-              {/* Settings */}
               <Button
                 variant="outline"
                 onClick={() => navigate('/settings')}
@@ -311,8 +317,6 @@ const Layout = ({ children }: LayoutProps) => {
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
               </Button>
-
-              {/* Profile */}
               <Button
                 variant="outline"
                 onClick={() => navigate('/profile')}
@@ -321,8 +325,6 @@ const Layout = ({ children }: LayoutProps) => {
                 <User className="w-4 h-4 mr-2" />
                 Profile
               </Button>
-
-              {/* Sign Out Button */}
               <Button
                 variant="outline"
                 onClick={handleSignOut}

@@ -14,7 +14,6 @@ import { Plus, Edit, Trash2, Search, Lock, Palette, TrendingUp, ShoppingCart, St
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
-import ExportDialog from "@/components/ExportDialog";
 import { Database } from "@/integrations/supabase/types";
 
 const formatUGX = (amount: number | null | undefined): string => {
@@ -55,7 +54,8 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
     quantity: "1",
     rate: "",
     expenditure: "",
-    done_by: ""
+    done_by: "",
+    date: new Date().toISOString().split('T')[0],
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
@@ -69,7 +69,8 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
       quantity: "1",
       rate: "",
       expenditure: "",
-      done_by: ""
+      done_by: "",
+      date: new Date().toISOString().split('T')[0],
     });
     setEditingId(null);
     setFormErrors({});
@@ -188,7 +189,8 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
       quantity: item.quantity.toString(),
       rate: item.rate.toString(),
       expenditure: item.expenditure.toString(),
-      done_by: item.done_by || ""
+      done_by: item.done_by || "",
+      date: item.date || new Date().toISOString().split('T')[0],
     });
     setIsDialogOpen(true);
   };
@@ -302,7 +304,8 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
       setIsLoading(true);
 
       // Parse values safely - handle NaN values
-      const quantity = parseInt(formData.quantity) || 1;
+      const parsedQty = parseInt(formData.quantity);
+      const quantity = !isNaN(parsedQty) && parsedQty > 0 ? parsedQty : 1;
       const rate = parseFloat(formData.rate) || 0;
       const expenditure = parseFloat(formData.expenditure) || 0;
       const deposit = 0; // Default deposit value
@@ -316,7 +319,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
         expenditure: expenditure,
         deposit: deposit,
         done_by: formData.done_by === "not_specified" ? null : (formData.done_by || (profile?.id || null)),
-        date: new Date().toISOString().split('T')[0]
+        date: formData.date || new Date().toISOString().split('T')[0]
       };
 
       console.log("Submitting art service data:", serviceData);
@@ -436,13 +439,6 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                   Delete Selected ({selectedIds.size})
                 </Button>
               )}
-
-              <ExportDialog
-                data={items}
-                type="art_services"
-                moduleTitle="Art Services"
-                disabled={items.length === 0}
-              />
 
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 if (open === false) {
@@ -594,6 +590,17 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                       )}
                     </div>
 
+                    <div className="space-y-2">
+                      <Label className="font-medium">Date *</Label>
+                      <Input
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                        required
+                        className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                      />
+                    </div>
+
                     <Button
                       type="submit"
                       className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 transition-all duration-200 shadow-lg hover:shadow-xl"
@@ -651,6 +658,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                       <TableHead className="font-semibold text-gray-700">Quotation</TableHead>
                       <TableHead className="font-semibold text-gray-700">Expenditure</TableHead>
                       <TableHead className="font-semibold text-gray-700">Profit</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Time</TableHead>
                       <TableHead className="font-semibold text-gray-700">Done by</TableHead>
                       <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
                     </TableRow>
@@ -690,6 +698,9 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                                 {formatUGX(profit)}
                               </div>
                             </TableCell>
+                            <TableCell className="text-gray-500 text-xs">
+                              {item.created_at ? new Date(item.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : "-"}
+                            </TableCell>
                             <TableCell className="text-gray-600">
                               {item.done_by ? salesProfiles.find(p => p.id === item.done_by)?.sales_initials || item.done_by : "-"}
                             </TableCell>
@@ -722,7 +733,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={isAdmin ? 9 : 8} className="h-32 text-center">
+                        <TableCell colSpan={isAdmin ? 10 : 9} className="h-32 text-center">
                           <div className="flex flex-col items-center gap-4">
                             {isLoading ? (
                               <div className="flex flex-col items-center gap-3">
@@ -753,7 +764,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
                         <TableCell className="text-green-700">
                           {formatUGX(filteredItems.reduce((sum, item) => sum + ((item.rate * item.quantity) - item.expenditure), 0))}
                         </TableCell>
-                        <TableCell colSpan={2}></TableCell>
+                        <TableCell colSpan={3}></TableCell>
                       </TableRow>
                     )}
                   </TableBody>

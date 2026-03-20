@@ -12,7 +12,6 @@ import { Plus, Edit, Trash2, Search, Lock, Monitor, TrendingUp, ShoppingCart, St
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
-import ExportDialog from "@/components/ExportDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import CustomLoader from "@/components/ui/CustomLoader";
 
@@ -61,7 +60,8 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
     expenditure: "",
     sold_by: "",
     color_type: "bw", // "bw" | "colored"
-    laminate_type: "id" // "id" | "a4" | "a3"
+    laminate_type: "id", // "id" | "a4" | "a3"
+    date: new Date().toISOString().split('T')[0],
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
@@ -307,8 +307,9 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
       rate: item.rate.toString(),
       expenditure: item.expenditure?.toString() || "",
       sold_by: item.done_by || "",
-      color_type: "bw", // Defaults as we don't store this in DB specifically
-      laminate_type: "id"
+      color_type: "bw",
+      laminate_type: "id",
+      date: item.date || new Date().toISOString().split('T')[0],
     });
     setIsDialogOpen(true);
   };
@@ -366,7 +367,8 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
       quantity: parseInt(formData.quantity),
       rate: parseFloat(formData.rate),
       expenditure: formData.expenditure ? parseFloat(formData.expenditure) : 0,
-      done_by: formData.sold_by || profile?.id || null
+      done_by: formData.sold_by || profile?.id || null,
+      date: formData.date || new Date().toISOString().split('T')[0],
     };
 
     try {
@@ -424,7 +426,8 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
       expenditure: "",
       sold_by: "",
       color_type: "bw",
-      laminate_type: "id"
+      laminate_type: "id",
+      date: new Date().toISOString().split('T')[0],
     });
     setEditingId(null);
     setFormErrors({});
@@ -495,16 +498,6 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                   Delete Selected ({selectedIds.size})
                 </Button>
               )}
-
-              <ExportDialog
-                data={items.map(item => ({
-                  ...item,
-                  done_by: item.done_by ? salesProfiles.find(p => p.id === item.done_by)?.sales_initials || item.done_by : "-"
-                }))}
-                type="machines"
-                moduleTitle="Machine Services"
-                disabled={items.length === 0}
-              />
 
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 setIsDialogOpen(open);
@@ -696,6 +689,17 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                       )}
                     </div>
 
+                    <div className="space-y-2">
+                      <Label className="font-medium">Date *</Label>
+                      <Input
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                        required
+                        className="border-blue-200 focus:border-blue-400 focus:ring-blue-200 transition-all duration-200"
+                      />
+                    </div>
+
                     <Button
                       type="submit"
                       className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 transition-all duration-200 shadow-lg hover:shadow-xl"
@@ -753,6 +757,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                       <TableHead className="font-semibold text-gray-700">Expenditure</TableHead>
                       <TableHead className="font-semibold text-gray-700">Profit</TableHead>
                       <TableHead className="font-semibold text-gray-700">Date</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Time</TableHead>
                       <TableHead className="font-semibold text-gray-700">Done By</TableHead>
                       <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
                     </TableRow>
@@ -799,6 +804,9 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                             <TableCell className="text-gray-600">
                               {new Date(item.date).toLocaleDateString()}
                             </TableCell>
+                            <TableCell className="text-gray-500 text-xs">
+                              {item.created_at ? new Date(item.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : "-"}
+                            </TableCell>
                             <TableCell className="text-gray-600">
                               {item.done_by ? salesProfiles.find(p => p.id === item.done_by)?.sales_initials || item.done_by : "-"}
                             </TableCell>
@@ -831,7 +839,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={12} className="h-32 text-center">
+                        <TableCell colSpan={13} className="h-32 text-center">
                           <div className="flex flex-col items-center gap-4">
                             {isLoading ? (
                               <div className="flex flex-col items-center gap-3">
@@ -862,7 +870,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
                         <TableCell className="text-green-700">
                           {formatUGX(filteredItems.reduce((sum, item) => sum + ((item.rate * item.quantity) - (item.expenditure || 0)), 0))}
                         </TableCell>
-                        <TableCell colSpan={3}></TableCell>
+                        <TableCell colSpan={4}></TableCell>
                       </TableRow>
                     )}
                   </TableBody>

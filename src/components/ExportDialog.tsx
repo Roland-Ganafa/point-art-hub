@@ -68,9 +68,11 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
 
       // Add date range if specified
       if (startDate && endDate) {
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999);
         exportOptions.dateRange = {
           start: new Date(startDate),
-          end: new Date(endDate + 'T23:59:59'), // Include end of day
+          end: endOfDay,
         };
       } else if (startDate) {
         exportOptions.dateRange = {
@@ -78,9 +80,11 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
           end: new Date(),
         };
       } else if (endDate) {
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999);
         exportOptions.dateRange = {
-          start: new Date('2020-01-01'), // Start from a reasonable past date
-          end: new Date(endDate + 'T23:59:59'),
+          start: new Date('2020-01-01'),
+          end: endOfDay,
         };
       }
 

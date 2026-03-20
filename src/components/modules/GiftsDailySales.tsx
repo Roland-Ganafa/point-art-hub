@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,6 +84,7 @@ const GiftsDailySales = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [salesProfiles, setSalesProfiles] = useState<Array<{ id: string, sales_initials: string, full_name: string }>>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const editingIdRef = useRef<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   // Gift store inventory state
@@ -322,13 +323,14 @@ const GiftsDailySales = () => {
       }
 
       let error;
+      const currentEditingId = editingIdRef.current;
 
-      if (editingId) {
+      if (currentEditingId) {
         // Update existing record
         const result = await supabase
           .from("gift_daily_sales")
           .update(payload)
-          .eq("id", editingId as any);
+          .eq("id", currentEditingId as any);
         error = result.error;
       } else {
         // Create new record
@@ -346,6 +348,8 @@ const GiftsDailySales = () => {
       });
 
       // Reset form — use selectedDate so repeated entries for the same day work correctly
+      editingIdRef.current = null;
+      setEditingId(null);
       setFormData({
         date: format(selectedDate, 'yyyy-MM-dd'),
         category: "",
@@ -357,7 +361,6 @@ const GiftsDailySales = () => {
         spx: "",
         soldBy: ""
       });
-      setEditingId(null);
       setIsDialogOpen(false);
       fetchData();
     } catch (error) {
@@ -385,6 +388,7 @@ const GiftsDailySales = () => {
       spx: item.spx.toString(),
       soldBy: item.sold_by || ""
     });
+    editingIdRef.current = item.id;
     setEditingId(item.id);
     setIsDialogOpen(true);
   };
@@ -554,6 +558,8 @@ const GiftsDailySales = () => {
                 setIsDialogOpen(open);
                 if (!open) {
                   // Reset form when closing — keep selectedDate as date
+                  editingIdRef.current = null;
+                  setEditingId(null);
                   setFormData({
                     date: format(selectedDate, 'yyyy-MM-dd'),
                     category: "",
@@ -565,7 +571,6 @@ const GiftsDailySales = () => {
                     spx: "",
                     soldBy: ""
                   });
-                  setEditingId(null);
                 }
               }}>
                 <DialogTrigger asChild>
@@ -810,6 +815,7 @@ const GiftsDailySales = () => {
                       <TableHead className="font-semibold text-gray-700">Selling Price</TableHead>
                       <TableHead className="font-semibold text-gray-700">Total Value</TableHead>
                       <TableHead className="font-semibold text-gray-700">Profit</TableHead>
+                      <TableHead className="font-semibold text-gray-700">Time</TableHead>
                       <TableHead className="font-semibold text-gray-700">Added By</TableHead>
                       <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
                     </TableRow>
@@ -836,6 +842,7 @@ const GiftsDailySales = () => {
                           <TableCell className="font-medium text-purple-600">UGX {formatUGX(sale.spx)}</TableCell>
                           <TableCell className="font-bold text-indigo-700">UGX {formatUGX(sale.spx * sale.quantity)}</TableCell>
                           <TableCell className="font-bold text-green-600">UGX {formatUGX((sale.spx - sale.bpx) * sale.quantity)}</TableCell>
+                          <TableCell className="text-gray-500 text-xs">-</TableCell>
                           <TableCell className="font-medium">
                             {sale.sold_by ? getSalesPersonName(sale.sold_by) : "Not specified"}
                           </TableCell>
@@ -869,6 +876,9 @@ const GiftsDailySales = () => {
                             <TableCell className="font-medium text-purple-600">UGX {formatUGX(item.spx)}</TableCell>
                             <TableCell className="font-bold text-indigo-700">UGX {formatUGX(item.spx * item.quantity)}</TableCell>
                             <TableCell className="font-bold text-green-600">UGX {formatUGX((item.spx - item.bpx) * item.quantity)}</TableCell>
+                            <TableCell className="text-gray-500 text-xs">
+                              {item.created_at ? new Date(item.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : "-"}
+                            </TableCell>
                             <TableCell className="font-medium">
                               {item.sold_by ? getSalesPersonName(item.sold_by) : "Not specified"}
                             </TableCell>
@@ -897,7 +907,7 @@ const GiftsDailySales = () => {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={10} className="h-32 text-center">
+                        <TableCell colSpan={11} className="h-32 text-center">
                           <div className="flex flex-col items-center gap-4">
                             {loading ? (
                               <div className="flex items-center gap-3">

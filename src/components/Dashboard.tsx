@@ -112,9 +112,12 @@ const Dashboard = () => {
       let endDate: string | null = null;
 
       if (dateFilter === "today") {
-        const today = new Date();
-        startDate = new Date(today.setHours(0, 0, 0, 0)).toISOString();
-        endDate = new Date(today.setHours(23, 59, 59, 999)).toISOString();
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+        startDate = todayStart.toISOString();
+        endDate = todayEnd.toISOString();
       } else if (dateFilter === "month") {
         const today = new Date();
         startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
@@ -288,6 +291,24 @@ const Dashboard = () => {
       if (interval) window.clearInterval(interval);
     };
   }, [fetchDashboardStats, loading]);
+
+  // Real-time subscriptions — refresh dashboard immediately when any sales/service entry is added
+  useEffect(() => {
+    if (loading) return;
+
+    const channel = supabase
+      .channel("dashboard-realtime")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "stationery_sales" }, () => fetchDashboardStats())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "gift_daily_sales" }, () => fetchDashboardStats())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "embroidery" }, () => fetchDashboardStats())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "machines" }, () => fetchDashboardStats())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "art_services" }, () => fetchDashboardStats())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [loading, fetchDashboardStats]);
 
   // Memoize modules array to prevent recreation on every render
   const modules = useMemo(() => [
@@ -503,7 +524,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 relative">
       {/* Background Decorative Elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-10 right-10 w-32 h-32 bg-orange-200/30 rounded-full blur-3xl animate-pulse"></div>
@@ -822,7 +843,7 @@ const Dashboard = () => {
           )}
 
           <TabsContent value="stationery" className="animate-in fade-in-50 slide-in-from-right-4 duration-500">
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden">
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl">
               <Suspense fallback={<ModuleLoading />}>
                 <StationeryModule openAddTrigger={addTriggers["stationery"]} />
               </Suspense>
@@ -830,7 +851,7 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="gift-store" className="animate-in fade-in-50 slide-in-from-right-4 duration-500">
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden">
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl">
               <Suspense fallback={<ModuleLoading />}>
                 <GiftStoreModule openAddTrigger={addTriggers["gift-store"]} />
               </Suspense>
@@ -838,7 +859,7 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="embroidery" className="animate-in fade-in-50 slide-in-from-right-4 duration-500">
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden">
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl">
               <Suspense fallback={<ModuleLoading />}>
                 <EmbroideryModule openAddTrigger={addTriggers["embroidery"]} />
               </Suspense>
@@ -846,7 +867,7 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="machines" className="animate-in fade-in-50 slide-in-from-right-4 duration-500">
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden">
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl">
               <Suspense fallback={<ModuleLoading />}>
                 <MachinesModule openAddTrigger={addTriggers["machines"]} />
               </Suspense>
@@ -854,7 +875,7 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="art-services" className="animate-in fade-in-50 slide-in-from-right-4 duration-500">
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl overflow-hidden">
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border-0 shadow-2xl">
               <Suspense fallback={<ModuleLoading />}>
                 <ArtServicesModule openAddTrigger={addTriggers["art-services"]} />
               </Suspense>
