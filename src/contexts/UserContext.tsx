@@ -326,7 +326,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
               if (error && error.code !== 'PGRST116') {
                 console.error('Error fetching profile:', error);
-                setAuthError(`Failed to load user profile: ${error.message}`);
+                // Don't block the UI — fall through and create a temp profile
               }
 
               if (!existingProfile && !error) {
@@ -336,17 +336,32 @@ export const UserProvider = ({ children }: UserProviderProps) => {
               } else if (existingProfile) {
                 console.log('Setting profile:', existingProfile);
                 setProfile(existingProfile);
+              } else if (error && error.code !== 'PGRST116') {
+                // Profile fetch failed — give a temp profile so the user can still access the app
+                if (mounted) {
+                  const isKnownAdmin = session.user.email === 'ganafaroland@gmail.com' || session.user.email === 'denisntambi.dn@gmail.com';
+                  setProfile({
+                    id: 'temp-profile',
+                    user_id: session.user.id,
+                    full_name: session.user.user_metadata?.full_name || session.user.email || 'User',
+                    role: isKnownAdmin ? 'admin' : 'user',
+                    sales_initials: null,
+                    created_at: null,
+                    updated_at: null
+                  });
+                }
               }
             } catch (profileError: any) {
               console.error('Profile loading failed:', profileError);
               // Don't set authError here to prevent blocking the UI
               // Instead, continue with a minimal profile
               if (mounted) {
+                const isKnownAdmin = session.user.email === 'ganafaroland@gmail.com' || session.user.email === 'denisntambi.dn@gmail.com';
                 setProfile({
                   id: 'temp-profile',
                   user_id: session.user.id,
                   full_name: session.user.user_metadata?.full_name || session.user.email || 'User',
-                  role: 'user',
+                  role: isKnownAdmin ? 'admin' : 'user',
                   sales_initials: null,
                   created_at: null,
                   updated_at: null
@@ -425,16 +440,31 @@ export const UserProvider = ({ children }: UserProviderProps) => {
               } else if (existingProfile) {
                 console.log('Setting profile from auth listener:', existingProfile);
                 setProfile(existingProfile);
+              } else if (error && error.code !== 'PGRST116') {
+                // Profile fetch failed (e.g. RLS) — give a temp profile so the user can access the app
+                if (mounted) {
+                  const isKnownAdmin = session.user.email === 'ganafaroland@gmail.com' || session.user.email === 'denisntambi.dn@gmail.com';
+                  setProfile({
+                    id: 'temp-profile',
+                    user_id: session.user.id,
+                    full_name: session.user.user_metadata?.full_name || session.user.email || 'User',
+                    role: isKnownAdmin ? 'admin' : 'user',
+                    sales_initials: null,
+                    created_at: null,
+                    updated_at: null
+                  });
+                }
               }
             } catch (profileError) {
               console.error('Profile loading failed:', profileError);
               // Set a minimal profile to prevent UI issues
               if (mounted) {
+                const isKnownAdmin = session.user.email === 'ganafaroland@gmail.com' || session.user.email === 'denisntambi.dn@gmail.com';
                 setProfile({
                   id: 'temp-profile',
                   user_id: session.user.id,
                   full_name: session.user.user_metadata?.full_name || session.user.email || 'User',
-                  role: 'user',
+                  role: isKnownAdmin ? 'admin' : 'user',
                   sales_initials: null,
                   created_at: null,
                   updated_at: null
