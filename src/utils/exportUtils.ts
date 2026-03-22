@@ -55,39 +55,98 @@ export const convertToCSV = (data: ExportData[], headers?: Record<string, string
   return [csvHeaders, ...csvRows].join('\n');
 };
 
-// Generate PDF from data
-export const generatePDF = (data: ExportData[], headers: Record<string, string>, title: string, filename: string): void => {
-  const doc = new jsPDF();
+interface SummaryItem {
+  label: string;
+  value: string;
+}
 
+// Format number with commas
+const fmt = (n: number) => n.toLocaleString('en-UG', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+// Generate PDF from data
+export const generatePDF = (
+  data: ExportData[],
+  headers: Record<string, string>,
+  title: string,
+  filename: string,
+  summaryItems?: SummaryItem[]
+): void => {
+  const doc = new jsPDF();
+  const pageW = doc.internal.pageSize.getWidth();
+
+  // ── Header bar ──────────────────────────────────────────────
+  doc.setFillColor(30, 30, 30);
+  doc.rect(0, 0, pageW, 22, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.text(title, 14, 13);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Generated: ${format(new Date(), 'dd/MM/yyyy  HH:mm')}`, pageW - 14, 13, { align: 'right' });
+
+  let curY = 28;
+
+  // ── Summary box ──────────────────────────────────────────────
+  if (summaryItems && summaryItems.length > 0) {
+    const colCount = Math.min(summaryItems.length, 4);
+    const boxW = (pageW - 28) / colCount;
+    const boxH = 18;
+
+    summaryItems.slice(0, 8).forEach((item, i) => {
+      const col = i % 4;
+      const row = Math.floor(i / 4);
+      const x = 14 + col * boxW;
+      const y = curY + row * (boxH + 4);
+
+      // Box background (alternating shades)
+      doc.setFillColor(col % 2 === 0 ? 245 : 237, col % 2 === 0 ? 245 : 242, col % 2 === 0 ? 245 : 248);
+      doc.setDrawColor(200, 200, 200);
+      doc.roundedRect(x, y, boxW - 2, boxH, 2, 2, 'FD');
+
+      // Label
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text(item.label, x + 4, y + 6);
+
+      // Value
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(20, 20, 20);
+      doc.text(item.value, x + 4, y + 14);
+    });
+
+    const rowsUsed = Math.ceil(Math.min(summaryItems.length, 8) / 4);
+    curY += rowsUsed * (boxH + 4) + 4;
+  }
+
+  // ── Table ────────────────────────────────────────────────────
   const tableColumn = Object.values(headers);
   const tableKeys = Object.keys(headers);
 
-  const tableRows = data.map(item => {
-    return tableKeys.map(key => {
+  const tableRows = data.map(item =>
+    tableKeys.map(key => {
       const value = item[key];
       return value === null || value === undefined ? '' : String(value);
-    });
-  });
+    })
+  );
 
-  doc.text(title, 14, 15);
-  doc.setFontSize(10);
-  doc.text(`Generated on: ${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}`, 14, 22);
+  doc.setTextColor(0, 0, 0);
 
   autoTable(doc, {
     head: [tableColumn],
     body: tableRows,
-    startY: 25,
+    startY: curY,
     theme: 'grid',
-    styles: { fontSize: 8, cellPadding: 2 },
-    headStyles: { fillColor: [66, 66, 66] },
+    styles: { fontSize: 7.5, cellPadding: 2 },
+    headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], fontStyle: 'bold' },
     didParseCell: (data) => {
-      // Check if this is the last row and if it looks like a totals row
-      // We can confidently assume the last row is totals based on our implementation
       if (data.row.index === tableRows.length - 1) {
         const firstCell = tableRows[data.row.index][0];
         if (firstCell && String(firstCell).includes('TOTALS')) {
           data.cell.styles.fontStyle = 'bold';
-          data.cell.styles.fillColor = [240, 240, 240];
+          data.cell.styles.fillColor = [220, 220, 220];
           data.cell.styles.textColor = [0, 0, 0];
         }
       }
@@ -162,7 +221,14 @@ export const prepareStationeryData = (data: any[]) => {
     created_at: ''
   });
 
-  return { headers, processedData };
+  const summaryItems: SummaryItem[] = [
+    { label: 'Total Items (Qty)', value: fmt(totalQuantity) },
+    { label: 'Total Selling Value (UGX)', value: fmt(totalSellingValue) },
+    { label: 'Total Buying / Cost Value (UGX)', value: fmt(grandTotalValue) },
+    { label: 'Estimated Profit (UGX)', value: fmt(totalSellingValue - grandTotalValue) },
+  ];
+
+  return { headers, processedData, summaryItems };
 };
 
 // Prepare gift store data
@@ -204,7 +270,14 @@ export const prepareGiftStoreData = (data: any[]) => {
     created_at: ''
   });
 
-  return { headers, processedData };
+  const summaryItems: SummaryItem[] = [
+    { label: 'Total Items (Qty)', value: fmt(totalQuantity) },
+    { label: 'Total Selling Value (UGX)', value: fmt(totalSellingValue) },
+    { label: 'Total Buying Value (UGX)', value: fmt(totalBuyingValue) },
+    { label: 'Estimated Profit (UGX)', value: fmt(totalSellingValue - totalBuyingValue) },
+  ];
+
+  return { headers, processedData, summaryItems };
 };
 
 // Prepare embroidery data
@@ -250,7 +323,14 @@ export const prepareEmbroideryData = (data: any[], profilesMap?: Record<string, 
     time_recorded: ''
   });
 
-  return { headers, processedData };
+  const summaryItems: SummaryItem[] = [
+    { label: 'Total Sales (UGX)', value: fmt(totalSales) },
+    { label: 'Total Cost / Expenditure (UGX)', value: fmt(totalCost) },
+    { label: 'Total Profit (UGX)', value: fmt(totalProfit) },
+    { label: 'Total Jobs', value: fmt(processedData.length - 1) },
+  ];
+
+  return { headers, processedData, summaryItems };
 };
 
 // Prepare machines data
@@ -300,7 +380,14 @@ export const prepareMachinesData = (data: any[]) => {
     done_by: ''
   });
 
-  return { headers, processedData };
+  const summaryItems: SummaryItem[] = [
+    { label: 'Total Sales (UGX)', value: fmt(totalSales) },
+    { label: 'Total Expenditure (UGX)', value: fmt(totalExpenditure) },
+    { label: 'Total Profit (UGX)', value: fmt(totalProfit) },
+    { label: 'Total Qty', value: fmt(totalQuantity) },
+  ];
+
+  return { headers, processedData, summaryItems };
 };
 
 // Prepare art services data
@@ -346,7 +433,14 @@ export const prepareArtServicesData = (data: any[]) => {
     done_by: ''
   });
 
-  return { headers, processedData };
+  const summaryItems: SummaryItem[] = [
+    { label: 'Total Sales Amount (UGX)', value: fmt(totalAmount) },
+    { label: 'Total Profit (UGX)', value: fmt(totalProfit) },
+    { label: 'Total Qty Sold', value: fmt(totalQuantity) },
+    { label: 'Total Jobs', value: fmt(processedData.length - 1) },
+  ];
+
+  return { headers, processedData, summaryItems };
 };
 
 // Prepare sales data
@@ -411,7 +505,16 @@ export const prepareSalesData = (data: any[]) => {
     sold_by: ''
   });
 
-  return { headers, processedData };
+  const summaryItems: SummaryItem[] = [
+    { label: 'Total Sales (UGX)', value: fmt(grandTotal) },
+    { label: 'Total Profit (UGX)', value: fmt(totalProfit) },
+    { label: 'Total Buying Price (UGX)', value: fmt(totalBuyingPrice) },
+    { label: 'Total Selling Price (UGX)', value: fmt(totalSellingPrice) },
+    { label: 'Total Items Sold', value: fmt(totalQuantity) },
+    { label: 'Total Transactions', value: fmt(processedData.length - 1) },
+  ];
+
+  return { headers, processedData, summaryItems };
 };
 
 // Prepare customers data
@@ -443,7 +546,12 @@ export const prepareCustomersData = (data: any[]) => {
     last_visit: ''
   });
 
-  return { headers, processedData };
+  const summaryItems: SummaryItem[] = [
+    { label: 'Total Revenue from Customers (UGX)', value: fmt(totalSpent) },
+    { label: 'Total Customers', value: fmt(processedData.length - 1) },
+  ];
+
+  return { headers, processedData, summaryItems };
 };
 
 // Prepare invoices data
@@ -478,7 +586,12 @@ export const prepareInvoicesData = (data: any[]) => {
     status: ''
   });
 
-  return { headers, processedData };
+  const summaryItems: SummaryItem[] = [
+    { label: 'Grand Total (UGX)', value: fmt(grandTotal) },
+    { label: 'Total Invoices', value: fmt(processedData.length - 1) },
+  ];
+
+  return { headers, processedData, summaryItems };
 };
 
 // Filter data by date range
@@ -575,7 +688,8 @@ export const exportData = async (
       prepared.processedData,
       prepared.headers,
       `${type.replace('_', ' ').toUpperCase()} Report`,
-      `${baseFilename}.pdf`
+      `${baseFilename}.pdf`,
+      (prepared as any).summaryItems
     );
   } else {
     // Default to CSV
