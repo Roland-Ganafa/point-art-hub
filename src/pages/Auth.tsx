@@ -39,6 +39,9 @@ const Auth = () => {
   const [statsVisible, setStatsVisible] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [activeFeature, setActiveFeature] = useState(0);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -90,11 +93,39 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true);
+    setEmailNotConfirmed(false);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) { toast({ title: "Error", description: getSignInErrorMessage(error.message), variant: "destructive" }); }
+      if (error) {
+        const isUnconfirmed = error.message.toLowerCase().includes('email not confirmed');
+        if (isUnconfirmed) setEmailNotConfirmed(true);
+        toast({ title: "Error", description: getSignInErrorMessage(error.message), variant: "destructive" });
+      }
       else if (data?.session) { toast({ title: "Welcome back!", description: "Signed in successfully." }); setTimeout(() => navigate("/", { replace: true }), 300); }
     } catch { toast({ title: "Error", description: "Sign in failed. Please try again.", variant: "destructive" }); }
+    finally { setLoading(false); }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault(); setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); }
+      else { setResetSent(true); toast({ title: "Reset email sent!", description: "Check your inbox for the password reset link.", duration: 7000 }); }
+    } catch { toast({ title: "Error", description: "Failed to send reset email. Please try again.", variant: "destructive" }); }
+    finally { setLoading(false); }
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!email) { toast({ title: "Enter your email", description: "Please enter your email address above first.", variant: "destructive" }); return; }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resend({ type: 'signup', email });
+      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); }
+      else { toast({ title: "Confirmation email resent!", description: `A new confirmation link has been sent to ${email}.`, duration: 7000 }); setEmailNotConfirmed(false); }
+    } catch { toast({ title: "Error", description: "Failed to resend confirmation email.", variant: "destructive" }); }
     finally { setLoading(false); }
   };
 
@@ -332,19 +363,33 @@ const Auth = () => {
               <div className="mb-8 text-center">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-5 badge-live">
                   <span className="w-1.5 h-1.5 rounded-full bg-pink-400 pulse-dot" />
-                  {isSignUp ? "Join Point Art Hub" : "Welcome back"}
+                  {isForgotPassword ? "Reset Password" : isSignUp ? "Join Point Art Hub" : "Welcome back"}
                 </div>
                 <h1 className="text-4xl font-black text-white leading-tight tracking-tight mb-2">
-                  {isSignUp ? (
+                  {isForgotPassword ? (
+                    <>Reset your<br /><span className="shimmer-text">password</span></>
+                  ) : isSignUp ? (
                     <><span className="shimmer-text">Create</span><br />your account</>
                   ) : (
                     <>Sign in to your<br /><span className="shimmer-text">workspace</span></>
                   )}
                 </h1>
                 <p className="text-sm" style={{ color:'rgba(255,255,255,.35)' }}>
-                  {isSignUp ? "Start managing your business today" : "Point Art Hub — everything in one place"}
+                  {isForgotPassword ? "Enter your email and we'll send a reset link" : isSignUp ? "Start managing your business today" : "Point Art Hub — everything in one place"}
                 </p>
               </div>
+
+              {/* Reset sent success state */}
+              {isForgotPassword && resetSent && (
+                <div className="rounded-2xl p-5 mb-4 text-center"
+                  style={{ background:'rgba(52,211,153,.1)', border:'1px solid rgba(52,211,153,.3)' }}>
+                  <div className="text-2xl mb-2">✅</div>
+                  <p className="text-white font-semibold mb-1">Reset link sent!</p>
+                  <p className="text-sm" style={{ color:'rgba(255,255,255,.5)' }}>
+                    Check your inbox at <strong className="text-pink-300">{email}</strong> and click the link to reset your password.
+                  </p>
+                </div>
+              )}
 
               {/* Google */}
               {!isSignUp && (
@@ -372,8 +417,8 @@ const Auth = () => {
               )}
 
               {/* Form */}
-              <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-4">
-                {isSignUp && (
+              <form onSubmit={isForgotPassword ? handleForgotPassword : isSignUp ? handleSignUp : handleSignIn} className="space-y-4">
+                {isSignUp && !isForgotPassword && (
                   <div>
                     <label className="form-label">Full Name</label>
                     <Input type="text" placeholder="John Doe" value={fullName}
@@ -387,23 +432,37 @@ const Auth = () => {
                     onChange={e => setEmail(e.target.value)} required disabled={loading}
                     className="form-input h-12 rounded-xl border-0 text-white" />
                 </div>
+                {!isForgotPassword && (
                 <div>
                   <label className="form-label">Password</label>
                   <Input type="password" placeholder="••••••••" value={password}
                     onChange={e => setPassword(e.target.value)} required minLength={6} disabled={loading}
                     className="form-input h-12 rounded-xl border-0 text-white" />
                 </div>
+                )}
 
-                {!isSignUp && (
+                {!isSignUp && !isForgotPassword && (
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Checkbox id="rem" checked={rememberMe} onCheckedChange={c => setRememberMe(c as boolean)}
                         className="border-white/20 data-[state=checked]:bg-pink-500 data-[state=checked]:border-pink-500" />
                       <label htmlFor="rem" className="text-sm cursor-pointer select-none" style={{ color:'rgba(255,255,255,.4)' }}>Remember me</label>
                     </div>
-                    <button type="button" onClick={() => navigate('/direct-login')}
+                    <button type="button" onClick={() => { setIsForgotPassword(true); setResetSent(false); setEmailNotConfirmed(false); }}
                       className="text-sm font-bold toggle-grad hover:opacity-80 transition-opacity">
                       Forgot password?
+                    </button>
+                  </div>
+                )}
+
+                {/* Email not confirmed banner */}
+                {emailNotConfirmed && !isForgotPassword && (
+                  <div className="rounded-xl p-3 text-sm flex flex-col gap-2"
+                    style={{ background:'rgba(236,72,153,.1)', border:'1px solid rgba(236,72,153,.3)' }}>
+                    <p style={{ color:'rgba(255,255,255,.7)' }}>Your email hasn't been confirmed yet.</p>
+                    <button type="button" onClick={handleResendConfirmation} disabled={loading}
+                      className="text-left text-sm font-bold toggle-grad hover:opacity-80 transition-opacity">
+                      Resend confirmation email →
                     </button>
                   </div>
                 )}
@@ -411,20 +470,32 @@ const Auth = () => {
                 <button type="submit" disabled={loading}
                   className="btn-primary w-full h-12 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2 mt-2">
                   {loading ? (
-                    <><CustomLoader size="sm" /><span>{isSignUp ? "Creating..." : "Signing in..."}</span></>
+                    <><CustomLoader size="sm" /><span>{isForgotPassword ? "Sending..." : isSignUp ? "Creating..." : "Signing in..."}</span></>
                   ) : (
-                    <><span>{isSignUp ? "Create account" : "Sign in"}</span><ArrowRight className="w-4 h-4" /></>
+                    <><span>{isForgotPassword ? "Send reset link" : isSignUp ? "Create account" : "Sign in"}</span><ArrowRight className="w-4 h-4" /></>
                   )}
                 </button>
               </form>
 
+              {/* Forgot password back link */}
+              {isForgotPassword && (
+                <p className="mt-4 text-center text-sm" style={{ color:'rgba(255,255,255,.3)' }}>
+                  <button onClick={() => { setIsForgotPassword(false); setResetSent(false); }}
+                    className="toggle-grad font-bold hover:opacity-80 transition-opacity">
+                    ← Back to Sign in
+                  </button>
+                </p>
+              )}
+
+              {!isForgotPassword && (
               <p className="mt-6 text-center text-sm" style={{ color:'rgba(255,255,255,.3)' }}>
                 {isSignUp ? "Already have an account? " : "Don't have an account? "}
-                <button onClick={() => { setIsSignUp(!isSignUp); setEmail(""); setPassword(""); setFullName(""); }}
+                <button onClick={() => { setIsSignUp(!isSignUp); setEmail(""); setPassword(""); setFullName(""); setEmailNotConfirmed(false); }}
                   disabled={loading} className="toggle-grad font-bold ml-1 hover:opacity-80 transition-opacity">
                   {isSignUp ? "Sign in" : "Sign up"}
                 </button>
               </p>
+              )}
 
               {/* Trust row */}
               <div className="flex items-center justify-center gap-4 mt-8">
