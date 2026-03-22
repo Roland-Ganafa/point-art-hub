@@ -147,6 +147,7 @@ export const prepareStationeryData = (data: any[]) => {
 
   // Add Totals Row
   const totalQuantity = processedData.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+  const totalSellingValue = processedData.reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity) || 0), 0);
   const grandTotalValue = processedData.reduce((sum, item) => sum + (Number(item.total_value) || 0), 0);
 
   processedData.push({
@@ -154,8 +155,8 @@ export const prepareStationeryData = (data: any[]) => {
     item_name: 'TOTALS',
     description: '',
     quantity: totalQuantity,
-    price: '', // Summing unit prices doesn't make sense
-    cost: '',
+    price: totalSellingValue,
+    cost: grandTotalValue,
     total_value: grandTotalValue,
     supplier: '',
     created_at: ''
@@ -190,15 +191,16 @@ export const prepareGiftStoreData = (data: any[]) => {
 
   // Add Totals Row
   const totalQuantity = processedData.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
-  const totalValue = processedData.reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity) || 0), 0);
+  const totalSellingValue = processedData.reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity) || 0), 0);
+  const totalBuyingValue = processedData.reduce((sum, item) => sum + (Number(item.cost) * Number(item.quantity) || 0), 0);
 
   processedData.push({
     category: '',
     item_name: 'TOTALS',
     description: '',
     quantity: totalQuantity,
-    price: '',
-    cost: '',
+    price: totalSellingValue,
+    cost: totalBuyingValue,
     created_at: ''
   });
 
@@ -391,6 +393,8 @@ export const prepareSalesData = (data: any[]) => {
 
   // Add Totals Row
   const totalQuantity = processedData.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+  const totalBuyingPrice = processedData.reduce((sum, item) => sum + (Number(item.rate) * Number(item.quantity) || 0), 0);
+  const totalSellingPrice = processedData.reduce((sum, item) => sum + (Number(item.selling_price) * Number(item.quantity) || 0), 0);
   const grandTotal = processedData.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
   const totalProfit = processedData.reduce((sum, item) => sum + (Number(item.profit) || 0), 0);
 
@@ -398,8 +402,8 @@ export const prepareSalesData = (data: any[]) => {
     item: 'TOTALS',
     description: '',
     quantity: totalQuantity,
-    rate: '',
-    selling_price: '',
+    rate: totalBuyingPrice,
+    selling_price: totalSellingPrice,
     total: grandTotal,
     profit: totalProfit,
     date: '',
