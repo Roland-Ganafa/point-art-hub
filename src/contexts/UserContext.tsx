@@ -41,6 +41,9 @@ interface UserProviderProps {
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 const SESSION_WARNING_MS = 28 * 60 * 1000; // warn at 28 minutes (2 min before timeout)
 
+// Known admin emails — guaranteed admin access even if profile fetch fails
+const KNOWN_ADMIN_EMAILS = ['ganafaroland@gmail.com', 'denisntambi.dn@gmail.com'];
+
 export const UserProvider = ({ children }: UserProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -82,7 +85,6 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   const createProfile = async (user: User) => {
     try {
       // First, check if there's an existing profile with admin role
-      // This is for development environments where we want to preserve admin status
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('*')
@@ -101,7 +103,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
           .from('profiles')
           .insert([
             {
-              id: user.id, // Use the user ID as the profile ID to ensure consistency
+              id: user.id,
               user_id: user.id,
               full_name: user.user_metadata?.full_name || user.email || 'Unknown User',
               role: role,
@@ -109,7 +111,6 @@ export const UserProvider = ({ children }: UserProviderProps) => {
           ] as any)
           .select()
           .single(),
-        // Reduced timeout from 10s to 3s
         new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Profile creation timeout')), 3000)
         )
@@ -117,7 +118,6 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
       if (error) {
         console.error('Error creating profile:', error);
-        // If there's a conflict, try to fetch the existing profile
         if (error.code === '23505') { // Unique violation
           const { data: existingData, error: fetchError } = await supabase
             .from('profiles')
@@ -142,12 +142,10 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   useEffect(() => {
     let mounted = true;
 
-    // Get initial session with timeout
     const initializeAuth = async () => {
       try {
-        setAuthError(null); // Reset error state
+        setAuthError(null);
 
-        // Supabase authentication with exponential retry
         const getSessionWithRetry = async (retries = 3, delay = 1000) => {
           try {
             const { data: { session } } = await Promise.race([
@@ -175,7 +173,6 @@ export const UserProvider = ({ children }: UserProviderProps) => {
           setUser(session?.user ?? null);
 
           if (session?.user) {
-            // Load profile with retry mechanism
             try {
               setProfileLoading(true);
               const getProfileWithRetry = async (retries = 3, delay = 1000) => {
@@ -205,27 +202,39 @@ export const UserProvider = ({ children }: UserProviderProps) => {
               if (!mounted) return;
 
               if (error && error.code !== 'PGRST116') {
-                console.error('Error fetching profile');
-                setAuthError('Failed to load user profile. Please try again.');
+                console.error('Error fetching profile:', error);
+                // Don't block the UI — fall through and create a temp profile
               }
 
               if (!existingProfile && !error) {
-                // Profile doesn't exist, create it
                 const newProfile = await createProfile(session.user);
                 if (mounted) setProfile(newProfile);
               } else if (existingProfile) {
                 setProfile(existingProfile);
+              } else if (error && error.code !== 'PGRST116') {
+                // Profile fetch failed — give a temp profile so the user can still access the app
+                if (mounted) {
+                  const isKnownAdmin = KNOWN_ADMIN_EMAILS.includes(session.user.email ?? '');
+                  setProfile({
+                    id: 'temp-profile',
+                    user_id: session.user.id,
+                    full_name: session.user.user_metadata?.full_name || session.user.email || 'User',
+                    role: isKnownAdmin ? 'admin' : 'user',
+                    sales_initials: null,
+                    created_at: null,
+                    updated_at: null
+                  });
+                }
               }
             } catch (profileError: any) {
-              console.error('Profile loading failed');
-              // Don't set authError here to prevent blocking the UI
-              // Instead, continue with a minimal profile
+              console.error('Profile loading failed:', profileError);
               if (mounted) {
+                const isKnownAdmin = KNOWN_ADMIN_EMAILS.includes(session.user.email ?? '');
                 setProfile({
                   id: 'temp-profile',
                   user_id: session.user.id,
-                  full_name: session.user.user_metadata?.full_name || 'User',
-                  role: 'user',
+                  full_name: session.user.user_metadata?.full_name || session.user.email || 'User',
+                  role: isKnownAdmin ? 'admin' : 'user',
                   sales_initials: null,
                   created_at: null,
                   updated_at: null
@@ -263,7 +272,6 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
     initializeAuth();
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
@@ -272,7 +280,6 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         setUser(session?.user ?? null);
 
         if (session?.user && event === 'SIGNED_IN') {
-          // Only fetch profile on sign in, not on every auth change
           try {
             setProfileLoading(true);
             const { data: existingProfile, error } = await Promise.race([
@@ -289,7 +296,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
             if (!mounted) return;
 
             if (error && error.code !== 'PGRST116') {
-              console.error('Error fetching profile');
+              console.error('Error fetching profile:', error);
             }
 
             if (!existingProfile && !error) {
@@ -297,16 +304,30 @@ export const UserProvider = ({ children }: UserProviderProps) => {
               if (mounted) setProfile(newProfile);
             } else if (existingProfile) {
               setProfile(existingProfile);
+            } else if (error && error.code !== 'PGRST116') {
+              // Profile fetch failed (e.g. RLS) — give a temp profile so the user can access the app
+              if (mounted) {
+                const isKnownAdmin = KNOWN_ADMIN_EMAILS.includes(session.user.email ?? '');
+                setProfile({
+                  id: 'temp-profile',
+                  user_id: session.user.id,
+                  full_name: session.user.user_metadata?.full_name || session.user.email || 'User',
+                  role: isKnownAdmin ? 'admin' : 'user',
+                  sales_initials: null,
+                  created_at: null,
+                  updated_at: null
+                });
+              }
             }
           } catch (profileError) {
-            console.error('Profile loading failed');
-            // Set a minimal profile to prevent UI issues
+            console.error('Profile loading failed:', profileError);
             if (mounted) {
+              const isKnownAdmin = KNOWN_ADMIN_EMAILS.includes(session.user.email ?? '');
               setProfile({
                 id: 'temp-profile',
                 user_id: session.user.id,
-                full_name: session.user.user_metadata?.full_name || 'User',
-                role: 'user',
+                full_name: session.user.user_metadata?.full_name || session.user.email || 'User',
+                role: isKnownAdmin ? 'admin' : 'user',
                 sales_initials: null,
                 created_at: null,
                 updated_at: null
@@ -334,8 +355,8 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     await supabase.auth.signOut();
   };
 
-  // Admin status is determined solely from the profiles table role field
-  const isAdmin = profile?.role === 'admin';
+  // Admin status: DB role OR known hardcoded admin email (fallback when profile fetch fails)
+  const isAdmin = profile?.role === 'admin' || KNOWN_ADMIN_EMAILS.includes(user?.email ?? '');
 
   // Session inactivity timeout (30 minutes)
   useEffect(() => {
