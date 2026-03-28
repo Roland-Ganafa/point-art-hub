@@ -92,15 +92,13 @@ const StationeryDailySales = () => {
     try {
       setIsLoading(true);
       const targetDate = dateToFetch || selectedDate;
-      const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0).toISOString();
-      const endOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999).toISOString();
+      const dateStr = format(targetDate, 'yyyy-MM-dd');
 
       // Fetch sales data for the selected date
       const { data, error } = await (supabase as any)
         .from("stationery_sales")
         .select("*")
-        .gte("date", startOfDay)
-        .lte("date", endOfDay)
+        .eq("date", dateStr)
         .order("date", { ascending: false });
 
       if (error) {
