@@ -9,12 +9,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Search, AlertTriangle, Lock, Gift, TrendingUp, ShoppingCart, Star } from "lucide-react";
+import { Plus, Edit, Trash2, Search, AlertTriangle, Lock, Gift, TrendingUp, ShoppingCart, Star, Download, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import GiftsDailySales from "./GiftsDailySales";
 import CustomLoader from "@/components/ui/CustomLoader";
+import { prepareGiftStoreData, generatePDF, convertToCSV, downloadCSV } from "@/utils/exportUtils";
 
 const formatUGX = (amount: number | null | undefined): string => {
   if (amount === null || amount === undefined) return "UGX 0";
@@ -547,6 +548,31 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+
+              {/* Export Buttons */}
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const { headers, processedData, summaryItems } = prepareGiftStoreData(filteredItems);
+                  const csv = convertToCSV(processedData, headers);
+                  downloadCSV(csv, `gift-store-${new Date().toISOString().split('T')[0]}.csv`);
+                }}
+                className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-400 transition-all duration-200"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                CSV
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const { headers, processedData, summaryItems } = prepareGiftStoreData(filteredItems);
+                  generatePDF(processedData, headers, 'Gift Store Inventory Report', `gift-store-${new Date().toISOString().split('T')[0]}.pdf`, summaryItems);
+                }}
+                className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-400 transition-all duration-200"
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                PDF
+              </Button>
 
               {isAdmin && selectedIds.size > 0 && (
                 <Button
