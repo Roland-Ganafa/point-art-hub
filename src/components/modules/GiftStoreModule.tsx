@@ -6,10 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Search, AlertTriangle, Lock, Gift, TrendingUp, ShoppingCart, Star, Download, FileText } from "lucide-react";
+import { Plus, Edit, Trash2, Search, AlertTriangle, Lock, Gift, TrendingUp, ShoppingCart, Star, Download, FileText, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
@@ -549,30 +550,37 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                 />
               </div>
 
-              {/* Export Buttons */}
-              <Button
-                variant="outline"
-                onClick={() => {
-                  const { headers, processedData, summaryItems } = prepareGiftStoreData(filteredItems);
-                  const csv = convertToCSV(processedData, headers);
-                  downloadCSV(csv, `gift-store-${new Date().toISOString().split('T')[0]}.csv`);
-                }}
-                className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-400 transition-all duration-200"
-              >
-                <Download className="mr-2 h-4 w-4" />
-                CSV
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  const { headers, processedData, summaryItems } = prepareGiftStoreData(filteredItems);
-                  generatePDF(processedData, headers, 'Gift Store Inventory Report', `gift-store-${new Date().toISOString().split('T')[0]}.pdf`, summaryItems);
-                }}
-                className="border-green-200 text-green-700 hover:bg-green-50 hover:border-green-400 transition-all duration-200"
-              >
-                <FileText className="mr-2 h-4 w-4" />
-                PDF
-              </Button>
+              {/* Export Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200">
+                    <Download className="mr-2 h-4 w-4" />
+                    Export
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const { headers, processedData } = prepareGiftStoreData(filteredItems);
+                      const csv = convertToCSV(processedData, headers);
+                      downloadCSV(csv, `gift-store-${new Date().toISOString().split('T')[0]}.csv`);
+                    }}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Export CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const { headers, processedData, summaryItems } = prepareGiftStoreData(filteredItems);
+                      generatePDF(processedData, headers, 'Gift Store Inventory Report', `gift-store-${new Date().toISOString().split('T')[0]}.pdf`, summaryItems);
+                    }}
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Export PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {isAdmin && selectedIds.size > 0 && (
                 <Button
