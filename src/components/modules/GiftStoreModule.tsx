@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Search, AlertTriangle, Lock, Gift, TrendingUp, ShoppingCart, Star, Download, FileText, ChevronDown } from "lucide-react";
+import { Plus, Edit, Trash2, Search, AlertTriangle, Lock, Gift, TrendingUp, ShoppingCart, Star, Download, FileText, ChevronDown, Calendar, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
@@ -46,6 +46,8 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const lastProcessedTrigger = useRef<number>(0);
@@ -64,12 +66,17 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
   const { toast } = useToast();
   const { isAdmin, profile } = useUser();
 
-  // Filter items based on search
-  const filteredItems = items.filter(item =>
-    item.item.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.custom_category && item.custom_category.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Filter items based on search and date range
+  const filteredItems = items.filter(item => {
+    const matchesSearch =
+      item.item.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.custom_category && item.custom_category.toLowerCase().includes(searchTerm.toLowerCase()));
+    const itemDate = item.date || (item.created_at ? item.created_at.split('T')[0] : '');
+    const matchesStart = !filterStartDate || itemDate >= filterStartDate;
+    const matchesEnd = !filterEndDate || itemDate <= filterEndDate;
+    return matchesSearch && matchesStart && matchesEnd;
+  });
 
   // Low stock items
   const lowStockItems = items.filter(item => {
@@ -531,16 +538,50 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
         </TabsList>
 
         <TabsContent value="inventory" className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-          <div className="flex justify-between items-center mb-8">
-            <div className="space-y-2">
-              <h3 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-3">
-                <Gift className="h-8 w-8 text-green-600" />
-                Gift Store Management
-              </h3>
-              <p className="text-muted-foreground">Manage your gift store inventory with style</p>
+          <div className="flex flex-col gap-4 mb-8">
+            {/* Title row */}
+            <div className="flex justify-between items-start">
+              <div className="space-y-1">
+                <h3 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-3">
+                  <Gift className="h-8 w-8 text-green-600" />
+                  Gift Store Management
+                </h3>
+                <p className="text-muted-foreground">Manage your gift store inventory with style</p>
+              </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="relative w-full max-w-md">
+
+            {/* Filters + actions row */}
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Date range */}
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                <Input
+                  type="date"
+                  value={filterStartDate}
+                  onChange={(e) => setFilterStartDate(e.target.value)}
+                  className="w-36 border-gray-300 focus:border-green-400 focus:ring-green-200 text-sm"
+                />
+                <span className="text-muted-foreground text-sm">to</span>
+                <Input
+                  type="date"
+                  value={filterEndDate}
+                  onChange={(e) => setFilterEndDate(e.target.value)}
+                  className="w-36 border-gray-300 focus:border-green-400 focus:ring-green-200 text-sm"
+                />
+                {(filterStartDate || filterEndDate) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setFilterStartDate(""); setFilterEndDate(""); }}
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+
+              {/* Search */}
+              <div className="relative flex-1 min-w-48">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search items..."
