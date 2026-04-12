@@ -139,9 +139,14 @@ const CustomerManagement = () => {
       notes: formData.notes || null,
     };
 
+    if (editingCustomer && !isAdmin) {
+      toast({ title: 'Access Denied', description: 'Only administrators can edit customers', variant: 'destructive' });
+      return;
+    }
+
     try {
       let error;
-      
+
       if (editingCustomer) {
         const { error: updateError } = await supabase
           .from('customers')

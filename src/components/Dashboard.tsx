@@ -151,7 +151,7 @@ const Dashboard = () => {
       const salesQuery = (table: string) => {
         let q = (supabase as any).from(table).select("*");
         if (startDate && endDate) {
-          q = q.gte("date", startDate).lte("date", endDate);
+          q = q.gte("date", startDate.split('T')[0]).lte("date", endDate.split('T')[0]);
         }
         return q as Promise<any>;
       };

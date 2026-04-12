@@ -211,7 +211,7 @@ const GiftsDailySales = () => {
     if (!isOffline && offlineGiftSales.length > 0) {
       syncOfflineGiftSales();
     }
-  }, [isOffline]);
+  }, [isOffline, offlineGiftSales.length]);
 
   const grouped = useMemo(() => {
     const map: Record<string, GiftDailySale[]> = {};
@@ -224,8 +224,8 @@ const GiftsDailySales = () => {
   const totals = useMemo(() => {
     return items.reduce(
       (acc, r) => {
-        acc.bpx += Number(r.bpx || 0) * Number(r.quantity || 0) / Number(r.quantity || 1); // per-row value already bpx
-        acc.spx += Number(r.spx || 0);
+        acc.bpx += Number(r.bpx || 0) * Number(r.quantity || 0);
+        acc.spx += Number(r.spx || 0) * Number(r.quantity || 0);
         return acc;
       },
       { bpx: 0, spx: 0 }
@@ -342,7 +342,7 @@ const GiftsDailySales = () => {
 
       toast({
         title: "Success",
-        description: editingId ? "Sale updated successfully" : "Sale recorded successfully",
+        description: currentEditingId ? "Sale updated successfully" : "Sale recorded successfully",
       });
 
       // Reset form — use selectedDate so repeated entries for the same day work correctly

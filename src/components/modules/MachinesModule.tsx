@@ -200,7 +200,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
       setIsLoading(true);
       const { data, error } = await (supabase as any)
         .from("machines")
-        .select("*, profiles!updated_by(full_name, sales_initials)")
+        .select("*, profiles!done_by(full_name, sales_initials)")
         .order("created_at", { ascending: false });
 
       if (error) {

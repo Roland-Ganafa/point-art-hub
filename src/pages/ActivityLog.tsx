@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,8 @@ export default function ActivityLog() {
   const [search, setSearch] = useState("");
   const [moduleFilter, setModuleFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
+  const [liveIndicator, setLiveIndicator] = useState(false);
+  const liveFlashRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -82,24 +84,24 @@ export default function ActivityLog() {
           .order("created_at", { ascending: false })
           .limit(500),
 
-        // Embroidery (uses updated_at + updated_by FK)
+        // Embroidery — done_by FK to profiles.id; correct column names
         supabase
           .from("embroidery")
-          .select("id, updated_at, item_name, quantity, total_amount, customer_name, profiles!updated_by(full_name, sales_initials)")
-          .order("updated_at", { ascending: false })
-          .limit(500),
-
-        // Machines — updated_by has FK to profiles.id
-        (supabase as any)
-          .from("machines")
-          .select("id, created_at, machine_type, quantity, total_amount, customer_name, updated_by, profiles!updated_by(full_name, sales_initials)")
+          .select("id, created_at, job_description, quotation, client_name, profiles!done_by(full_name, sales_initials)")
           .order("created_at", { ascending: false })
           .limit(500),
 
-        // Art Services — updated_by has FK; done_by is raw text (may store profiles.id or user_id)
+        // Machines — done_by FK to profiles.id
+        (supabase as any)
+          .from("machines")
+          .select("id, created_at, machine_type, quantity, sales, done_by, profiles!done_by(full_name, sales_initials)")
+          .order("created_at", { ascending: false })
+          .limit(500),
+
+        // Art Services — done_by FK to profiles.id
         (supabase as any)
           .from("art_services")
-          .select("id, created_at, service_name, quantity, sales, description, done_by, updated_by, profiles!updated_by(full_name, sales_initials)")
+          .select("id, created_at, service_name, quantity, sales, description, done_by, profiles!done_by(full_name, sales_initials)")
           .order("created_at", { ascending: false })
           .limit(500),
       ]);
@@ -139,39 +141,41 @@ export default function ActivityLog() {
       // Embroidery
       (embRes.data || []).forEach((r: any) => {
         const profile = r.profiles;
-        const emp = profile ? `${profile.full_name || ""}${profile.sales_initials ? ` (${profile.sales_initials})` : ""}`.trim() : "Unknown";
+        const emp = profile
+          ? `${profile.full_name || ""}${profile.sales_initials ? ` (${profile.sales_initials})` : ""}`.trim()
+          : "Unknown";
         combined.push({
           id: `emb-${r.id}`,
-          created_at: r.updated_at || "",
+          created_at: r.created_at || "",
           module: "Embroidery",
-          description: r.item_name,
+          description: r.job_description || "Embroidery job",
           employee: emp || "Unknown",
-          amount: r.total_amount,
-          extra: r.customer_name ? `Customer: ${r.customer_name}` : `Qty: ${r.quantity}`,
+          amount: r.quotation,
+          extra: r.client_name ? `Client: ${r.client_name}` : undefined,
         });
       });
 
-      // Machines — use updated_by FK JOIN, fallback to manual profileMap lookup
+      // Machines — done_by FK JOIN
       (machRes.data || []).forEach((r: any) => {
         const profile = r.profiles;
         const profileName = profile ? `${profile.full_name || ""}${profile.sales_initials ? ` (${profile.sales_initials})` : ""}`.trim() : "";
-        const emp = profileName || resolveEmployee(r.updated_by) || "Unknown";
+        const emp = profileName || resolveEmployee(r.done_by) || "Unknown";
         combined.push({
           id: `mach-${r.id}`,
           created_at: r.created_at || "",
           module: "Machines",
           description: r.machine_type,
           employee: emp,
-          amount: r.total_amount,
-          extra: r.customer_name ? `Customer: ${r.customer_name}` : undefined,
+          amount: r.sales,
+          extra: undefined,
         });
       });
 
-      // Art Services — updated_by FK JOIN is primary; done_by raw text is fallback
+      // Art Services — done_by FK JOIN
       (artRes.data || []).forEach((r: any) => {
         const profile = r.profiles;
         const profileName = profile ? `${profile.full_name || ""}${profile.sales_initials ? ` (${profile.sales_initials})` : ""}`.trim() : "";
-        const emp = profileName || resolveEmployee(r.done_by) || resolveEmployee(r.updated_by) || "Unknown";
+        const emp = profileName || resolveEmployee(r.done_by) || "Unknown";
         combined.push({
           id: `art-${r.id}`,
           created_at: r.created_at || "",
@@ -192,6 +196,37 @@ export default function ActivityLog() {
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  // ── Real-time subscriptions ────────────────────────────────────────────────
+  useEffect(() => {
+    const flashLive = () => {
+      setLiveIndicator(true);
+      if (liveFlashRef.current) clearTimeout(liveFlashRef.current);
+      liveFlashRef.current = setTimeout(() => setLiveIndicator(false), 2000);
+    };
+
+    const handleChange = () => {
+      flashLive();
+      fetchAll();
+    };
+
+    const channel = supabase
+      .channel("activity-log-realtime")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "stationery_sales" }, handleChange)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "gift_daily_sales" }, handleChange)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "embroidery" }, handleChange)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "machines" }, handleChange)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "art_services" }, handleChange)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "embroidery" }, handleChange)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "machines" }, handleChange)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "art_services" }, handleChange)
+      .subscribe();
+
+    return () => {
+      if (liveFlashRef.current) clearTimeout(liveFlashRef.current);
+      supabase.removeChannel(channel);
+    };
+  }, [fetchAll]);
 
   const filtered = entries.filter((e) => {
     if (moduleFilter !== "all" && e.module !== moduleFilter) return false;
@@ -230,6 +265,10 @@ export default function ActivityLog() {
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
               <Activity className="h-6 w-6 text-red-600" />
               Activity Log
+              <span className="flex items-center gap-1.5 ml-1">
+                <span className={`inline-block h-2.5 w-2.5 rounded-full transition-colors duration-300 ${liveIndicator ? "bg-green-400 scale-125" : "bg-green-500"} animate-pulse`} />
+                <span className="text-xs font-normal text-green-600 dark:text-green-400">Live</span>
+              </span>
             </h1>
             <p className="text-sm text-muted-foreground">Track every entry made by your employees — time, date, module</p>
           </div>

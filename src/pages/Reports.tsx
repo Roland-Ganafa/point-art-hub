@@ -68,6 +68,7 @@ interface ReportData {
   };
   artServicesSummary: {
     totalSales: number;
+    totalExpenditure: number;
     totalProfit: number;
     totalServices: number;
     profitMargin: number;
@@ -99,6 +100,7 @@ const Reports = () => {
     },
     artServicesSummary: {
       totalSales: 0,
+      totalExpenditure: 0,
       totalProfit: 0,
       totalServices: 0,
       profitMargin: 0,
@@ -128,6 +130,7 @@ const Reports = () => {
 
       // Calculate date range
       const endDate = new Date();
+      endDate.setHours(23, 59, 59, 999);
       const startDate = new Date();
 
       switch (dateRange) {
@@ -146,28 +149,41 @@ const Reports = () => {
         default:
           startDate.setDate(endDate.getDate() - 7);
       }
+      startDate.setHours(0, 0, 0, 0);
 
       const startDateStr = startDate.toISOString();
       const endDateStr = endDate.toISOString();
+      const startDateOnly = startDateStr.split('T')[0];
+      const endDateOnly = endDateStr.split('T')[0];
 
-      // Fetch data from different tables
+      // Fetch data from all tables with date filters applied consistently
       const [
         stationeryData,
         giftData,
         embroideryData,
         machinesData,
         artServicesData,
-        salesData
+        salesData,
+        stationeryDailySalesData,
+        giftDailySalesData
       ] = await Promise.all([
         supabase.from('stationery').select('*'),
         supabase.from('gift_store').select('*'),
-        supabase.from('embroidery').select('*'),
-        supabase.from('machines').select('*'),
-        supabase.from('art_services').select('*'),
+        supabase.from('embroidery').select('*').gte('date', startDateOnly).lte('date', endDateOnly),
+        supabase.from('machines').select('*').gte('date', startDateOnly).lte('date', endDateOnly),
+        supabase.from('art_services').select('*').gte('date', startDateOnly).lte('date', endDateOnly),
         supabase.from('stationery_sales')
           .select('*')
           .gte('created_at', startDateStr)
-          .lte('created_at', endDateStr)
+          .lte('created_at', endDateStr),
+        supabase.from('stationery_daily_sales')
+          .select('item, quantity, selling_price, rate, date')
+          .gte('date', startDateStr)
+          .lte('date', endDateStr),
+        supabase.from('gift_daily_sales')
+          .select('item, quantity, spx, bpx, date')
+          .gte('date', startDateOnly)
+          .lte('date', endDateOnly)
       ]);
 
       // Calculate totals
@@ -177,12 +193,18 @@ const Reports = () => {
       let itemsSold = 0;
       let servicesDone = 0;
 
-      // Process sales data
+      // Process stationery_sales data
       if (salesData.data) {
         totalSales += salesData.data.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
         totalProfit += salesData.data.reduce((sum, sale) => sum + (sale.profit || 0), 0);
         itemsSold += salesData.data.reduce((sum, sale) => sum + (sale.quantity || 0), 0);
       }
+
+      // Process gift daily sales
+      const giftRows = giftDailySalesData.data || [];
+      totalSales += giftRows.reduce((sum, s) => sum + Number(s.spx || 0) * Number(s.quantity || 0), 0);
+      totalProfit += giftRows.reduce((sum, s) => sum + (Number(s.spx || 0) - Number(s.bpx || 0)) * Number(s.quantity || 0), 0);
+      itemsSold += giftRows.reduce((sum, s) => sum + Number(s.quantity || 0), 0);
 
       // Process service data
       const allServices = [
@@ -194,14 +216,12 @@ const Reports = () => {
       servicesDone = allServices.length;
       totalSales += allServices.reduce((sum, service) => sum + (service.sales || 0), 0);
 
-      // Calculate profit for different service types
       if (embroideryData.data) {
         totalProfit += embroideryData.data.reduce((sum, service) => sum + (service.profit || 0), 0);
       }
       if (artServicesData.data) {
         totalProfit += artServicesData.data.reduce((sum, service) => sum + (service.profit || 0), 0);
       }
-      // Machines don't have profit field, calculate from sales - expenditure
       if (machinesData.data) {
         totalProfit += machinesData.data.reduce((sum, service) => {
           const profit = (service.sales || 0) - (service.expenditure || 0);
@@ -211,47 +231,101 @@ const Reports = () => {
 
       totalExpenses += allServices.reduce((sum, service) => sum + (service.expenditure || 0), 0);
 
-      // Calculate top selling items (mock data for now)
-      const topSellingItems = [
-        { item_name: 'A4 Paper', total_sold: 150, total_revenue: 75000 },
-        { item_name: 'Pens', total_sold: 200, total_revenue: 40000 },
-        { item_name: 'Notebooks', total_sold: 80, total_revenue: 120000 },
-        { item_name: 'Folders', total_sold: 60, total_revenue: 30000 },
-        { item_name: 'Markers', total_sold: 45, total_revenue: 67500 },
-      ];
+      // ── Real: top selling items ────────────────────────────────────────────
+      const itemMap: Record<string, { total_sold: number; total_revenue: number }> = {};
+      const addItem = (name: string, qty: number, revenue: number) => {
+        if (!name) return;
+        if (!itemMap[name]) itemMap[name] = { total_sold: 0, total_revenue: 0 };
+        itemMap[name].total_sold += qty;
+        itemMap[name].total_revenue += revenue;
+      };
 
-      // Calculate sales by category
+      (stationeryDailySalesData.data || []).forEach(s => {
+        addItem(s.item, Number(s.quantity || 0), Number(s.selling_price || 0) * Number(s.quantity || 0));
+      });
+
+      giftRows.forEach(s => {
+        const name = s.item?.includes(': ') ? s.item.split(': ').slice(1).join(': ') : s.item;
+        addItem(name, Number(s.quantity || 0), Number(s.spx || 0) * Number(s.quantity || 0));
+      });
+
+      (artServicesData.data || []).forEach(s => {
+        addItem(s.service_name || 'Art Service', Number(s.quantity || 0), Number(s.sales || 0));
+      });
+
+      (machinesData.data || []).forEach(s => {
+        addItem(s.service_description || s.machine_name || 'Machine Service', Number(s.quantity || 0), Number(s.sales || 0));
+      });
+
+      (embroideryData.data || []).forEach(s => {
+        addItem(s.job_description || 'Embroidery', 1, Number(s.sales || s.quotation || 0));
+      });
+
+      const topSellingItems = Object.entries(itemMap)
+        .map(([item_name, stats]) => ({ item_name, ...stats }))
+        .sort((a, b) => b.total_revenue - a.total_revenue)
+        .slice(0, 5);
+
+      // ── Real: sales by category ────────────────────────────────────────────
+      const statRows = stationeryDailySalesData.data || [];
+      const stationerySales = statRows.reduce((sum, s) => sum + Number(s.selling_price || 0) * Number(s.quantity || 0), 0)
+        + (salesData.data || []).reduce((sum, s) => sum + Number(s.total_amount || 0), 0);
+      const stationeryProfit = statRows.reduce((sum, s) => sum + (Number(s.selling_price || 0) - Number(s.rate || 0)) * Number(s.quantity || 0), 0)
+        + (salesData.data || []).reduce((sum, s) => sum + Number(s.profit || 0), 0);
+
+      const giftSales = giftRows.reduce((sum, s) => sum + Number(s.spx || 0) * Number(s.quantity || 0), 0);
+      const giftProfit = giftRows.reduce((sum, s) => sum + (Number(s.spx || 0) - Number(s.bpx || 0)) * Number(s.quantity || 0), 0);
+
+      const embSales = (embroideryData.data || []).reduce((sum, s) => sum + Number(s.sales || s.quotation || 0), 0);
+      const embProfit = (embroideryData.data || []).reduce((sum, s) => sum + Number(s.profit || 0), 0);
+
+      const macSales = (machinesData.data || []).reduce((sum, s) => sum + Number(s.sales || 0), 0);
+      const macProfit = (machinesData.data || []).reduce((sum, s) => sum + Math.max(0, Number(s.sales || 0) - Number(s.expenditure || 0)), 0);
+
+      const artSales = (artServicesData.data || []).reduce((sum, s) => sum + Number(s.sales || 0), 0);
+      const artProfit = (artServicesData.data || []).reduce((sum, s) => sum + Number(s.profit || 0), 0);
+
       const salesByCategory = [
-        { category: 'Stationery', sales: totalSales * 0.4, profit: totalProfit * 0.35 },
-        { category: 'Gifts', sales: totalSales * 0.25, profit: totalProfit * 0.3 },
-        { category: 'Embroidery', sales: totalSales * 0.15, profit: totalProfit * 0.2 },
-        { category: 'Machines', sales: totalSales * 0.12, profit: totalProfit * 0.1 },
-        { category: 'Art Services', sales: totalSales * 0.08, profit: totalProfit * 0.05 },
-      ];
+        { category: 'Stationery', sales: stationerySales, profit: stationeryProfit },
+        { category: 'Gifts', sales: giftSales, profit: giftProfit },
+        { category: 'Embroidery', sales: embSales, profit: embProfit },
+        { category: 'Machines', sales: macSales, profit: macProfit },
+        { category: 'Art Services', sales: artSales, profit: artProfit },
+      ].filter(c => c.sales > 0 || c.profit > 0);
 
-      // Generate daily sales (mock data)
-      const dailySales = [];
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        dailySales.push({
-          date: date.toISOString().split('T')[0],
-          sales: Math.random() * 50000 + 20000,
-          profit: Math.random() * 20000 + 8000,
-        });
-      }
+      // ── Real: daily sales aggregated from all sources ──────────────────────
+      const dailyMap: Record<string, { sales: number; profit: number }> = {};
+      const addToDay = (rawDate: string, sales: number, profit: number) => {
+        const day = rawDate?.split('T')[0];
+        if (!day) return;
+        if (!dailyMap[day]) dailyMap[day] = { sales: 0, profit: 0 };
+        dailyMap[day].sales += sales;
+        dailyMap[day].profit += profit;
+      };
 
-      // Calculate profit margins
+      statRows.forEach(s => addToDay(s.date, Number(s.selling_price || 0) * Number(s.quantity || 0), (Number(s.selling_price || 0) - Number(s.rate || 0)) * Number(s.quantity || 0)));
+      giftRows.forEach(s => addToDay(s.date, Number(s.spx || 0) * Number(s.quantity || 0), (Number(s.spx || 0) - Number(s.bpx || 0)) * Number(s.quantity || 0)));
+      (embroideryData.data || []).forEach(s => addToDay(s.date, Number(s.sales || s.quotation || 0), Number(s.profit || 0)));
+      (machinesData.data || []).forEach(s => addToDay(s.date, Number(s.sales || 0), Math.max(0, Number(s.sales || 0) - Number(s.expenditure || 0))));
+      (artServicesData.data || []).forEach(s => addToDay(s.date, Number(s.sales || 0), Number(s.profit || 0)));
+      (salesData.data || []).forEach(s => addToDay(s.created_at || s.date, Number(s.total_amount || 0), Number(s.profit || 0)));
+
+      const dailySales = Object.entries(dailyMap)
+        .map(([date, { sales, profit }]) => ({ date, sales, profit }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      // ── Real: profit margins per category ─────────────────────────────────
       const profitMargins = {
-        stationery: totalSales > 0 ? ((totalProfit * 0.35) / (totalSales * 0.4)) * 100 : 0,
-        gifts: totalSales > 0 ? ((totalProfit * 0.3) / (totalSales * 0.25)) * 100 : 0,
-        embroidery: totalSales > 0 ? ((totalProfit * 0.2) / (totalSales * 0.15)) * 100 : 0,
-        machines: totalSales > 0 ? ((totalProfit * 0.1) / (totalSales * 0.12)) * 100 : 0,
-        artServices: totalSales > 0 ? ((totalProfit * 0.05) / (totalSales * 0.08)) * 100 : 0,
+        stationery: stationerySales > 0 ? (stationeryProfit / stationerySales) * 100 : 0,
+        gifts: giftSales > 0 ? (giftProfit / giftSales) * 100 : 0,
+        embroidery: embSales > 0 ? (embProfit / embSales) * 100 : 0,
+        machines: macSales > 0 ? (macProfit / macSales) * 100 : 0,
+        artServices: artSales > 0 ? (artProfit / artSales) * 100 : 0,
       };
 
       // Calculate Art Services Summary
       const artServicesSales = (artServicesData.data || []).reduce((sum, service) => sum + (service.sales || 0), 0);
+      const artServicesExpenditure = (artServicesData.data || []).reduce((sum, service) => sum + (service.expenditure || 0), 0);
       const artServicesProfit = (artServicesData.data || []).reduce((sum, service) => sum + (service.profit || 0), 0);
       const artServicesCount = (artServicesData.data || []).length;
       const artServicesProfitMargin = artServicesSales > 0 ? (artServicesProfit / artServicesSales) * 100 : 0;
@@ -277,6 +351,7 @@ const Reports = () => {
         profitMargins,
         artServicesSummary: {
           totalSales: artServicesSales,
+          totalExpenditure: artServicesExpenditure,
           totalProfit: artServicesProfit,
           totalServices: artServicesCount,
           profitMargin: artServicesProfitMargin,
@@ -677,6 +752,10 @@ const Reports = () => {
                       <p className="text-sm text-blue-600 font-medium">Total Sales</p>
                       <p className="text-2xl font-bold text-blue-900">{formatUGX(reportData.artServicesSummary.totalSales)}</p>
                     </div>
+                    <div className="p-4 bg-gradient-to-br from-red-50 dark:from-red-950/30 to-red-100 dark:to-red-900/30 rounded-lg">
+                      <p className="text-sm text-red-600 font-medium">Total Expenditure</p>
+                      <p className="text-2xl font-bold text-red-900">{formatUGX(reportData.artServicesSummary.totalExpenditure)}</p>
+                    </div>
                     <div className="p-4 bg-gradient-to-br from-green-50 dark:from-green-950/30 to-green-100 dark:to-green-900/30 rounded-lg">
                       <p className="text-sm text-green-600 font-medium">Total Profit</p>
                       <p className="text-2xl font-bold text-green-900">{formatUGX(reportData.artServicesSummary.totalProfit)}</p>
@@ -685,7 +764,7 @@ const Reports = () => {
                       <p className="text-sm text-purple-600 font-medium">Services Done</p>
                       <p className="text-2xl font-bold text-purple-900">{reportData.artServicesSummary.totalServices}</p>
                     </div>
-                    <div className="p-4 bg-gradient-to-br from-orange-50 dark:from-orange-950/30 to-orange-100 dark:to-orange-900/30 rounded-lg">
+                    <div className="p-4 bg-gradient-to-br from-orange-50 dark:from-orange-950/30 to-orange-100 dark:to-orange-900/30 rounded-lg col-span-2">
                       <p className="text-sm text-orange-600 font-medium">Profit Margin</p>
                       <p className={`text-2xl font-bold ${getProfitMarginColor(reportData.artServicesSummary.profitMargin)}`}>
                         {reportData.artServicesSummary.profitMargin.toFixed(1)}%

@@ -75,18 +75,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
     return stock <= (item.low_stock_threshold || 5);
   });
 
-  // Calculate profit when rate or selling price changes
-  useEffect(() => {
-    if (formData.rate && formData.selling_price) {
-      const rate = parseFloat(formData.rate) || 0;
-      const sellingPrice = parseFloat(formData.selling_price) || 0;
-      const profit = sellingPrice - rate;
-      setFormData(prev => ({
-        ...prev,
-        profit_per_unit: profit.toFixed(2)
-      }));
-    }
-  }, [formData.rate, formData.selling_price]);
+  // profit_per_unit is calculated directly in handleSubmit when saving
 
   // Open the add dialog when triggered from Dashboard
   useEffect(() => {
@@ -601,6 +590,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="cleaning">Cleaning</SelectItem>
                           <SelectItem value="kids_toys">Kids Toys</SelectItem>
                           <SelectItem value="birthday">Birthday</SelectItem>
                           <SelectItem value="custom">Custom</SelectItem>

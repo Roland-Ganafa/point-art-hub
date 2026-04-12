@@ -86,14 +86,14 @@ export const useOfflineGiftSales = () => {
 
   // Sync offline gift sales when online
   const syncOfflineGiftSales = async () => {
-    if (offlineGiftSales.length === 0) return;
+    const pendingItems = getPendingSyncItems();
+    if (offlineGiftSales.length === 0 && pendingItems.length === 0) return;
 
     setIsSyncing(true);
-    
+
     try {
-      // Get pending sync items
-      const pendingItems = getPendingSyncItems();
-      
+      let allSynced = true;
+
       // Process each pending item
       for (const item of pendingItems) {
         if (item.endpoint === '/api/gift-sales') {
@@ -103,20 +103,25 @@ export const useOfflineGiftSales = () => {
             .insert([item.data]);
 
           if (!error) {
-            // Remove from sync queue if successful
+            // Remove from sync queue only if this item succeeded
             removeFromSyncQueue(item.id);
+          } else {
+            allSynced = false;
+            console.error('Error syncing item:', item.id, error);
           }
         }
       }
 
-      // Clear offline gift sales after successful sync
-      removeOfflineData('offline_gift_sales');
-      setOfflineGiftSales([]);
+      // Only clear offline data if every item synced successfully
+      if (allSynced) {
+        removeOfflineData('offline_gift_sales');
+        setOfflineGiftSales([]);
+      }
 
-      // Reload pending items
+      // Reload pending items to reflect current queue state
       loadPendingSyncItems();
-      
-      return true;
+
+      return allSynced;
     } catch (error) {
       console.error('Error syncing offline gift sales:', error);
       return false;

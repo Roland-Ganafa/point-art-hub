@@ -290,6 +290,10 @@ const AdminProfilePage = () => {
 
   const handleMakeAdmin = async (userId: string) => {
     if (!userId) return;
+    if (!isAdmin) {
+      toast({ title: "Access Denied", description: "Only administrators can assign admin roles.", variant: "destructive" });
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -320,6 +324,10 @@ const AdminProfilePage = () => {
 
   const handleRemoveAdmin = async (userId: string) => {
     if (!userId) return;
+    if (!isAdmin) {
+      toast({ title: "Access Denied", description: "Only administrators can remove admin roles.", variant: "destructive" });
+      return;
+    }
 
     try {
       const { error } = await supabase
