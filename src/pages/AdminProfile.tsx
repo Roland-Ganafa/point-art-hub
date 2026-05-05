@@ -523,9 +523,7 @@ const AdminProfilePage = () => {
                   <Button
                     variant="outline"
                     className="px-6 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/20"
-                    onClick={() => {
-                      // Open edit dialog
-                    }}
+                    onClick={() => setIsEditDialogOpen(true)}
                   >
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Admin Profile
