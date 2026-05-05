@@ -94,6 +94,7 @@ const GiftsDailySales = () => {
     date: new Date().toISOString().slice(0, 10),
     category: "",
     item: "",
+    itemId: "",
     code: "",
     quantity: "1",
     unit: "Pc",
@@ -101,6 +102,8 @@ const GiftsDailySales = () => {
     spx: "",
     soldBy: ""          // UI only field
   });
+  // Tracks the original quantity + itemId when editing, to correctly reverse the stock delta
+  const [editingSnapshot, setEditingSnapshot] = useState<{ itemId: string; quantity: number } | null>(null);
 
   // Add offline functionality
   const { isOffline } = useOffline();
@@ -265,6 +268,24 @@ const GiftsDailySales = () => {
       return;
     }
 
+    // Stock check when an inventory item is linked
+    if (formData.itemId) {
+      const inventoryItem = inventoryItems.find(i => i.id === formData.itemId);
+      if (inventoryItem) {
+        const currentStock = inventoryItem.stock ?? inventoryItem.quantity;
+        const reservedQty = editingSnapshot?.itemId === formData.itemId ? editingSnapshot.quantity : 0;
+        const availableStock = currentStock + reservedQty;
+        if (quantity > availableStock) {
+          toast({
+            title: "Insufficient Stock",
+            description: `Only ${availableStock} unit(s) available for ${inventoryItem.item}`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+    }
+
     // Combine category and item name into a single item field for database
     // Format: "Category: Item Name"
     const combinedItem = `${formData.category.trim()}: ${formData.item.trim()}`;
@@ -308,6 +329,7 @@ const GiftsDailySales = () => {
           date: format(selectedDate, 'yyyy-MM-dd'),
           category: "",
           item: "",
+          itemId: "",
           code: "",
           quantity: "1",
           unit: "Pc",
@@ -316,6 +338,7 @@ const GiftsDailySales = () => {
           soldBy: ""
         });
         setEditingId(null);
+        setEditingSnapshot(null);
         setIsDialogOpen(false);
         return;
       }
@@ -340,6 +363,9 @@ const GiftsDailySales = () => {
 
       if (error) throw error;
 
+      // Stock is updated by the DB trigger on gift_daily_sales — just refresh the local inventory display
+      await fetchInventoryItems();
+
       toast({
         title: "Success",
         description: currentEditingId ? "Sale updated successfully" : "Sale recorded successfully",
@@ -348,10 +374,12 @@ const GiftsDailySales = () => {
       // Reset form — use selectedDate so repeated entries for the same day work correctly
       editingIdRef.current = null;
       setEditingId(null);
+      setEditingSnapshot(null);
       setFormData({
         date: format(selectedDate, 'yyyy-MM-dd'),
         category: "",
         item: "",
+        itemId: "",
         code: "",
         quantity: "1",
         unit: "Pc",
@@ -375,10 +403,20 @@ const GiftsDailySales = () => {
     const [category, ...itemNameParts] = item.item.split(": ");
     const itemName = itemNameParts.join(": ");
 
+    // Try to match this sale back to a gift_store inventory item
+    const matchedInventory = inventoryItems.find(
+      inv => `${inv.category}: ${inv.item}` === item.item
+    );
+
+    setEditingSnapshot(
+      matchedInventory ? { itemId: matchedInventory.id, quantity: item.quantity } : null
+    );
+
     setFormData({
       date: item.date,
       category: category || "",
       item: itemName || "",
+      itemId: matchedInventory?.id || "",
       code: item.code || "",
       quantity: item.quantity.toString(),
       unit: item.unit,
@@ -401,6 +439,9 @@ const GiftsDailySales = () => {
         .eq("id", id as any);
 
       if (error) throw error;
+
+      // Stock is restored by the DB trigger on gift_daily_sales DELETE — just refresh display
+      await fetchInventoryItems();
 
       toast({
         title: "Success",
@@ -558,10 +599,12 @@ const GiftsDailySales = () => {
                   // Reset form when closing — keep selectedDate as date
                   editingIdRef.current = null;
                   setEditingId(null);
+                  setEditingSnapshot(null);
                   setFormData({
                     date: format(selectedDate, 'yyyy-MM-dd'),
                     category: "",
                     item: "",
+                    itemId: "",
                     code: "",
                     quantity: "1",
                     unit: "Pc",
@@ -596,11 +639,54 @@ const GiftsDailySales = () => {
                     </DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Inventory item selector — links sale to stock */}
+                    <div className="space-y-2">
+                      <Label className="font-medium">Select from Inventory</Label>
+                      <Select
+                        value={formData.itemId}
+                        onValueChange={(value) => {
+                          if (value === "__custom__") {
+                            setFormData({ ...formData, itemId: "", category: "", item: "", bpx: "" });
+                            return;
+                          }
+                          const inv = inventoryItems.find(i => i.id === value);
+                          if (inv) {
+                            setFormData({
+                              ...formData,
+                              itemId: inv.id,
+                              category: inv.category,
+                              item: inv.item,
+                              bpx: (inv.rate ?? 0).toString(),
+                            });
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="border-green-200 dark:border-green-800">
+                          <SelectValue placeholder="Pick an item (or enter manually below)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__custom__">— Enter manually —</SelectItem>
+                          {inventoryItems.map(inv => {
+                            const stock = inv.stock ?? inv.quantity;
+                            return (
+                              <SelectItem key={inv.id} value={inv.id} disabled={stock <= 0}>
+                                {inv.category}: {inv.item}
+                                {" "}
+                                <span className={stock <= 0 ? "text-red-500" : stock <= (inv.low_stock_threshold ?? 5) ? "text-yellow-600" : "text-green-600"}>
+                                  ({stock} left)
+                                </span>
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     <div className="space-y-2">
                       <Label className="font-medium">Category *</Label>
                       <Input
                         value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value, itemId: "" })}
                         placeholder="e.g., Birthday"
                         required
                         className="border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
@@ -611,7 +697,7 @@ const GiftsDailySales = () => {
                       <Label className="font-medium">Item Name *</Label>
                       <Input
                         value={formData.item}
-                        onChange={(e) => setFormData({ ...formData, item: e.target.value })}
+                        onChange={(e) => setFormData({ ...formData, item: e.target.value, itemId: "" })}
                         placeholder="e.g., Birthday Card"
                         required
                         className="border-green-200 dark:border-green-800 focus:border-green-400 focus:ring-green-200 transition-all duration-200"
