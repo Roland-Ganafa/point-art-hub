@@ -89,34 +89,34 @@ export const useOfflineStationerySales = () => {
     if (offlineStationerySales.length === 0) return;
 
     setIsSyncing(true);
-    
+
     try {
-      // Get pending sync items
       const pendingItems = getPendingSyncItems();
-      
-      // Process each pending item
+      let allSynced = true;
+
       for (const item of pendingItems) {
         if (item.endpoint === '/api/stationery-sales') {
-          // Insert sale into Supabase
           const { error } = await supabase
             .from('stationery_daily_sales')
             .insert([item.data]);
 
           if (!error) {
-            // Remove from sync queue if successful
             removeFromSyncQueue(item.id);
+          } else {
+            allSynced = false;
+            console.error('Error syncing stationery sale:', error);
           }
         }
       }
 
-      // Clear offline stationery sales after successful sync
-      removeOfflineData('offline_stationery_sales');
-      setOfflineStationerySales([]);
+      // Only clear local cache when every item synced successfully
+      if (allSynced) {
+        removeOfflineData('offline_stationery_sales');
+        setOfflineStationerySales([]);
+      }
 
-      // Reload pending items
       loadPendingSyncItems();
-      
-      return true;
+      return allSynced;
     } catch (error) {
       console.error('Error syncing offline stationery sales:', error);
       return false;
