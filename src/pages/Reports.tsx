@@ -178,8 +178,8 @@ const Reports = () => {
           .lte('created_at', endDateStr),
         supabase.from('stationery_daily_sales')
           .select('item, quantity, selling_price, rate, date')
-          .gte('date', startDateStr)
-          .lte('date', endDateStr),
+          .gte('date', startDateOnly)
+          .lte('date', endDateOnly),
         supabase.from('gift_daily_sales')
           .select('item, quantity, spx, bpx, date')
           .gte('date', startDateOnly)
@@ -199,6 +199,12 @@ const Reports = () => {
         totalProfit += salesData.data.reduce((sum, sale) => sum + (sale.profit || 0), 0);
         itemsSold += salesData.data.reduce((sum, sale) => sum + (sale.quantity || 0), 0);
       }
+
+      // Process stationery_daily_sales data
+      const stationeryDailyRows = stationeryDailySalesData.data || [];
+      totalSales += stationeryDailyRows.reduce((sum, s) => sum + Number(s.selling_price || 0) * Number(s.quantity || 0), 0);
+      totalProfit += stationeryDailyRows.reduce((sum, s) => sum + (Number(s.selling_price || 0) - Number(s.rate || 0)) * Number(s.quantity || 0), 0);
+      itemsSold += stationeryDailyRows.reduce((sum, s) => sum + Number(s.quantity || 0), 0);
 
       // Process gift daily sales
       const giftRows = giftDailySalesData.data || [];

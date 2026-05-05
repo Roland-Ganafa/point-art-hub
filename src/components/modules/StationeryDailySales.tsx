@@ -546,7 +546,7 @@ const StationeryDailySales = () => {
             if (!open) {
               // Reset form when closing
               setFormData({
-                date: format(new Date(), 'yyyy-MM-dd'),
+                date: format(selectedDate, 'yyyy-MM-dd'),
                 category: "",
                 item: "",
                 itemId: "",
