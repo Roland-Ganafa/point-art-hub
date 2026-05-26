@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { asAppError } from '@/utils/errorUtils';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -45,6 +46,7 @@ import {
   MessageCircle,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseTyped } from '@/integrations/supabase/extended-types';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/contexts/UserContext';
 import CustomLoader from '@/components/ui/CustomLoader';
@@ -90,7 +92,7 @@ const InvoiceManagement = () => {
   const fetchInvoices = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabaseTyped
         .from('invoices')
         .select(`
           *,
@@ -114,7 +116,7 @@ const InvoiceManagement = () => {
 
   const fetchInvoiceWithItems = async (invoiceId: string) => {
     try {
-      const { data: invoice, error: invoiceError } = await (supabase as any)
+      const { data: invoice, error: invoiceError } = await supabaseTyped
         .from('invoices')
         .select('*')
         .eq('id', invoiceId)
@@ -122,7 +124,7 @@ const InvoiceManagement = () => {
 
       if (invoiceError) throw invoiceError;
 
-      const { data: items, error: itemsError } = await (supabase as any)
+      const { data: items, error: itemsError } = await supabaseTyped
         .from('invoice_items')
         .select('*')
         .eq('invoice_id', invoiceId)
@@ -182,99 +184,36 @@ const InvoiceManagement = () => {
 
       setIsLoading(true);
 
-      let invoiceId = editingInvoiceId;
-      let invoiceNumber = '';
-
-      if (isEditing && editingInvoiceId) {
-        // Update existing invoice
-        const totalAmount = calculateTotal();
-        const amountInWords = numberToWords(totalAmount);
-
-        const { data: invoice, error: invoiceError } = await (supabase as any)
-          .from('invoices')
-          .update({
-            customer_name: formData.customer_name,
-            invoice_date: formData.invoice_date,
-            total_amount: totalAmount,
-            amount_in_words: amountInWords,
-            notes: formData.notes,
-            updated_by: user?.id,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', editingInvoiceId)
-          .select()
-          .single();
-
-        if (invoiceError) throw invoiceError;
-        invoiceNumber = invoice.invoice_number;
-
-        // Delete existing items
-        const { error: deleteError } = await (supabase as any)
-          .from('invoice_items')
-          .delete()
-          .eq('invoice_id', editingInvoiceId);
-
-        if (deleteError) throw deleteError;
-      } else {
-        // Create new invoice
-        // Get next invoice and reference numbers
-        const { data: nextInv, error: invError } = await (supabase as any).rpc('get_next_invoice_number');
-        if (invError) {
-          console.error('Error getting invoice number:', invError);
-          throw new Error(`Failed to generate invoice number: ${invError.message}`);
-        }
-
-        const { data: nextRef, error: refError } = await (supabase as any).rpc('get_next_reference_number');
-        if (refError) {
-          console.error('Error getting reference number:', refError);
-          throw new Error(`Failed to generate reference number: ${refError.message}`);
-        }
-
-        const totalAmount = calculateTotal();
-        const amountInWords = numberToWords(totalAmount);
-
-        // Create invoice
-        const { data: invoice, error: invoiceError } = await (supabase as any)
-          .from('invoices')
-          .insert({
-            invoice_number: nextInv,
-            reference_number: nextRef,
-            customer_name: formData.customer_name,
-            invoice_date: formData.invoice_date,
-            total_amount: totalAmount,
-            amount_in_words: amountInWords,
-            status: 'draft',
-            notes: formData.notes,
-            created_by: user?.id,
-            updated_by: user?.id,
-          })
-          .select()
-          .single();
-
-        if (invoiceError) throw invoiceError;
-        invoiceId = invoice.id;
-        invoiceNumber = invoice.invoice_number;
-      }
-
-      // Create invoice items
-      const itemsToInsert = lineItems.map((item, index) => ({
-        invoice_id: invoiceId,
-        serial_number: index + 1,
+      // Bug fix #8 (high): the previous flow updated the invoice header,
+      // then deleted line items, then inserted new ones — three independent
+      // calls. If the insert failed (network, validation, RLS) the invoice
+      // was left with zero line items but a non-zero total. Now all three
+      // steps happen inside a Postgres transaction via the RPC.
+      const itemsPayload = lineItems.map((item) => ({
         particulars: item.particulars,
         description: item.description,
         quantity: item.quantity,
         rate: item.rate,
-        amount: calculateLineAmount(item.quantity, item.rate),
       }));
 
-      const { error: itemsError } = await (supabase as any)
-        .from('invoice_items')
-        .insert(itemsToInsert);
+      const { data: savedInvoice, error: rpcError } = await (supabaseTyped as any).rpc(
+        'save_invoice_with_items',
+        {
+          p_invoice_id: isEditing && editingInvoiceId ? editingInvoiceId : null,
+          p_customer_name: formData.customer_name,
+          p_invoice_date: formData.invoice_date,
+          p_notes: formData.notes,
+          p_user_id: user?.id ?? null,
+          p_items: itemsPayload,
+        }
+      );
 
-      if (itemsError) {
-        console.error('Invoice items creation error:', itemsError);
-        throw new Error(`Failed to save invoice items: ${itemsError.message}`);
+      if (rpcError) {
+        console.error('Invoice save error:', rpcError);
+        throw new Error(`Failed to save invoice: ${rpcError.message}`);
       }
+
+      const invoiceNumber = savedInvoice?.invoice_number ?? '';
 
       toast({
         title: 'Success',
@@ -284,11 +223,12 @@ const InvoiceManagement = () => {
       setShowCreateDialog(false);
       resetForm();
       fetchInvoices();
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       console.error('Error saving invoice:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to save invoice. Please try again.',
+        description: e.message || 'Failed to save invoice. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -355,7 +295,7 @@ const InvoiceManagement = () => {
     if (!confirm('Are you sure you want to delete this invoice?')) return;
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabaseTyped
         .from('invoices')
         .delete()
         .eq('id', invoiceId);
@@ -369,11 +309,12 @@ const InvoiceManagement = () => {
 
       setSelectedInvoiceIds(prev => prev.filter(id => id !== invoiceId));
       await fetchInvoices();
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       console.error('Error deleting invoice:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete invoice',
+        description: e.message || 'Failed to delete invoice',
         variant: 'destructive',
       });
     }
@@ -388,7 +329,7 @@ const InvoiceManagement = () => {
     try {
       setIsLoading(true);
 
-      const { error } = await (supabase as any)
+      const { error } = await supabaseTyped
         .from('invoices')
         .delete()
         .in('id', selectedInvoiceIds);
@@ -402,11 +343,12 @@ const InvoiceManagement = () => {
 
       setSelectedInvoiceIds([]);
       await fetchInvoices();
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       console.error('Error in bulk delete:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete selected invoices',
+        description: e.message || 'Failed to delete selected invoices',
         variant: 'destructive',
       });
     } finally {
@@ -449,10 +391,18 @@ const InvoiceManagement = () => {
     return <Badge className={styles[status as keyof typeof styles]}>{status.toUpperCase()}</Badge>;
   };
 
-  const filteredInvoices = invoices.filter(invoice =>
-    invoice.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    invoice.invoice_number.includes(searchQuery)
-  );
+  // Bug fix #15: also search by reference_number (column is shown in the
+  // table). Make all comparisons case-insensitive for consistency, and
+  // guard against null fields.
+  const filteredInvoices = invoices.filter(invoice => {
+    const q = searchQuery.toLowerCase();
+    if (!q) return true;
+    return (
+      (invoice.customer_name || '').toLowerCase().includes(q) ||
+      (invoice.invoice_number || '').toLowerCase().includes(q) ||
+      ((invoice as any).reference_number || '').toLowerCase().includes(q)
+    );
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">

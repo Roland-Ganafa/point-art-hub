@@ -198,7 +198,7 @@ const MachinesModule = ({ openAddTrigger }: MachinesModuleProps) => {
   const fetchItems = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("machines")
         .select("*, profiles!done_by(full_name, sales_initials)")
         .order("created_at", { ascending: false });

@@ -48,7 +48,12 @@
       "Bash(sed -i 's/dark:hover:bg-yellow-950\\\\/20 dark:bg-yellow-950\\\\/30/dark:hover:bg-yellow-950\\\\/20/g' src/pages/CustomerManagement.tsx)",
       "Bash(sed -i 's/dark:hover:bg-red-950\\\\/20 dark:bg-red-950\\\\/30/dark:hover:bg-red-950\\\\/20/g' src/pages/CustomerManagement.tsx)",
       "Bash(sed -i 's/dark:hover:bg-blue-900\\\\/30 dark:bg-blue-900\\\\/30/dark:hover:bg-blue-900\\\\/30/g' src/pages/HelpCenter.tsx)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(xargs ls *)",
+      "Bash(grep -E \"^      [a-z_]+: \\\\{$\" src/integrations/supabase/types.ts)",
+      "Bash(cd \"/c/Users/MSI/CascadeProjects/point-art-hub-main \\(1\\)/.claude/worktrees/stupefied-rosalind-6b064c\" && grep -A 30 \"stationery: {\" src/integrations/supabase/types.ts | head -60)",
+      "Bash(cd \"/c/Users/MSI/CascadeProjects/point-art-hub-main \\(1\\)/.claude/worktrees/stupefied-rosalind-6b064c\" && ls supabase/migrations/ 2>/dev/null | tail -5 && echo \"---\" && ls supabase/)",
+      "Bash(cd \"/c/Users/MSI/CascadeProjects/point-art-hub-main \\(1\\)/.claude/worktrees/stupefied-rosalind-6b064c\" && grep -rn \"KNOWN_ADMIN_EMAILS\\\\|admin@\\\\|role.*=.*admin\\\\|'admin'\" src --include=\"*.ts\" --include=\"*.tsx\" | grep -i \"email\\\\|admin\" | head -20)"
     ]
   }
 }

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { asAppError } from "@/utils/errorUtils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -53,6 +54,10 @@ const StationeryDailySales = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [salesProfiles, setSalesProfiles] = useState<ProfileItem[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  // Track the ORIGINAL itemId/quantity of the sale being edited so we can
+  // compute the correct stock delta on save. Bug fix: stock used to never
+  // change on edit, so inventory drifted.
+  const [editingOriginal, setEditingOriginal] = useState<{ itemId: string; quantity: number } | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -95,7 +100,7 @@ const StationeryDailySales = () => {
       const dateStr = format(targetDate, 'yyyy-MM-dd');
 
       // Fetch sales data for the selected date
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("stationery_sales")
         .select("*")
         .eq("date", dateStr)
@@ -125,7 +130,7 @@ const StationeryDailySales = () => {
 
   const fetchAllSales = async () => {
     try {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("stationery_sales")
         .select("*, stationery!item_id(item, category), profiles!sold_by(full_name, sales_initials)")
         .order("date", { ascending: false });
@@ -157,7 +162,7 @@ const StationeryDailySales = () => {
 
   const fetchSalesProfiles = async () => {
     try {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("profiles")
         .select("id, sales_initials, full_name")
         .not("sales_initials", "is", null);
@@ -233,10 +238,14 @@ const StationeryDailySales = () => {
       return;
     }
 
-    if (quantity > selectedItem.stock) {
+    // Bug fix #9: previously `quantity > selectedItem.stock` would silently
+    // pass when stock was undefined/null (qty > undefined === false), allowing
+    // oversell. Treat missing stock as zero and refuse the sale.
+    const availableStock = Number.isFinite(selectedItem.stock as number) ? (selectedItem.stock as number) : 0;
+    if (quantity > availableStock) {
       toast({
         title: "Insufficient Stock",
-        description: `Only ${selectedItem.stock} units available for ${selectedItem.item}`,
+        description: `Only ${availableStock} units available for ${selectedItem.item}`,
         variant: "destructive"
       });
       return;
@@ -306,7 +315,7 @@ const StationeryDailySales = () => {
           selling_price: "",
           soldBy: ""
         });
-        setEditingId(null);
+        setEditingId(null); setEditingOriginal(null);
         setIsDialogOpen(false);
         return;
       }
@@ -314,18 +323,53 @@ const StationeryDailySales = () => {
       let error;
 
       if (editingId) {
-        // Update existing record
-        const result = await (supabase as any)
+        // Update existing record. Stock adjustments on edit are handled by
+        // the existing trigger trg_adjust_stationery_stock_on_sale_update
+        // (fires WHEN NEW.quantity <> OLD.quantity for same-item edits).
+        //
+        // KNOWN GAP: cross-item edits (changing item_id without changing
+        // quantity) are NOT covered by the trigger. If the user edits a
+        // sale to point at a different stationery item, the old item's
+        // stock is not restored and the new item's stock is not decremented.
+        // For now we manually compensate when item_id changes.
+        const result = await supabase
           .from("stationery_sales")
           .update(payload)
           .eq("id", editingId);
         error = result.error;
+
+        if (!error && editingOriginal && editingOriginal.itemId !== formData.itemId) {
+          // Cross-item edit: trigger only watches same-item quantity changes.
+          // Manually restore old item's stock and decrement new item's stock.
+          const { error: restoreErr } = await (supabase as any).rpc('adjust_stationery_stock', {
+            p_item_id: editingOriginal.itemId,
+            p_delta: -editingOriginal.quantity,
+          });
+          if (restoreErr) {
+            error = restoreErr;
+          } else {
+            const { error: decErr } = await (supabase as any).rpc('adjust_stationery_stock', {
+              p_item_id: formData.itemId,
+              p_delta: quantity,
+            });
+            if (decErr) error = decErr;
+          }
+        }
       } else {
-        // Create new record
-        const result = await (supabase as any)
-          .from("stationery_sales")
-          .insert([payload]);
-        error = result.error;
+        // Bug fix #3: record sale via RPC. The RPC reads the authoritative
+        // rate from inventory (so a user can't inflate profit by editing
+        // the rate field) and pre-checks stock to reject oversell. Stock
+        // decrement itself happens via the existing AFTER-INSERT trigger
+        // in the same transaction.
+        const { error: rpcErr } = await (supabase as any).rpc('record_stationery_sale', {
+          p_item_id: formData.itemId,
+          p_quantity: quantity,
+          p_selling_price: sellingPrice,
+          p_description: formData.description ? formData.description.trim() : null,
+          p_sold_by: formData.soldBy === "not_specified" ? null : formData.soldBy,
+          p_date: saleDate.toISOString(),
+        });
+        error = rpcErr;
       }
 
       if (error) throw error;
@@ -347,19 +391,20 @@ const StationeryDailySales = () => {
         selling_price: "",
         soldBy: ""
       });
-      setEditingId(null);
+      setEditingId(null); setEditingOriginal(null);
       setIsDialogOpen(false);
       fetchData();
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       console.error("Error in handleSubmit:", error);
 
       // Provide more specific error messages
-      let errorMessage = error.message || error.details || "An unexpected error occurred";
+      let errorMessage = e.message || e.details || "An unexpected error occurred";
 
       // Handle foreign key constraint violations specifically
-      if (error.code === '23503') {
+      if (e.code === '23503') {
         errorMessage = "Unable to record sale due to user profile issues. Please contact an administrator.";
-        console.error("Foreign key constraint violation:", error.details);
+        console.error("Foreign key constraint violation:", e.details);
       }
 
       toast({
@@ -388,6 +433,7 @@ const StationeryDailySales = () => {
       soldBy: item.sold_by || ""
     });
     setEditingId(item.id);
+    setEditingOriginal({ itemId: item.item_id, quantity: item.quantity });
     setIsDialogOpen(true);
   };
 
@@ -396,7 +442,11 @@ const StationeryDailySales = () => {
 
     try {
       setIsLoading(true); // Use setIsLoading for deleting
-      const { error } = await (supabase as any)
+
+      // Stock restoration on delete is handled by the existing AFTER-DELETE
+      // trigger trg_restore_stationery_stock_on_sale_delete (from migration
+      // 20250910000001) — no manual adjustment needed here.
+      const { error } = await supabase
         .from("stationery_sales")
         .delete()
         .eq("id", id);
@@ -408,10 +458,11 @@ const StationeryDailySales = () => {
         description: "Sale deleted successfully",
       });
       fetchData();
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       toast({
         title: "Error deleting sale",
-        description: error.message,
+        description: e.message,
         variant: "destructive",
       });
     } finally {
@@ -556,7 +607,7 @@ const StationeryDailySales = () => {
                 selling_price: "",
                 soldBy: ""
               });
-              setEditingId(null);
+              setEditingId(null); setEditingOriginal(null);
             }
           }}>
             <DialogTrigger asChild>

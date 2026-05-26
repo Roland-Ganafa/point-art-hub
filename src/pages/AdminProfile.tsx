@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { asAppError } from '@/utils/errorUtils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -406,11 +407,12 @@ const AdminProfilePage = () => {
       setTimeout(() => loadAllUsers(), 500);
       await loadAllUsers();
 
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       console.error("Create user error:", error);
       toast({
         title: "Failed to Create User",
-        description: error.message || "An error occurred.",
+        description: e.message || "An error occurred.",
         variant: "destructive"
       });
     } finally {

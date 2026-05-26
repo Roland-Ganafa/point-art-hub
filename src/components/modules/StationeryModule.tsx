@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { asAppError } from "@/utils/errorUtils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -110,11 +111,12 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
 
       setSelectedIds(new Set());
       fetchItems();
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       console.error("Error in handleBulkDelete:", error);
       toast({
         title: "Error deleting items",
-        description: error.message,
+        description: e.message,
         variant: "destructive",
       });
     }
@@ -223,12 +225,13 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
       }));
 
       setItems(processedData);
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       console.error("Error fetching items:", error);
 
       // Provide more specific error messages
-      let errorMessage = error.message;
-      if (error.code === "42501") {
+      let errorMessage = e.message;
+      if (e.code === "42501") {
         errorMessage = "Database permission error. This is likely due to a missing database column. Please run the database migration to fix this issue.";
       }
 
@@ -315,13 +318,14 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
       });
 
       fetchItems();
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       console.error("Error in handleDelete:", error);
 
-      let errorMessage = error.message;
-      if (error.status === 401) {
+      let errorMessage = e.message;
+      if (e.status === 401) {
         errorMessage = "Authentication failed. Please log in and try again.";
-      } else if (error.status === 403) {
+      } else if (e.status === 403) {
         errorMessage = "Access denied. You may not have permission to perform this action.";
       }
 
@@ -387,22 +391,13 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
         sold_by: formData.sold_by === "not_specified" ? null : formData.sold_by,
       };
 
-      // Only add stock field if it's supported by the database
-      // This handles cases where the database migration hasn't been applied yet
-      try {
-        const { data: schemaData, error: schemaError } = await supabase
-          .from("stationery")
-          .select("*")
-          .limit(1);
-
-        if (!schemaError && schemaData && schemaData.length > 0) {
-          // Check if stock column exists in the schema
-          if ("stock" in schemaData[0]) {
-            itemData.stock = parseInt(formData.quantity) || 0; // Stock should be equal to initial quantity
-          }
-        }
-      } catch (schemaCheckError) {
-        console.warn("Could not check schema, proceeding without stock field:", schemaCheckError);
+      // Bug fix #2: `stock` is the live inventory count (decremented by sales,
+      // restored by sale deletions). It must NOT be overwritten on edit, or
+      // the entire sales history is erased. Initial stock is set on INSERT
+      // only, equal to the initial purchase quantity. To restock an existing
+      // item, use a dedicated restock flow (TODO) - do NOT edit quantity.
+      if (!editingId) {
+        itemData.stock = parseInt(formData.quantity) || 0;
       }
 
       // DEBUG: Log the data being sent
@@ -509,19 +504,20 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
       });
       setEditingId(null);
       fetchItems();
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       console.error("Error in handleSubmit:", error);
       console.error("Error details:", JSON.stringify(error, null, 2));
 
       // Provide more specific error messages
-      let errorMessage = error.message;
-      if (error.status === 401) {
+      let errorMessage = e.message;
+      if (e.status === 401) {
         errorMessage = "Authentication failed. Please log in and try again.";
-      } else if (error.status === 403) {
+      } else if (e.status === 403) {
         errorMessage = "Access denied. You may not have permission to perform this action.";
-      } else if (error.code === "42501") {
-        errorMessage = "Database permission error (RLS policy violation). This is a known issue that requires database administrator intervention. Please contact your system administrator. Error details: " + error.message;
-      } else if (error.message.includes("new row violates row-level security policy")) {
+      } else if (e.code === "42501") {
+        errorMessage = "Database permission error (RLS policy violation). This is a known issue that requires database administrator intervention. Please contact your system administrator. Error details: " + e.message;
+      } else if (e.message?.includes("new row violates row-level security policy")) {
         errorMessage = "RLS policy violation. The database is preventing this operation. This requires database administrator intervention to fix the RLS policies.";
       }
 
@@ -992,7 +988,11 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                         </TableCell>
                         <TableCell></TableCell>
                         <TableCell className="font-bold text-lg text-green-700">
-                          {formatUGX(filteredItems.reduce((sum, item) => sum + (item.profit_per_unit || 0), 0) / filteredItems.length)}
+                          {/* Bug fix #13: was sum / count (= average), but the
+                              row is labelled TOTALS. Show potential total
+                              profit = sum(profit_per_unit * quantity) to
+                              match the adjacent total-investment column. */}
+                          {formatUGX(filteredItems.reduce((sum, item) => sum + ((item.profit_per_unit || 0) * (item.quantity || 0)), 0))}
                         </TableCell>
                         <TableCell colSpan={3}></TableCell>
                       </TableRow>

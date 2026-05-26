@@ -6,6 +6,7 @@ import { Label } from "./ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import Logo from "./ui/Logo";
 import { useToast } from "@/hooks/use-toast";
+import { asAppError } from "@/utils/errorUtils";
 
 /**
  * DirectLogin component for bypassing session timeout issues
@@ -54,19 +55,12 @@ const DirectLogin = () => {
       );
       
       const result = await Promise.race([loginPromise, timeoutPromise]) as any;
-      
-      // Handle timeout
-      if (result && result.error && result.error.message === 'LOGIN_TIMEOUT') {
-        console.error("Fast Login timeout");
-        setError("Login request timed out. Please check your connection and try again.");
-        toast({
-          title: "Fast Login timeout",
-          description: "The login request took too long. Please check your internet connection and try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
+
+      // Bug fix #16: the timeoutPromise REJECTS with new Error('LOGIN_TIMEOUT'),
+      // which throws out of Promise.race straight into the catch block below.
+      // The old `if (result.error.message === 'LOGIN_TIMEOUT')` branch could
+      // never run and has been removed. Timeout handling lives in the catch.
+
       if (result && result.error) {
         console.error("Fast Login error:", result.error);
         console.error("Error status:", result.error.status);
@@ -98,11 +92,12 @@ const DirectLogin = () => {
           window.location.href = '/';
         }, 300);
       }
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       console.error("Fast Login exception:", error);
-      
+
       // Handle timeout errors specifically
-      if (error.message === 'LOGIN_TIMEOUT') {
+      if (e.message === 'LOGIN_TIMEOUT') {
         setError("Login request timed out. Please check your connection and try again.");
         toast({
           title: "Login timeout",
@@ -110,7 +105,7 @@ const DirectLogin = () => {
           variant: "destructive",
         });
       } else {
-        const errorMessage = error.message || "An unexpected error occurred";
+        const errorMessage = e.message || "An unexpected error occurred";
         setError(errorMessage);
         toast({
           title: "Login failed",

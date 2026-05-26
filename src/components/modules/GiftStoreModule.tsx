@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { asAppError } from "@/utils/errorUtils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -125,11 +126,12 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
 
         setItems(processedData);
       }
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       console.error("Exception in fetchItems:", error);
       toast({
         title: "Error fetching gift store items",
-        description: error.message || "An unexpected error occurred",
+        description: e.message || "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {
@@ -238,10 +240,11 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
       });
 
       fetchItems();
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       toast({
         title: "Error deleting item",
-        description: error.message,
+        description: e.message,
         variant: "destructive",
       });
     }
@@ -296,10 +299,11 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
 
       setSelectedIds(new Set());
       fetchItems();
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       toast({
         title: "Error deleting items",
-        description: error.message,
+        description: e.message,
         variant: "destructive",
       });
     }
@@ -476,12 +480,13 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
       setEditingId(null);
       setFormErrors({});
       fetchItems();
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       console.error("=== EXCEPTION ===");
       console.error("Exception:", error);
       toast({
         title: editingId ? "Error updating item" : "Error adding item",
-        description: error.message || "An unexpected error occurred. Check the browser console for details.",
+        description: e.message || "An unexpected error occurred. Check the browser console for details.",
         variant: "destructive",
       });
     }

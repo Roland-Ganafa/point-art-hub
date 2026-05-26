@@ -21,7 +21,7 @@ export async function executeSupabaseOperation<T>(
 ): Promise<T> {
   try {
     return await ConnectionMonitor.supabaseOperationWithRetry(operation);
-  } catch (error: any) {
+  } catch (error) {
     console.error(`Error in ${operationName}:`, error);
     throw error;
   }

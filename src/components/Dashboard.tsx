@@ -10,7 +10,9 @@ import { PlusCircle, Package, Gift, Scissors, Printer, Palette, TrendingUp, Tren
 import CustomLoader from "@/components/ui/CustomLoader";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { supabaseTyped } from "@/integrations/supabase/extended-types";
 import { useUser } from "@/contexts/UserContext";
+import { asAppError } from "@/utils/errorUtils";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -82,7 +84,13 @@ const Dashboard = () => {
 
   // State for tracking dashboard data loading errors
   const [dashboardError, setDashboardError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
+  // Bug fix #6/#7: retry count must live in a ref. If it lives in state +
+  // useCallback deps, every retry re-creates fetchDashboardStats, which
+  // re-runs the interval-effect and stacks intervals; the closure also
+  // sees a stale value so backoff never escalates correctly.
+  const retryCountRef = useRef(0);
+  const retryTimerRef = useRef<number | null>(null);
+  const inFlightRef = useRef(false);
   const maxRetries = 3;
 
   // Preload modules when user shows intent (hovering over tabs)
@@ -110,6 +118,10 @@ const Dashboard = () => {
   const fetchDashboardStats = useCallback(async () => {
     // Don't fetch if auth is still loading
     if (loading) return;
+    // Bug fix #6: prevent re-entrant fetches stacking up (the 30s interval
+    // can fire while a retry is also in flight).
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
 
     try {
       // Add timeout to Supabase queries - Increased to 15 seconds for better reliability
@@ -157,13 +169,13 @@ const Dashboard = () => {
       };
 
       const results = await Promise.allSettled([
-        fetchWithTimeout((supabase as any).from("stationery").select("*") as Promise<any>),
-        fetchWithTimeout((supabase as any).from("gift_store").select("*") as Promise<any>),
+        fetchWithTimeout(supabase.from("stationery").select("*") as Promise<any>),
+        fetchWithTimeout(supabase.from("gift_store").select("*") as Promise<any>),
         fetchWithTimeout(serviceQuery("embroidery")),
         fetchWithTimeout(serviceQuery("machines")),
         fetchWithTimeout(serviceQuery("art_services")),
         fetchWithTimeout(salesQuery("stationery_sales")),
-        fetchWithTimeout((supabase as any).from("invoices").select("*").eq('status', 'paid') as Promise<any>)
+        fetchWithTimeout(supabaseTyped.from("invoices").select("*").eq('status', 'paid') as Promise<any>)
       ]);
 
       const [
@@ -206,27 +218,27 @@ const Dashboard = () => {
 
       // From stationery sales
       if (salesData.length > 0) {
-        totalSales += salesData.reduce((sum: number, sale: any) => sum + (sale.total_amount || 0), 0);
-        totalProfit += salesData.reduce((sum: number, sale: any) => sum + (sale.profit || 0), 0);
-        itemsSold += salesData.reduce((sum: number, sale: any) => sum + (sale.quantity || 0), 0);
+        totalSales += salesData.reduce((sum: number, sale: { total_amount?: number }) => sum + (sale.total_amount || 0), 0);
+        totalProfit += salesData.reduce((sum: number, sale: { profit?: number }) => sum + (sale.profit || 0), 0);
+        itemsSold += salesData.reduce((sum: number, sale: { quantity?: number }) => sum + (sale.quantity || 0), 0);
       }
 
       // From services (embroidery, machines, art services)
       if (embroideryData.length > 0) {
         servicesDone += embroideryData.length;
-        totalSales += embroideryData.reduce((sum: number, item: any) => sum + (item.sales || 0), 0);
-        totalProfit += embroideryData.reduce((sum: number, item: any) => sum + (item.profit || 0), 0);
+        totalSales += embroideryData.reduce((sum: number, item: { sales?: number }) => sum + (item.sales || 0), 0);
+        totalProfit += embroideryData.reduce((sum: number, item: { profit?: number }) => sum + (item.profit || 0), 0);
       }
 
       if (machinesData.length > 0) {
         servicesDone += machinesData.length;
-        totalSales += machinesData.reduce((sum: number, item: any) => sum + (item.sales || 0), 0);
+        totalSales += machinesData.reduce((sum: number, item: { sales?: number }) => sum + (item.sales || 0), 0);
       }
 
       if (artData.length > 0) {
         servicesDone += artData.length;
-        totalSales += artData.reduce((sum: number, item: any) => sum + (Number(item.sales) || 0), 0);
-        totalProfit += artData.reduce((sum: number, item: any) => sum + (Number(item.profit) || 0), 0);
+        totalSales += artData.reduce((sum: number, item: { sales?: number | string }) => sum + (Number(item.sales) || 0), 0);
+        totalProfit += artData.reduce((sum: number, item: { profit?: number | string }) => sum + (Number(item.profit) || 0), 0);
       }
 
       // From paid invoices
@@ -236,7 +248,7 @@ const Dashboard = () => {
           const invDate = new Date(inv.invoice_date);
           return invDate >= new Date(startDate) && invDate <= new Date(endDate);
         });
-        totalSales += filteredInvoices.reduce((sum: number, inv: any) => sum + (Number(inv.total_amount) || 0), 0);
+        totalSales += filteredInvoices.reduce((sum: number, inv: { total_amount?: number | string }) => sum + (Number(inv.total_amount) || 0), 0);
       }
 
       setDashboardStats({
@@ -253,36 +265,51 @@ const Dashboard = () => {
         }
       });
 
-      // If ALL requests failed, then show the error page. 
-      // Otherwise, just clear generic errors and retry count.
-      if (errors.length === 6) {
+      // Bug fix #8: 7 queries are issued, not 6. Compare against actual
+      // result length so the "all failed" guard fires correctly.
+      if (errors.length === results.length) {
         throw new Error(`Failed to load any data. Details: ${errors.join(', ')}`);
       }
 
       // Clear any previous dashboard error
       setDashboardError(null);
       // Reset retry count on success (partial or full)
-      setRetryCount(0);
+      retryCountRef.current = 0;
+      if (retryTimerRef.current !== null) {
+        window.clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = null;
+      }
 
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       console.error("Error fetching dashboard stats:", error);
 
-      // Implement retry logic with exponential backoff
-      if (retryCount < maxRetries) {
-        setRetryCount(prev => prev + 1);
-        const backoffTime = Math.pow(2, retryCount) * 1000;
-        console.log(`Retrying in ${backoffTime}ms (attempt ${retryCount + 1}/${maxRetries})`);
+      // Bug fix #7: retry with backoff using ref (no stale closure).
+      // Clear any pending retry so we never have two stacked timers.
+      if (retryTimerRef.current !== null) {
+        window.clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = null;
+      }
 
-        setTimeout(() => {
+      if (retryCountRef.current < maxRetries) {
+        const attempt = retryCountRef.current;
+        retryCountRef.current = attempt + 1;
+        const backoffTime = Math.pow(2, attempt) * 1000;
+        console.log(`Retrying in ${backoffTime}ms (attempt ${attempt + 1}/${maxRetries})`);
+
+        retryTimerRef.current = window.setTimeout(() => {
+          retryTimerRef.current = null;
           fetchDashboardStats();
         }, backoffTime);
       } else {
         setDashboardError(
-          `Unable to load dashboard data. ${error.message || "Please check your internet connection."}`
+          `Unable to load dashboard data. ${e.message || "Please check your internet connection."}`
         );
       }
+    } finally {
+      inFlightRef.current = false;
     }
-  }, [retryCount, maxRetries, loading, dateFilter]);
+  }, [maxRetries, loading, dateFilter]);
 
   // Fetch dashboard statistics with improved error handling
   useEffect(() => {
@@ -311,13 +338,16 @@ const Dashboard = () => {
   useEffect(() => {
     if (loading) return;
 
+    // Smell fix: previously only INSERT was watched, so edits/deletes left
+    // the dashboard stale until the 30s interval ran. Use '*' to catch all
+    // events on each table.
     const channel = supabase
       .channel("dashboard-realtime")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "stationery_sales" }, () => fetchDashboardStats())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "gift_daily_sales" }, () => fetchDashboardStats())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "embroidery" }, () => fetchDashboardStats())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "machines" }, () => fetchDashboardStats())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "art_services" }, () => fetchDashboardStats())
+      .on("postgres_changes", { event: "*", schema: "public", table: "stationery_sales" }, () => fetchDashboardStats())
+      .on("postgres_changes", { event: "*", schema: "public", table: "gift_daily_sales" }, () => fetchDashboardStats())
+      .on("postgres_changes", { event: "*", schema: "public", table: "embroidery" }, () => fetchDashboardStats())
+      .on("postgres_changes", { event: "*", schema: "public", table: "machines" }, () => fetchDashboardStats())
+      .on("postgres_changes", { event: "*", schema: "public", table: "art_services" }, () => fetchDashboardStats())
       .subscribe();
 
     return () => {
@@ -445,7 +475,7 @@ const Dashboard = () => {
     const dateLabel = from && to ? `${from}_to_${to}` : "all-time";
 
     // Build a profiles map: uuid → full name (for resolving sold_by / done_by)
-    const { data: profileRows } = await (supabase as any)
+    const { data: profileRows } = await supabase
       .from("profiles")
       .select("id, full_name, sales_initials");
     const profileMap: Record<string, string> = {};
@@ -623,11 +653,11 @@ const Dashboard = () => {
         endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
       }
 
-      let statQ = (supabase as any).from("stationery_sales").select("item_id, quantity, total_amount, stationery!item_id(item, category, quantity)");
-      let giftQ = (supabase as any).from("gift_daily_sales").select("item, quantity, spx");
-      let embQ  = (supabase as any).from("embroidery").select("item_name, quantity, total_amount, date");
-      let machQ = (supabase as any).from("machines").select("machine_name, quantity, sales, date");
-      let artQ  = (supabase as any).from("art_services").select("service_name, quantity, sales, date");
+      let statQ = supabase.from("stationery_sales").select("item_id, quantity, total_amount, stationery!item_id(item, category, quantity)");
+      let giftQ = supabase.from("gift_daily_sales").select("item, quantity, spx");
+      let embQ  = supabase.from("embroidery").select("item_name, quantity, total_amount, date");
+      let machQ = supabase.from("machines").select("machine_name, quantity, sales, date");
+      let artQ  = supabase.from("art_services").select("service_name, quantity, sales, date");
 
       if (startDate && endDate) {
         statQ = statQ.gte("created_at", startDate).lte("created_at", endDate);
@@ -640,7 +670,7 @@ const Dashboard = () => {
 
       const [statRes, giftRes, giftStoreRes, embRes, machRes, artRes] = await Promise.all([
         statQ, giftQ,
-        (supabase as any).from("gift_store").select("item, quantity"),
+        supabase.from("gift_store").select("item, quantity"),
         embQ, machQ, artQ,
       ]);
 
@@ -720,7 +750,7 @@ const Dashboard = () => {
                 // Attempt to refresh the Supabase connection
                 supabase.auth.refreshSession();
                 // Reset retry count
-                setRetryCount(0);
+                retryCountRef.current = 0;
                 // Try fetching data again
                 fetchDashboardStats();
                 // Show a toast notification
