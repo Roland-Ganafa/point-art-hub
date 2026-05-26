@@ -92,14 +92,14 @@ export default function ActivityLog() {
           .limit(500),
 
         // Machines — done_by FK to profiles.id
-        (supabase as any)
+        supabase
           .from("machines")
           .select("id, created_at, machine_type, quantity, sales, done_by, profiles!done_by(full_name, sales_initials)")
           .order("created_at", { ascending: false })
           .limit(500),
 
         // Art Services — done_by FK to profiles.id
-        (supabase as any)
+        supabase
           .from("art_services")
           .select("id, created_at, service_name, quantity, sales, description, done_by, profiles!done_by(full_name, sales_initials)")
           .order("created_at", { ascending: false })

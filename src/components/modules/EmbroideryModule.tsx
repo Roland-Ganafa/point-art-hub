@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { asAppError } from "@/utils/errorUtils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -147,7 +148,7 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
   const fetchItems = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("embroidery")
         .select("*, profiles!done_by(full_name, sales_initials)")
         .order("created_at", { ascending: false });
@@ -243,10 +244,11 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
       });
 
       fetchItems();
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       toast({
         title: "Error deleting job",
-        description: error.message,
+        description: e.message,
         variant: "destructive",
       });
     }
@@ -301,10 +303,11 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
 
       setSelectedIds(new Set());
       fetchItems();
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       toast({
         title: "Error deleting items",
-        description: error.message,
+        description: e.message,
         variant: "destructive",
       });
     }
@@ -388,11 +391,12 @@ const EmbroideryModule = ({ openAddTrigger }: EmbroideryModuleProps) => {
       setIsDialogOpen(false);
       resetForm();
       fetchItems();
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       console.error("Error in embroidery job submission:", error);
       toast({
         title: editingId ? "Error updating job" : "Error adding job",
-        description: error.message || "An unknown error occurred",
+        description: e.message || "An unknown error occurred",
         variant: "destructive",
       });
     } finally {

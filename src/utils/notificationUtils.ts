@@ -255,7 +255,7 @@ export const checkSalesMilestones = async (): Promise<SalesMilestone[]> => {
       .select('total_amount')
       .gte('created_at', startOfDay.toISOString());
 
-    const dailyTotal = dailySales?.reduce((sum: number, sale: any) => sum + (sale.total_amount || 0), 0) || 0;
+    const dailyTotal = dailySales?.reduce((sum: number, sale: { total_amount?: number }) => sum + (sale.total_amount || 0), 0) || 0;
     const dailyTarget = 500000; // 500k UGX daily target
 
     if (dailyTotal >= dailyTarget) {
@@ -274,7 +274,7 @@ export const checkSalesMilestones = async (): Promise<SalesMilestone[]> => {
       .select('total_amount')
       .gte('created_at', startOfWeek.toISOString());
 
-    const weeklyTotal = weeklySales?.reduce((sum: number, sale: any) => sum + (sale.total_amount || 0), 0) || 0;
+    const weeklyTotal = weeklySales?.reduce((sum: number, sale: { total_amount?: number }) => sum + (sale.total_amount || 0), 0) || 0;
     const weeklyTarget = 3000000; // 3M UGX weekly target
 
     if (weeklyTotal >= weeklyTarget) {
@@ -293,7 +293,7 @@ export const checkSalesMilestones = async (): Promise<SalesMilestone[]> => {
       .select('total_amount')
       .gte('created_at', startOfMonth.toISOString());
 
-    const monthlyTotal = monthlySales?.reduce((sum: number, sale: any) => sum + (sale.total_amount || 0), 0) || 0;
+    const monthlyTotal = monthlySales?.reduce((sum: number, sale: { total_amount?: number }) => sum + (sale.total_amount || 0), 0) || 0;
     const monthlyTarget = 12000000; // 12M UGX monthly target
 
     if (monthlyTotal >= monthlyTarget) {
@@ -312,7 +312,7 @@ export const checkSalesMilestones = async (): Promise<SalesMilestone[]> => {
       .from('stationery_sales' as any)
       .select('total_amount');
 
-    const totalRevenue = totalSales?.reduce((sum: number, sale: any) => sum + (sale.total_amount || 0), 0) || 0;
+    const totalRevenue = totalSales?.reduce((sum: number, sale: { total_amount?: number }) => sum + (sale.total_amount || 0), 0) || 0;
     
     for (const milestone of revenueMilestones) {
       if (totalRevenue >= milestone) {

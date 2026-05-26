@@ -133,7 +133,7 @@ const GiftsDailySales = () => {
       const dateStr = format(targetDate, 'yyyy-MM-dd');
 
       // Fetch sales data for the selected date
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("gift_daily_sales")
         .select("*, profiles!sold_by(full_name, sales_initials)")
         .eq("date", dateStr)
@@ -298,7 +298,10 @@ const GiftsDailySales = () => {
       bpx: bpx,
       spx: spx,
       code: formData.code ? formData.code.trim() : null,
-      description: formData.code ? formData.code.trim() : null,
+      // Bug fix #11: previously this duplicated `code` into `description`,
+      // which is misleading on reports. The form has no description input
+      // today; leave description null (or wire up a real input later).
+      description: null,
       sold_by: formData.soldBy === "not_specified" ? null : formData.soldBy
     };
 

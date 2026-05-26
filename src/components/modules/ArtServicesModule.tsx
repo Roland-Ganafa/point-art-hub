@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { asAppError } from "@/utils/errorUtils";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -128,7 +129,7 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
   const fetchItems = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("art_services")
         .select("*, profiles!done_by(full_name, sales_initials)")
         .order("created_at", { ascending: false });
@@ -228,10 +229,11 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
       });
 
       fetchItems();
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       toast({
         title: "Error deleting job",
-        description: error.message,
+        description: e.message,
         variant: "destructive",
       });
     }
@@ -286,10 +288,11 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
 
       setSelectedIds(new Set());
       fetchItems();
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       toast({
         title: "Error deleting items",
-        description: error.message,
+        description: e.message,
         variant: "destructive",
       });
     }
@@ -370,11 +373,12 @@ const ArtServicesModule = ({ openAddTrigger }: ArtServicesModuleProps) => {
       setIsDialogOpen(false);
       resetForm();
       fetchItems();
-    } catch (error: any) {
+    } catch (error) {
+      const e = asAppError(error);
       console.error("Error in art service submission:", error);
       toast({
         title: editingId ? "Error updating job" : "Error adding job",
-        description: error.message || "An unknown error occurred",
+        description: e.message || "An unknown error occurred",
         variant: "destructive",
       });
     } finally {

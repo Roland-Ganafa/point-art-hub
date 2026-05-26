@@ -61,13 +61,20 @@ export const useOfflineGiftSales = () => {
     }
   };
 
-  // Record a gift sale while offline
-  const recordOfflineGiftSale = (saleData: Omit<OfflineGiftSale, 'id' | 'date'>) => {
+  // Record a gift sale while offline.
+  // Bug fix #10: previously the user-selected date was silently dropped and
+  // replaced with `new Date().toISOString()` (because the signature Omit-ed
+  // 'date' AND the body assigned it again). Now `date` is accepted from the
+  // caller and only falls back to now() when missing.
+  const recordOfflineGiftSale = (
+    saleData: Omit<OfflineGiftSale, 'id' | 'date'> & { date?: string }
+  ) => {
     try {
+      const { date: providedDate, ...rest } = saleData;
       const newSale: OfflineGiftSale = {
-        ...saleData,
+        ...rest,
         id: `offline_${Date.now()}`,
-        date: new Date().toISOString()
+        date: providedDate || new Date().toISOString()
       };
 
       const updatedSales = [...offlineGiftSales, newSale];
