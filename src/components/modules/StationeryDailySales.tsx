@@ -98,12 +98,17 @@ const StationeryDailySales = () => {
       setIsLoading(true);
       const targetDate = dateToFetch || selectedDate;
       const dateStr = format(targetDate, 'yyyy-MM-dd');
+      const nextDateStr = format(addDays(targetDate, 1), 'yyyy-MM-dd');
 
-      // Fetch sales data for the selected date
+      // Fetch sales data for the selected date.
+      // Use a date-range (gte/lt) instead of eq so that records stored with a
+      // full ISO timestamp (e.g. "2026-05-05T14:30:00Z") are still matched when
+      // the user is viewing the "2026-05-05" day view.
       const { data, error } = await supabase
         .from("stationery_sales")
         .select("*")
-        .eq("date", dateStr)
+        .gte("date", dateStr)
+        .lt("date", nextDateStr)
         .order("date", { ascending: false });
 
       if (error) {
@@ -597,7 +602,7 @@ const StationeryDailySales = () => {
             if (!open) {
               // Reset form when closing
               setFormData({
-                date: format(new Date(), 'yyyy-MM-dd'),
+                date: format(selectedDate, 'yyyy-MM-dd'),
                 category: "",
                 item: "",
                 itemId: "",
