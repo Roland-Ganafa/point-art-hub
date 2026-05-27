@@ -857,7 +857,7 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                       <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Category</TableHead>
                       <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Item</TableHead>
                       <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 text-left whitespace-nowrap">Description</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Qty</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">In Stock</TableHead>
                       <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Buying Price (UGX)</TableHead>
                       <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Total Value (UGX)</TableHead>
                       <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-blue-50 dark:from-blue-950/30 to-purple-50 dark:to-purple-950/30 whitespace-nowrap">Selling Price</TableHead>
@@ -903,10 +903,13 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                             </TableCell>
                             <TableCell className="font-semibold text-gray-800 dark:text-gray-200">{item.item}</TableCell>
                             <TableCell className="text-gray-500 dark:text-gray-400 max-w-xs truncate text-left">{item.description || '-'}</TableCell>
-                            <TableCell className="font-medium">{item.quantity}</TableCell>
+                            {/* Bug fix: show live remaining stock, not the static
+                                original purchase quantity. `actualStock` is computed
+                                a few lines above as item.stock (with fallback). */}
+                            <TableCell className="font-medium">{actualStock}</TableCell>
                             <TableCell className="font-medium text-blue-600">{formatUGX(item.rate)}</TableCell>
                             <TableCell className="font-medium text-green-600">
-                              {formatUGX(item.quantity * item.rate)}
+                              {formatUGX(actualStock * item.rate)}
                             </TableCell>
                             <TableCell className="font-medium text-purple-600">{formatUGX(item.selling_price)}</TableCell>
                             <TableCell className={`font-bold ${item.profit_per_unit >= 0 ? "text-green-600" : "text-red-600"}`}>
@@ -984,15 +987,22 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
                           TOTALS:
                         </TableCell>
                         <TableCell className="font-bold text-lg text-green-700">
-                          {formatUGX(filteredItems.reduce((sum, item) => sum + (item.quantity * item.rate), 0))}
+                          {/* Bug fix: use live stock so totals reflect current
+                              inventory value, not the value at time of purchase. */}
+                          {formatUGX(filteredItems.reduce((sum, item) => {
+                            const liveStock = item.stock !== undefined ? item.stock : (item.quantity || 0);
+                            return sum + (liveStock * (item.rate || 0));
+                          }, 0))}
                         </TableCell>
                         <TableCell></TableCell>
                         <TableCell className="font-bold text-lg text-green-700">
                           {/* Bug fix #13: was sum / count (= average), but the
                               row is labelled TOTALS. Show potential total
-                              profit = sum(profit_per_unit * quantity) to
-                              match the adjacent total-investment column. */}
-                          {formatUGX(filteredItems.reduce((sum, item) => sum + ((item.profit_per_unit || 0) * (item.quantity || 0)), 0))}
+                              profit = sum(profit_per_unit * live stock). */}
+                          {formatUGX(filteredItems.reduce((sum, item) => {
+                            const liveStock = item.stock !== undefined ? item.stock : (item.quantity || 0);
+                            return sum + ((item.profit_per_unit || 0) * liveStock);
+                          }, 0))}
                         </TableCell>
                         <TableCell colSpan={3}></TableCell>
                       </TableRow>
