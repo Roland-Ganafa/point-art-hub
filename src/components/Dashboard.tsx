@@ -653,7 +653,9 @@ const Dashboard = () => {
         endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
       }
 
-      let statQ = supabase.from("stationery_sales").select("item_id, quantity, total_amount, stationery!item_id(item, category, quantity)");
+      // Bug fix: pull `stock` (live remaining) too so best-sellers / low-stock
+      // widgets show current remaining count, not the static purchase quantity.
+      let statQ = supabase.from("stationery_sales").select("item_id, quantity, total_amount, stationery!item_id(item, category, quantity, stock)");
       let giftQ = supabase.from("gift_daily_sales").select("item, quantity, spx");
       let embQ  = supabase.from("embroidery").select("item_name, quantity, total_amount, date");
       let machQ = supabase.from("machines").select("machine_name, quantity, sales, date");
@@ -670,7 +672,8 @@ const Dashboard = () => {
 
       const [statRes, giftRes, giftStoreRes, embRes, machRes, artRes] = await Promise.all([
         statQ, giftQ,
-        supabase.from("gift_store").select("item, quantity"),
+        // Bug fix: include `stock` so low-stock and best-sellers reflect live count.
+        supabase.from("gift_store").select("item, quantity, stock"),
         embQ, machQ, artQ,
       ]);
 
@@ -679,7 +682,7 @@ const Dashboard = () => {
       (statRes.data || []).forEach((s: any) => {
         const info = s.stationery;
         const name = info?.item || "Unknown";
-        if (!prodMap[name]) prodMap[name] = { name, category: info?.category || "Stationery", module: "Stationery", totalQty: 0, totalRevenue: 0, currentStock: info?.quantity ?? null };
+        if (!prodMap[name]) prodMap[name] = { name, category: info?.category || "Stationery", module: "Stationery", totalQty: 0, totalRevenue: 0, currentStock: info?.stock ?? info?.quantity ?? null };
         prodMap[name].totalQty += s.quantity || 0;
         prodMap[name].totalRevenue += s.total_amount || 0;
       });
@@ -688,7 +691,7 @@ const Dashboard = () => {
         const name = s.item || "Unknown";
         if (!prodMap[name]) {
           const st = giftStock.find((g: any) => g.item === name);
-          prodMap[name] = { name, category: "Gift Store", module: "Gift Store", totalQty: 0, totalRevenue: 0, currentStock: st?.quantity ?? null };
+          prodMap[name] = { name, category: "Gift Store", module: "Gift Store", totalQty: 0, totalRevenue: 0, currentStock: st?.stock ?? st?.quantity ?? null };
         }
         prodMap[name].totalQty += s.quantity || 0;
         prodMap[name].totalRevenue += (s.quantity || 0) * (s.spx || 0);

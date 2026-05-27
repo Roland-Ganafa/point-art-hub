@@ -845,7 +845,7 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                       <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Category</TableHead>
                       <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Item</TableHead>
                       <TableHead className="font-semibold text-gray-700 dark:text-gray-300 text-left bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Description</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Qty</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">In Stock</TableHead>
                       <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Rate (UGX)</TableHead>
                       <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Total Value (UGX)</TableHead>
                       <TableHead className="font-semibold text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 dark:from-gray-800 to-green-50 whitespace-nowrap">Selling Price</TableHead>
@@ -895,9 +895,12 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                             </TableCell>
                             <TableCell className="font-semibold text-gray-800 dark:text-gray-200">{item.item}</TableCell>
                             <TableCell className="text-gray-500 dark:text-gray-400 max-w-xs truncate text-left">{item.description || '-'}</TableCell>
-                            <TableCell className="font-medium">{item.quantity}</TableCell>
+                            {/* Bug fix: show live remaining stock, not the static
+                                original purchase quantity. `stock` was already
+                                computed at the top of the row. */}
+                            <TableCell className="font-medium">{stock}</TableCell>
                             <TableCell className="font-medium text-blue-600">{formatUGX(item.rate)}</TableCell>
-                            <TableCell className="font-medium text-green-600">{formatUGX(item.quantity * item.rate)}</TableCell>
+                            <TableCell className="font-medium text-green-600">{formatUGX((stock || 0) * item.rate)}</TableCell>
                             <TableCell className="font-medium text-purple-600">{formatUGX(sellingPrice)}</TableCell>
                             <TableCell className={`font-bold ${profit && profit >= 0 ? "text-green-600" : "text-red-600"}`}>
                               <div className="flex items-center gap-1">
@@ -976,7 +979,12 @@ const GiftStoreModule = ({ openAddTrigger }: GiftStoreModuleProps) => {
                           TOTALS:
                         </TableCell>
                         <TableCell className="font-bold text-lg text-green-700">
-                          {formatUGX(filteredItems.reduce((sum, item) => sum + (item.quantity * item.rate), 0))}
+                          {/* Bug fix: use live stock so totals reflect current
+                              inventory value, not value at time of purchase. */}
+                          {formatUGX(filteredItems.reduce((sum, item) => {
+                            const liveStock = item.stock !== undefined ? item.stock : (item.quantity || 0);
+                            return sum + (liveStock * (item.rate || 0));
+                          }, 0))}
                         </TableCell>
                         <TableCell></TableCell>
                         <TableCell className="font-bold text-lg text-green-700">
