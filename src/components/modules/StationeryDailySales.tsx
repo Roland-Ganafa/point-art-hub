@@ -398,7 +398,14 @@ const StationeryDailySales = () => {
       });
       setEditingId(null); setEditingOriginal(null);
       setIsDialogOpen(false);
-      fetchData();
+
+      // Jump the day view to the date of the sale we just saved, so a
+      // back-dated entry is immediately visible (otherwise fetchData would
+      // re-fetch the previously-selected day and the new row, being on a
+      // different date, would appear "missing").
+      const savedDay = new Date(saleDate.getFullYear(), saleDate.getMonth(), saleDate.getDate());
+      setSelectedDate(savedDay);
+      fetchData(savedDay);
     } catch (error) {
       const e = asAppError(error);
       console.error("Error in handleSubmit:", error);
