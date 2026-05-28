@@ -209,7 +209,10 @@ const StationeryModule = ({ openAddTrigger }: StationeryModuleProps) => {
       const { data, error } = await supabase
         .from("stationery")
         .select("*")
-        .order("category", { ascending: true })
+        // Show most-recently-added items first so a freshly added item
+        // appears at the top of the list. created_at falls back to id
+        // ordering implicitly if timestamps tie.
+        .order("created_at", { ascending: false })
         .order("item", { ascending: true });
 
       if (error) throw error;
