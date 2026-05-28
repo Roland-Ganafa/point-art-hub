@@ -243,19 +243,6 @@ const StationeryDailySales = () => {
       return;
     }
 
-    // Bug fix #9: previously `quantity > selectedItem.stock` would silently
-    // pass when stock was undefined/null (qty > undefined === false), allowing
-    // oversell. Treat missing stock as zero and refuse the sale.
-    const availableStock = Number.isFinite(selectedItem.stock as number) ? (selectedItem.stock as number) : 0;
-    if (quantity > availableStock) {
-      toast({
-        title: "Insufficient Stock",
-        description: `Only ${availableStock} units available for ${selectedItem.item}`,
-        variant: "destructive"
-      });
-      return;
-    }
-
     // Combine the selected date with the current time to handle timezones safely
     const currentDate = new Date();
     const [year, month, day] = formData.date.split('-');
@@ -267,6 +254,27 @@ const StationeryDailySales = () => {
       currentDate.getMinutes(),
       currentDate.getSeconds()
     );
+
+    // Determine whether this is a back-dated entry (a sale for a previous day).
+    const todayMidnight = new Date();
+    todayMidnight.setHours(0, 0, 0, 0);
+    const saleDayMidnight = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const isBackdated = saleDayMidnight < todayMidnight;
+
+    // Stock-availability guard. We ONLY enforce it for sales dated today (or
+    // later) to prevent real-time overselling. Back-dated entries (recording
+    // a sale that was missed on a previous day) are always allowed regardless
+    // of current stock — the item already physically left the shelf, and the
+    // DB trigger clamps stock at 0 so it can never go negative.
+    const availableStock = Number.isFinite(selectedItem.stock as number) ? (selectedItem.stock as number) : 0;
+    if (!isBackdated && quantity > availableStock) {
+      toast({
+        title: "Insufficient Stock",
+        description: `Only ${availableStock} units available for ${selectedItem.item}`,
+        variant: "destructive"
+      });
+      return;
+    }
 
     const payload: any = {
       item_id: formData.itemId,
